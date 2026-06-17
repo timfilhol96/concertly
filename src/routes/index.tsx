@@ -32,13 +32,13 @@ function Landing() {
           </Link>
           <div className="flex items-center gap-3">
             <Link
-              to="/dashboard"
+              to="/auth"
               className="hidden text-sm font-medium text-muted-foreground transition-colors hover:text-foreground sm:inline"
             >
               Sign in
             </Link>
             <Link
-              to="/dashboard"
+              to="/auth"
               className="rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground transition-all hover:scale-[1.03] active:scale-95"
             >
               Try the demo
@@ -77,14 +77,14 @@ function Landing() {
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <Link
-                to="/dashboard"
+                to="/auth"
                 className="group inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3.5 text-sm font-bold text-brand-foreground transition-all hover:scale-[1.03] active:scale-95"
               >
                 Open your dashboard
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
               <Link
-                to="/add"
+                to="/auth"
                 className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface/60 px-6 py-3.5 text-sm font-bold text-foreground backdrop-blur-md transition-colors hover:bg-surface-2"
               >
                 Log your first show
@@ -154,7 +154,7 @@ function Landing() {
               then start logging your own.
             </p>
             <Link
-              to="/dashboard"
+              to="/auth"
               className="mt-8 inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3.5 text-sm font-bold text-background transition-transform hover:scale-[1.03] active:scale-95"
             >
               Enter the venue
