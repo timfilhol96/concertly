@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Search, Star } from "lucide-react";
-import { CONCERTS } from "@/lib/mock-data";
+import { useConcerts } from "@/lib/concerts";
 
 export const Route = createFileRoute("/_authenticated/shows")({
   head: () => ({ meta: [{ title: "My Shows · Concertly" }] }),
@@ -9,16 +9,17 @@ export const Route = createFileRoute("/_authenticated/shows")({
 });
 
 function Shows() {
+  const { data: concerts = [], isLoading } = useConcerts();
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"date" | "rating">("date");
   const list = useMemo(() => {
-    const filtered = CONCERTS.filter((c) =>
+    const filtered = concerts.filter((c) =>
       [c.artist, c.venue, c.city, c.tour ?? ""].join(" ").toLowerCase().includes(q.toLowerCase()),
     );
     return filtered.sort((a, b) =>
       sort === "date" ? (a.date < b.date ? 1 : -1) : b.rating - a.rating,
     );
-  }, [q, sort]);
+  }, [q, sort, concerts]);
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
@@ -26,7 +27,7 @@ function Shows() {
         <div>
           <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">My Shows</h1>
           <p className="mt-2 text-muted-foreground">
-            Every gig in your archive — {CONCERTS.length} total.
+            Every gig in your archive — {concerts.length} total.
           </p>
         </div>
         <div className="flex w-full items-center gap-3 md:w-auto">
@@ -70,7 +71,7 @@ function Shows() {
                 </td>
                 <td className="hidden px-4 py-4 text-sm text-muted-foreground md:table-cell md:px-6">
                   {c.venue}
-                  <div className="text-xs">{c.city}, {c.country}</div>
+                  <div className="text-xs">{c.city}{c.country ? `, ${c.country}` : ""}</div>
                 </td>
                 <td className="hidden px-4 py-4 text-xs text-muted-foreground lg:table-cell">
                   {c.tour ?? "—"}
@@ -86,8 +87,10 @@ function Shows() {
                 </td>
               </tr>
             ))}
-            {list.length === 0 && (
-              <tr><td colSpan={5} className="px-6 py-12 text-center text-sm text-muted-foreground">No shows match that search.</td></tr>
+            {!isLoading && list.length === 0 && (
+              <tr><td colSpan={5} className="px-6 py-12 text-center text-sm text-muted-foreground">
+                {concerts.length === 0 ? "No shows yet — log your first one!" : "No shows match that search."}
+              </td></tr>
             )}
           </tbody>
         </table>
