@@ -1,6 +1,9 @@
-import { Link, useRouterState } from "@tanstack/react-router";
-import { Plus, Search } from "lucide-react";
-import { USER } from "@/lib/mock-data";
+import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
+import { LogOut, Plus, Search } from "lucide-react";
+import { useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { useProfile } from "@/lib/concerts";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard" },
@@ -11,11 +14,31 @@ const NAV = [
 
 export function AppNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
+  const { data: profile } = useProfile();
+  const nav = useNavigate();
+  const qc = useQueryClient();
+  const [menuOpen, setMenuOpen] = useState(false);
+
+  const initials = (profile?.displayName ?? "U")
+    .split(/\s+/)
+    .map((w) => w[0])
+    .filter(Boolean)
+    .slice(0, 2)
+    .join("")
+    .toUpperCase();
+
+  async function signOut() {
+    await qc.cancelQueries();
+    qc.clear();
+    await supabase.auth.signOut();
+    nav({ to: "/auth", replace: true });
+  }
+
   return (
     <nav className="sticky top-0 z-50 border-b border-hairline bg-background/80 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <div className="flex items-center gap-8">
-          <Link to="/" className="font-display text-2xl font-extrabold tracking-tighter text-brand">
+          <Link to="/dashboard" className="font-display text-2xl font-extrabold tracking-tighter text-brand">
             CONCERTLY
           </Link>
           <div className="hidden items-center gap-6 md:flex">
@@ -47,8 +70,35 @@ export function AppNav() {
             <Plus className="h-4 w-4" />
             Log Show
           </Link>
-          <div className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-surface-2 text-xs font-bold">
-            {USER.initials}
+          <div className="relative">
+            <button
+              onClick={() => setMenuOpen((v) => !v)}
+              className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-surface-2 text-xs font-bold transition-colors hover:border-brand"
+              aria-label="Account menu"
+            >
+              {initials}
+            </button>
+            {menuOpen && (
+              <>
+                <button
+                  className="fixed inset-0 z-40 cursor-default"
+                  onClick={() => setMenuOpen(false)}
+                  aria-label="Close menu"
+                />
+                <div className="absolute right-0 top-11 z-50 w-56 overflow-hidden rounded-2xl border border-hairline bg-card shadow-xl">
+                  <div className="border-b border-hairline px-4 py-3">
+                    <p className="truncate text-sm font-semibold">{profile?.displayName}</p>
+                    <p className="truncate text-xs text-muted-foreground">{profile?.email}</p>
+                  </div>
+                  <button
+                    onClick={signOut}
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm transition-colors hover:bg-surface-2"
+                  >
+                    <LogOut className="h-3.5 w-3.5" /> Sign out
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
       </div>
