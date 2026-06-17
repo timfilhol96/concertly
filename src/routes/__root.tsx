@@ -85,13 +85,19 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
         content:
           "Concertly is the stats.fm for live music. Log every concert you attend and turn your gig history into rich personal stats, year-in-review recaps and shareable cards.",
       },
-      { property: "og:title", content: "Concertly — Track every show" },
+      { property: "og:title", content: "Concertly — Track every show. Discover your live music story." },
       {
         property: "og:description",
         content: "Turn your concert history into rich personal stats and year-in-review recaps.",
       },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
+      { name: "twitter:title", content: "Concertly — Track every show. Discover your live music story." },
+      { name: "description", content: "Live Log is a modern PWA for tracking live concerts and visualizing your music history." },
+      { property: "og:description", content: "Live Log is a modern PWA for tracking live concerts and visualizing your music history." },
+      { name: "twitter:description", content: "Live Log is a modern PWA for tracking live concerts and visualizing your music history." },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4fe99b87-66f1-4ee5-893e-d48f60b34277/id-preview-d95ae3a5--f1de454b-fc67-4bca-9b5e-ebbe7dc149ee.lovable.app-1781659217364.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/4fe99b87-66f1-4ee5-893e-d48f60b34277/id-preview-d95ae3a5--f1de454b-fc67-4bca-9b5e-ebbe7dc149ee.lovable.app-1781659217364.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
