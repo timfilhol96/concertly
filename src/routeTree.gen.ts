@@ -9,16 +9,22 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as AppRouteImport } from './routes/_app'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AppWrappedRouteImport } from './routes/_app.wrapped'
-import { Route as AppShowsRouteImport } from './routes/_app.shows'
-import { Route as AppInsightsRouteImport } from './routes/_app.insights'
-import { Route as AppDashboardRouteImport } from './routes/_app.dashboard'
-import { Route as AppAddRouteImport } from './routes/_app.add'
+import { Route as AuthenticatedWrappedRouteImport } from './routes/_authenticated/wrapped'
+import { Route as AuthenticatedShowsRouteImport } from './routes/_authenticated/shows'
+import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedAddRouteImport } from './routes/_authenticated/add'
 
-const AppRoute = AppRouteImport.update({
-  id: '/_app',
+const AuthRoute = AuthRouteImport.update({
+  id: '/auth',
+  path: '/auth',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const IndexRoute = IndexRouteImport.update({
@@ -26,86 +32,112 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AppWrappedRoute = AppWrappedRouteImport.update({
+const AuthenticatedWrappedRoute = AuthenticatedWrappedRouteImport.update({
   id: '/wrapped',
   path: '/wrapped',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AppShowsRoute = AppShowsRouteImport.update({
+const AuthenticatedShowsRoute = AuthenticatedShowsRouteImport.update({
   id: '/shows',
   path: '/shows',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AppInsightsRoute = AppInsightsRouteImport.update({
+const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AppDashboardRoute = AppDashboardRouteImport.update({
+const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AppAddRoute = AppAddRouteImport.update({
+const AuthenticatedAddRoute = AuthenticatedAddRouteImport.update({
   id: '/add',
   path: '/add',
-  getParentRoute: () => AppRoute,
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/add': typeof AppAddRoute
-  '/dashboard': typeof AppDashboardRoute
-  '/insights': typeof AppInsightsRoute
-  '/shows': typeof AppShowsRoute
-  '/wrapped': typeof AppWrappedRoute
+  '/auth': typeof AuthRoute
+  '/add': typeof AuthenticatedAddRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/insights': typeof AuthenticatedInsightsRoute
+  '/shows': typeof AuthenticatedShowsRoute
+  '/wrapped': typeof AuthenticatedWrappedRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/add': typeof AppAddRoute
-  '/dashboard': typeof AppDashboardRoute
-  '/insights': typeof AppInsightsRoute
-  '/shows': typeof AppShowsRoute
-  '/wrapped': typeof AppWrappedRoute
+  '/auth': typeof AuthRoute
+  '/add': typeof AuthenticatedAddRoute
+  '/dashboard': typeof AuthenticatedDashboardRoute
+  '/insights': typeof AuthenticatedInsightsRoute
+  '/shows': typeof AuthenticatedShowsRoute
+  '/wrapped': typeof AuthenticatedWrappedRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/_app': typeof AppRouteWithChildren
-  '/_app/add': typeof AppAddRoute
-  '/_app/dashboard': typeof AppDashboardRoute
-  '/_app/insights': typeof AppInsightsRoute
-  '/_app/shows': typeof AppShowsRoute
-  '/_app/wrapped': typeof AppWrappedRoute
+  '/_authenticated': typeof AuthenticatedRouteRouteWithChildren
+  '/auth': typeof AuthRoute
+  '/_authenticated/add': typeof AuthenticatedAddRoute
+  '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/insights': typeof AuthenticatedInsightsRoute
+  '/_authenticated/shows': typeof AuthenticatedShowsRoute
+  '/_authenticated/wrapped': typeof AuthenticatedWrappedRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/add' | '/dashboard' | '/insights' | '/shows' | '/wrapped'
+  fullPaths:
+    | '/'
+    | '/auth'
+    | '/add'
+    | '/dashboard'
+    | '/insights'
+    | '/shows'
+    | '/wrapped'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/add' | '/dashboard' | '/insights' | '/shows' | '/wrapped'
+  to:
+    | '/'
+    | '/auth'
+    | '/add'
+    | '/dashboard'
+    | '/insights'
+    | '/shows'
+    | '/wrapped'
   id:
     | '__root__'
     | '/'
-    | '/_app'
-    | '/_app/add'
-    | '/_app/dashboard'
-    | '/_app/insights'
-    | '/_app/shows'
-    | '/_app/wrapped'
+    | '/_authenticated'
+    | '/auth'
+    | '/_authenticated/add'
+    | '/_authenticated/dashboard'
+    | '/_authenticated/insights'
+    | '/_authenticated/shows'
+    | '/_authenticated/wrapped'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AppRoute: typeof AppRouteWithChildren
+  AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
+  AuthRoute: typeof AuthRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/_app': {
-      id: '/_app'
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated': {
+      id: '/_authenticated'
       path: ''
       fullPath: '/'
-      preLoaderRoute: typeof AppRouteImport
+      preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/': {
@@ -115,65 +147,67 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_app/wrapped': {
-      id: '/_app/wrapped'
+    '/_authenticated/wrapped': {
+      id: '/_authenticated/wrapped'
       path: '/wrapped'
       fullPath: '/wrapped'
-      preLoaderRoute: typeof AppWrappedRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof AuthenticatedWrappedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_app/shows': {
-      id: '/_app/shows'
+    '/_authenticated/shows': {
+      id: '/_authenticated/shows'
       path: '/shows'
       fullPath: '/shows'
-      preLoaderRoute: typeof AppShowsRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof AuthenticatedShowsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_app/insights': {
-      id: '/_app/insights'
+    '/_authenticated/insights': {
+      id: '/_authenticated/insights'
       path: '/insights'
       fullPath: '/insights'
-      preLoaderRoute: typeof AppInsightsRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof AuthenticatedInsightsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_app/dashboard': {
-      id: '/_app/dashboard'
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
       path: '/dashboard'
       fullPath: '/dashboard'
-      preLoaderRoute: typeof AppDashboardRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_app/add': {
-      id: '/_app/add'
+    '/_authenticated/add': {
+      id: '/_authenticated/add'
       path: '/add'
       fullPath: '/add'
-      preLoaderRoute: typeof AppAddRouteImport
-      parentRoute: typeof AppRoute
+      preLoaderRoute: typeof AuthenticatedAddRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
   }
 }
 
-interface AppRouteChildren {
-  AppAddRoute: typeof AppAddRoute
-  AppDashboardRoute: typeof AppDashboardRoute
-  AppInsightsRoute: typeof AppInsightsRoute
-  AppShowsRoute: typeof AppShowsRoute
-  AppWrappedRoute: typeof AppWrappedRoute
+interface AuthenticatedRouteRouteChildren {
+  AuthenticatedAddRoute: typeof AuthenticatedAddRoute
+  AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
+  AuthenticatedShowsRoute: typeof AuthenticatedShowsRoute
+  AuthenticatedWrappedRoute: typeof AuthenticatedWrappedRoute
 }
 
-const AppRouteChildren: AppRouteChildren = {
-  AppAddRoute: AppAddRoute,
-  AppDashboardRoute: AppDashboardRoute,
-  AppInsightsRoute: AppInsightsRoute,
-  AppShowsRoute: AppShowsRoute,
-  AppWrappedRoute: AppWrappedRoute,
+const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
+  AuthenticatedAddRoute: AuthenticatedAddRoute,
+  AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
+  AuthenticatedShowsRoute: AuthenticatedShowsRoute,
+  AuthenticatedWrappedRoute: AuthenticatedWrappedRoute,
 }
 
-const AppRouteWithChildren = AppRoute._addFileChildren(AppRouteChildren)
+const AuthenticatedRouteRouteWithChildren =
+  AuthenticatedRouteRoute._addFileChildren(AuthenticatedRouteRouteChildren)
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AppRoute: AppRouteWithChildren,
+  AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
+  AuthRoute: AuthRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

@@ -1,17 +1,18 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { ArrowUpRight, Star, TrendingUp } from "lucide-react";
 import {
-  CONCERTS,
-  USER,
   genreBreakdown,
   getConcertAge,
   getStats,
   heatmap,
   rankBy,
   recentConcerts,
-} from "@/lib/mock-data";
+  useConcerts,
+  useProfile,
+  useSeedDemoData,
+} from "@/lib/concerts";
 
-export const Route = createFileRoute("/_app/dashboard")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard · Concertly" },
@@ -21,7 +22,7 @@ export const Route = createFileRoute("/_app/dashboard")({
   component: Dashboard,
 });
 
-const YEAR = 2024;
+const YEAR = new Date().getFullYear();
 
 function heatColor(count: number): string {
   if (count === 0) return "bg-surface-2";
@@ -31,31 +32,33 @@ function heatColor(count: number): string {
 }
 
 function Dashboard() {
-  const stats = getStats();
-  const topArtists = rankBy("artist", 6);
-  const topVenues = rankBy("venue", 5);
-  const topCities = rankBy("city", 4);
-  const genres = genreBreakdown();
-  const weeks = heatmap(YEAR);
-  const recent = recentConcerts(4);
-  const yearShows = CONCERTS.filter((c) => new Date(c.date).getFullYear() === YEAR).length;
-  const yearArtists = new Set(
-    CONCERTS.filter((c) => new Date(c.date).getFullYear() === YEAR).map((c) => c.artist),
-  ).size;
-  const yearCities = new Set(
-    CONCERTS.filter((c) => new Date(c.date).getFullYear() === YEAR).map((c) => c.city),
-  ).size;
+  const { data: profile } = useProfile();
+  const { data: concerts, isLoading } = useConcerts();
+  // First-login seeding: drop a curated demo dataset so the dashboard sings on day one.
+  useSeedDemoData(!isLoading && (concerts?.length ?? 0) === 0);
+
+  if (isLoading || !concerts) return <LoadingState />;
+  if (concerts.length === 0) return <EmptyState name={profile?.displayName ?? "you"} />;
+
+  const stats = getStats(concerts);
+  const topArtists = rankBy(concerts, "artist", 6);
+  const topVenues = rankBy(concerts, "venue", 5);
+  const topCities = rankBy(concerts, "city", 4);
+  const genres = genreBreakdown(concerts);
+  const weeks = heatmap(concerts, YEAR);
+  const recent = recentConcerts(concerts, 4);
+  const inYear = concerts.filter((c) => new Date(c.date).getFullYear() === YEAR);
+  const yearShows = inYear.length;
+  const yearArtists = new Set(inYear.map((c) => c.artist)).size;
+  const yearCities = new Set(inYear.map((c) => c.city)).size;
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
-      {/* Hero header */}
       <div className="mb-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
         <div className="animate-reveal">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            Welcome back
-          </p>
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Welcome back</p>
           <h1 className="mt-1 font-display text-4xl font-extrabold tracking-tight md:text-6xl">
-            Hello, {USER.name.split(" ")[0]}.
+            Hello, {(profile?.displayName ?? "friend").split(" ")[0]}.
           </h1>
           <p className="mt-3 text-muted-foreground md:text-lg">
             You've seen <span className="font-semibold text-foreground">{yearArtists} artists</span> across{" "}
@@ -63,20 +66,18 @@ function Dashboard() {
           </p>
         </div>
         <div className="grid grid-cols-2 gap-3 animate-reveal">
-          <Stat label="Concert Age" value={`${getConcertAge()} yrs`} accent="brand" />
+          <Stat label="Concert Age" value={`${getConcertAge(concerts)} yrs`} accent="brand" />
           <Stat label="Avg Rating" value={stats.avgRating.toFixed(1)} accent="teal" />
         </div>
       </div>
 
-      {/* Big stat strip */}
       <div className="mb-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:grid-cols-4">
-        <BigStat label="Shows in {YEAR}" value={yearShows} sub={`${stats.total} all-time`} />
+        <BigStat label={`Shows in ${YEAR}`} value={yearShows} sub={`${stats.total} all-time`} />
         <BigStat label="Unique artists" value={stats.uniqueArtists} sub="across all shows" />
         <BigStat label="Cities visited" value={stats.uniqueCities} sub={`${stats.uniqueCountries} countries`} />
         <BigStat label="Hours live" value={stats.hoursLive} sub={`$${stats.totalSpend} spent`} />
       </div>
 
-      {/* Heatmap + Top artist */}
       <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">
         <div className="relative overflow-hidden rounded-3xl border border-hairline bg-card p-8 md:col-span-2">
           <div className="mb-8 flex items-center justify-between">
@@ -84,10 +85,6 @@ function Dashboard() {
               <h2 className="font-display text-2xl font-extrabold">Yearly Attendance</h2>
               <p className="text-xs text-muted-foreground">{yearShows} shows in {YEAR}</p>
             </div>
-            <select className="rounded-lg border border-hairline bg-surface-2 px-3 py-1 text-xs outline-none">
-              <option>2024</option>
-              <option>2023</option>
-            </select>
           </div>
           <div className="overflow-x-auto">
             <div className="flex gap-[3px]">
@@ -123,32 +120,29 @@ function Dashboard() {
           </div>
         </div>
 
-        {/* Top artist */}
         <div className="flex flex-col justify-between rounded-3xl border border-hairline bg-card p-8">
           <div>
             <h2 className="font-display text-2xl font-extrabold">Your #1 Artist</h2>
-            <div className="mt-6 flex items-center gap-4">
-              <div className="grid h-16 w-16 flex-shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand to-pink font-display text-2xl font-black text-brand-foreground">
-                {topArtists[0].name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+            {topArtists[0] ? (
+              <div className="mt-6 flex items-center gap-4">
+                <div className="grid h-16 w-16 flex-shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand to-pink font-display text-2xl font-black text-brand-foreground">
+                  {topArtists[0].name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                </div>
+                <div>
+                  <h3 className="text-xl font-bold leading-tight">{topArtists[0].name}</h3>
+                  <p className="text-sm text-muted-foreground">{topArtists[0].count} shows attended</p>
+                </div>
               </div>
-              <div>
-                <h3 className="text-xl font-bold leading-tight">{topArtists[0].name}</h3>
-                <p className="text-sm text-muted-foreground">{topArtists[0].count} shows attended</p>
-              </div>
-            </div>
+            ) : (
+              <p className="mt-6 text-sm text-muted-foreground">Log a show to find out.</p>
+            )}
           </div>
-          <div className="mt-8 space-y-3">
-            <RowKV k="Top venue" v="Eventim Apollo" />
-            <RowKV k="Songs seen" v="104" />
-            <RowKV k="Latest" v="Nov 12, 2024" />
-            <div className="mt-3 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-              <div className="h-full rounded-full bg-gradient-to-r from-brand to-pink" style={{ width: "85%" }} />
-            </div>
+          <div className="mt-8 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+            <div className="h-full rounded-full bg-gradient-to-r from-brand to-pink" style={{ width: "85%" }} />
           </div>
         </div>
       </div>
 
-      {/* Recent + sidebar */}
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <div className="space-y-5 lg:col-span-3">
           <div className="flex items-end justify-between">
@@ -161,12 +155,12 @@ function Dashboard() {
             <ConcertCard
               key={c.id}
               artist={c.artist}
-              tour={c.tour}
+              tour={c.tour ?? undefined}
               date={c.date}
               venue={c.venue}
               city={c.city}
               rating={c.rating}
-              notes={c.notes}
+              notes={c.notes ?? undefined}
             />
           ))}
         </div>
@@ -195,10 +189,10 @@ function Dashboard() {
           </Panel>
 
           <div className="rounded-2xl border border-brand/30 bg-gradient-to-br from-brand/20 via-transparent to-teal/10 p-6">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-brand">2024 Wrapped</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-brand">{YEAR} Wrapped</p>
             <h4 className="mt-1 font-display text-xl font-extrabold">Your year in concerts is ready.</h4>
             <p className="mt-2 text-xs text-muted-foreground">
-              {yearShows} shows · {yearArtists} artists · best month was July.
+              {yearShows} shows · {yearArtists} artists.
             </p>
             <Link
               to="/wrapped"
@@ -212,9 +206,7 @@ function Dashboard() {
             <ul className="space-y-3">
               {topVenues.map((v, i) => (
                 <li key={v.name} className="flex items-center gap-3">
-                  <span className="w-5 text-xs font-bold text-muted-foreground">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
+                  <span className="w-5 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                   <span className="truncate text-sm">{v.name}</span>
                   <span className="ml-auto text-[10px] text-muted-foreground">{v.count} shows</span>
                 </li>
@@ -226,9 +218,7 @@ function Dashboard() {
             <ul className="space-y-3">
               {topCities.map((v, i) => (
                 <li key={v.name} className="flex items-center gap-3">
-                  <span className="w-5 text-xs font-bold text-muted-foreground">
-                    {String(i + 1).padStart(2, "0")}
-                  </span>
+                  <span className="w-5 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                   <span className="truncate text-sm">{v.name}</span>
                   <span className="ml-auto text-[10px] text-muted-foreground">{v.count} shows</span>
                 </li>
@@ -241,13 +231,47 @@ function Dashboard() {
   );
 }
 
+function LoadingState() {
+  return (
+    <main className="mx-auto max-w-7xl px-6 py-20">
+      <div className="animate-pulse space-y-6">
+        <div className="h-12 w-72 rounded-xl bg-surface-2" />
+        <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <div key={i} className="h-28 rounded-2xl bg-surface-2" />
+          ))}
+        </div>
+        <div className="h-72 rounded-3xl bg-surface-2" />
+      </div>
+    </main>
+  );
+}
+
+function EmptyState({ name }: { name: string }) {
+  return (
+    <main className="mx-auto flex min-h-[70vh] max-w-2xl flex-col items-center justify-center px-6 text-center">
+      <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Welcome</p>
+      <h1 className="mt-2 font-display text-5xl font-extrabold tracking-tight md:text-6xl">
+        Hi {name.split(" ")[0]}. <span className="gradient-text">Log your first show.</span>
+      </h1>
+      <p className="mt-4 max-w-md text-muted-foreground">
+        The archive starts the moment you add a gig. Stats, heatmaps and your year-in-review unlock automatically.
+      </p>
+      <Link
+        to="/add"
+        className="mt-8 rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground hover:scale-[1.03] active:scale-95"
+      >
+        Log a show
+      </Link>
+    </main>
+  );
+}
+
 function Stat({ label, value, accent }: { label: string; value: string; accent: "brand" | "teal" }) {
   return (
     <div className="rounded-2xl border border-hairline bg-surface/60 p-4">
       <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className={"font-display text-2xl font-extrabold " + (accent === "brand" ? "text-brand" : "text-teal")}>
-        {value}
-      </p>
+      <p className={"font-display text-2xl font-extrabold " + (accent === "brand" ? "text-brand" : "text-teal")}>{value}</p>
     </div>
   );
 }
@@ -255,24 +279,13 @@ function Stat({ label, value, accent }: { label: string; value: string; accent: 
 function BigStat({ label, value, sub }: { label: string; value: number; sub?: string }) {
   return (
     <div className="bg-card p-6 md:p-8">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-        {label.replace("{YEAR}", "2024")}
-      </p>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
       <p className="mt-2 font-display text-4xl font-extrabold md:text-5xl">{value.toLocaleString()}</p>
       {sub && (
         <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
           <TrendingUp className="h-3 w-3" /> {sub}
         </p>
       )}
-    </div>
-  );
-}
-
-function RowKV({ k, v }: { k: string; v: string }) {
-  return (
-    <div className="flex items-center justify-between text-xs">
-      <span className="text-muted-foreground">{k}</span>
-      <span className="font-medium">{v}</span>
     </div>
   );
 }
@@ -310,9 +323,7 @@ export function ConcertCard({
                 {artist}
                 {tour && <span className="text-muted-foreground"> · {tour}</span>}
               </h4>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {venue} · {city}
-              </p>
+              <p className="mt-1 text-sm text-muted-foreground">{venue} · {city}</p>
             </div>
             <div className="flex flex-shrink-0 items-center gap-1 rounded-full border border-hairline bg-surface-2 px-3 py-1.5">
               <Star className="h-3.5 w-3.5 fill-teal text-teal" />
