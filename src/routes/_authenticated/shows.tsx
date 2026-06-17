@@ -3,7 +3,7 @@ import { useMemo, useState } from "react";
 import { Search, Star } from "lucide-react";
 import { CONCERTS } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/_app/shows")({
+export const Route = createFileRoute("/_authenticated/shows")({
   head: () => ({ meta: [{ title: "My Shows · Concertly" }] }),
   component: Shows,
 });

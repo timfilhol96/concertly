@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Calendar, MapPin, Music, Star, Ticket } from "lucide-react";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/_app/add")({
+export const Route = createFileRoute("/_authenticated/add")({
   head: () => ({ meta: [{ title: "Log a show · Concertly" }] }),
   component: AddShow,
 });

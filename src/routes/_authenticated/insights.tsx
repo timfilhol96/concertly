@@ -18,7 +18,7 @@ import {
   showsByYear,
 } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/_app/insights")({
+export const Route = createFileRoute("/_authenticated/insights")({
   head: () => ({ meta: [{ title: "Insights · Concertly" }] }),
   component: Insights,
 });

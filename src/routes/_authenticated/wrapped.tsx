@@ -2,7 +2,7 @@ import { createFileRoute, Link } from "@tanstack/react-router";
 import { Download, Share2 } from "lucide-react";
 import { CONCERTS, USER, rankBy, getStats } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/_app/wrapped")({
+export const Route = createFileRoute("/_authenticated/wrapped")({
   head: () => ({ meta: [{ title: "Your 2024 Wrapped · Concertly" }] }),
   component: Wrapped,
 });

@@ -11,7 +11,7 @@ import {
   recentConcerts,
 } from "@/lib/mock-data";
 
-export const Route = createFileRoute("/_app/dashboard")({
+export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
     meta: [
       { title: "Dashboard · Concertly" },
