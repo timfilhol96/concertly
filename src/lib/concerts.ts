@@ -3,9 +3,8 @@
 // so the dashboard / shows / insights / wrapped pages can stay structural.
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CONCERTS as SEED_CONCERTS } from "@/lib/mock-data";
+
 
 export type Concert = {
   id: string;
