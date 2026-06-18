@@ -9,7 +9,6 @@ import {
   recentConcerts,
   useConcerts,
   useProfile,
-  useSeedDemoData,
 } from "@/lib/concerts";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
@@ -34,8 +33,6 @@ function heatColor(count: number): string {
 function Dashboard() {
   const { data: profile } = useProfile();
   const { data: concerts, isLoading } = useConcerts();
-  // First-login seeding: drop a curated demo dataset so the dashboard sings on day one.
-  useSeedDemoData(!isLoading && (concerts?.length ?? 0) === 0);
 
   if (isLoading || !concerts) return <LoadingState />;
   if (concerts.length === 0) return <EmptyState name={profile?.displayName ?? "you"} />;
