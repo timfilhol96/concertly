@@ -1,28 +1,41 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Calendar, MapPin, Music, Star, Ticket } from "lucide-react";
+import { Calendar, MapPin, Music, Star, Ticket, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useAddConcert } from "@/lib/concerts";
+import { useAddConcert, useConcerts, useDeleteConcert, useUpdateConcert } from "@/lib/concerts";
+
+type Search = { id?: string };
 
 export const Route = createFileRoute("/_authenticated/add")({
   head: () => ({ meta: [{ title: "Log a show · Concertly" }] }),
+  validateSearch: (s: Record<string, unknown>): Search => ({
+    id: typeof s.id === "string" ? s.id : undefined,
+  }),
   component: AddShow,
 });
 
 function AddShow() {
   const nav = useNavigate();
+  const { id } = Route.useSearch();
+  const { data: concerts } = useConcerts();
+  const existing = id ? concerts?.find((c) => c.id === id) : undefined;
+  const isEdit = Boolean(existing);
+
   const add = useAddConcert();
-  const [rating, setRating] = useState(8);
+  const update = useUpdateConcert();
+  const del = useDeleteConcert();
+
+  const [rating, setRating] = useState(existing?.rating ?? 8);
   const [form, setForm] = useState({
-    artist: "",
-    tour: "",
-    date: new Date().toISOString().slice(0, 10),
-    venue: "",
-    city: "",
-    country: "",
-    genre: "",
-    notes: "",
-    ticketPrice: "",
+    artist: existing?.artist ?? "",
+    tour: existing?.tour ?? "",
+    date: existing?.date ?? new Date().toISOString().slice(0, 10),
+    venue: existing?.venue ?? "",
+    city: existing?.city ?? "",
+    country: existing?.country ?? "",
+    genre: existing?.genre ?? "",
+    notes: existing?.notes ?? "",
+    ticketPrice: existing?.ticketPrice != null ? String(existing.ticketPrice) : "",
   });
 
   function set<K extends keyof typeof form>(k: K, v: string) {
@@ -31,36 +44,60 @@ function AddShow() {
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const payload = {
+      artist: form.artist.trim(),
+      tour: form.tour.trim() || null,
+      openers: existing?.openers ?? null,
+      date: form.date,
+      venue: form.venue.trim(),
+      city: form.city.trim(),
+      country: form.country.trim() || null,
+      rating,
+      genre: form.genre.trim() || null,
+      notes: form.notes.trim() || null,
+      ticketPrice: form.ticketPrice ? Number(form.ticketPrice) : null,
+      songsSeen: existing?.songsSeen ?? null,
+    };
     try {
-      await add.mutateAsync({
-        artist: form.artist.trim(),
-        tour: form.tour.trim() || null,
-        openers: null,
-        date: form.date,
-        venue: form.venue.trim(),
-        city: form.city.trim(),
-        country: form.country.trim() || null,
-        rating,
-        genre: form.genre.trim() || null,
-        notes: form.notes.trim() || null,
-        ticketPrice: form.ticketPrice ? Number(form.ticketPrice) : null,
-        songsSeen: null,
-      });
-      toast.success("Show logged! 🎉", { description: "Your archive just got bigger." });
-      nav({ to: "/dashboard" });
+      if (isEdit && existing) {
+        await update.mutateAsync({ id: existing.id, ...payload });
+        toast.success("Show updated");
+      } else {
+        await add.mutateAsync(payload);
+        toast.success("Show logged! 🎉", { description: "Your archive just got bigger." });
+      }
+      nav({ to: "/shows" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't save the show");
     }
   }
 
+  async function onDelete() {
+    if (!existing) return;
+    if (!confirm(`Delete "${existing.artist}" from your archive?`)) return;
+    try {
+      await del.mutateAsync(existing.id);
+      toast.success("Show deleted");
+      nav({ to: "/shows" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't delete");
+    }
+  }
+
+  const pending = add.isPending || update.isPending;
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-10 md:py-14">
       <div className="mb-8 animate-reveal">
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">New entry</p>
+        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+          {isEdit ? "Edit entry" : "New entry"}
+        </p>
         <h1 className="mt-1 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-          Log a <span className="gradient-text">show</span>.
+          {isEdit ? "Edit" : "Log a"} <span className="gradient-text">show</span>.
         </h1>
-        <p className="mt-2 text-muted-foreground">Capture the basics — it lives in your archive forever.</p>
+        <p className="mt-2 text-muted-foreground">
+          {isEdit ? "Update the details of this gig." : "Capture the basics — it lives in your archive forever."}
+        </p>
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6 rounded-3xl border border-hairline bg-card p-6 md:p-8">
@@ -117,17 +154,31 @@ function AddShow() {
           <textarea rows={4} value={form.notes} onChange={(e) => set("notes", e.target.value)} className={inputCls + " resize-none"} placeholder="Best moment? Crowd energy? Setlist surprises?" />
         </div>
 
-        <div className="flex flex-col items-center justify-end gap-3 pt-2 sm:flex-row">
-          <button type="button" onClick={() => nav({ to: "/dashboard" })} className="rounded-full px-5 py-3 text-sm font-semibold text-muted-foreground hover:text-foreground">
-            Cancel
-          </button>
-          <button
-            type="submit"
-            disabled={add.isPending}
-            className="w-full rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60 sm:w-auto"
-          >
-            {add.isPending ? "Saving…" : "Add to archive"}
-          </button>
+        <div className="flex flex-col items-center justify-between gap-3 pt-2 sm:flex-row">
+          <div>
+            {isEdit && (
+              <button
+                type="button"
+                onClick={onDelete}
+                disabled={del.isPending}
+                className="inline-flex items-center gap-2 rounded-full border border-hairline px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-60"
+              >
+                <Trash2 className="h-4 w-4" /> {del.isPending ? "Deleting…" : "Delete"}
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <button type="button" onClick={() => nav({ to: "/shows" })} className="rounded-full px-5 py-3 text-sm font-semibold text-muted-foreground hover:text-foreground">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={pending}
+              className="rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
+            >
+              {pending ? "Saving…" : isEdit ? "Save changes" : "Add to archive"}
+            </button>
+          </div>
         </div>
       </form>
     </main>
