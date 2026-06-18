@@ -90,7 +90,7 @@ function AddShow() {
     const payload = {
       artist: form.artist.trim(),
       tour: form.tour.trim() || null,
-      openers: existing?.openers ?? null,
+      openers,
       date: form.date,
       venue: form.venue.trim(),
       city: form.city.trim(),
@@ -99,7 +99,7 @@ function AddShow() {
       genre: form.genre.trim() || null,
       notes: form.notes.trim() || null,
       ticketPrice: form.ticketPrice ? Number(form.ticketPrice) : null,
-      songsSeen: existing?.songsSeen ?? null,
+      songsSeen,
     };
     try {
       if (isEdit && existing) {
