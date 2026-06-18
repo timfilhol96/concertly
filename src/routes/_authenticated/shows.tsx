@@ -1,7 +1,8 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Search, Star } from "lucide-react";
-import { useConcerts } from "@/lib/concerts";
+import { Pencil, Search, Star, Trash2 } from "lucide-react";
+import { toast } from "sonner";
+import { useConcerts, useDeleteConcert } from "@/lib/concerts";
 
 export const Route = createFileRoute("/_authenticated/shows")({
   head: () => ({ meta: [{ title: "My Shows · Concertly" }] }),
@@ -10,6 +11,7 @@ export const Route = createFileRoute("/_authenticated/shows")({
 
 function Shows() {
   const { data: concerts = [], isLoading } = useConcerts();
+  const del = useDeleteConcert();
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"date" | "rating">("date");
   const list = useMemo(() => {
@@ -20,6 +22,16 @@ function Shows() {
       sort === "date" ? (a.date < b.date ? 1 : -1) : b.rating - a.rating,
     );
   }, [q, sort, concerts]);
+
+  async function handleDelete(id: string, artist: string) {
+    if (!confirm(`Delete "${artist}" from your archive?`)) return;
+    try {
+      await del.mutateAsync(id);
+      toast.success("Show deleted");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't delete");
+    }
+  }
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
@@ -60,6 +72,7 @@ function Shows() {
               <th className="hidden px-4 py-3 font-bold lg:table-cell">Tour</th>
               <th className="px-4 py-3 font-bold md:px-6">Date</th>
               <th className="px-4 py-3 text-right font-bold md:px-6">Rating</th>
+              <th className="px-4 py-3 text-right font-bold md:px-6">Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-hairline bg-card/40">
@@ -85,10 +98,31 @@ function Shows() {
                     <span className="font-display text-lg font-extrabold">{c.rating.toFixed(1)}</span>
                   </div>
                 </td>
+                <td className="px-4 py-4 md:px-6">
+                  <div className="flex items-center justify-end gap-1">
+                    <Link
+                      to="/add"
+                      search={{ id: c.id }}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+                      aria-label={`Edit ${c.artist}`}
+                    >
+                      <Pencil className="h-4 w-4" />
+                    </Link>
+                    <button
+                      type="button"
+                      onClick={() => handleDelete(c.id, c.artist)}
+                      disabled={del.isPending}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                      aria-label={`Delete ${c.artist}`}
+                    >
+                      <Trash2 className="h-4 w-4" />
+                    </button>
+                  </div>
+                </td>
               </tr>
             ))}
             {!isLoading && list.length === 0 && (
-              <tr><td colSpan={5} className="px-6 py-12 text-center text-sm text-muted-foreground">
+              <tr><td colSpan={6} className="px-6 py-12 text-center text-sm text-muted-foreground">
                 {concerts.length === 0 ? "No shows yet — log your first one!" : "No shows match that search."}
               </td></tr>
             )}
@@ -98,3 +132,4 @@ function Shows() {
     </main>
   );
 }
+

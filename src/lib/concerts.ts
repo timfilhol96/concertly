@@ -3,9 +3,8 @@
 // so the dashboard / shows / insights / wrapped pages can stay structural.
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { CONCERTS as SEED_CONCERTS } from "@/lib/mock-data";
+
 
 export type Concert = {
   id: string;
@@ -126,46 +125,48 @@ export function useAddConcert() {
   });
 }
 
-/**
- * On first login, seed the user's account with a curated demo dataset so the
- * dashboard, insights and wrapped pages have something to show immediately.
- * Safe to call repeatedly — no-op once the user has any concerts.
- */
-export function useSeedDemoData(enabled: boolean) {
+export function useUpdateConcert() {
   const qc = useQueryClient();
-  useEffect(() => {
-    if (!enabled) return;
-    let cancelled = false;
-    (async () => {
-      const { data: userRes } = await supabase.auth.getUser();
-      if (!userRes.user || cancelled) return;
-      const { count } = await supabase
+  return useMutation({
+    mutationFn: async ({ id, ...c }: NewConcert & { id: string }) => {
+      const { error, data } = await supabase
         .from("concerts")
-        .select("id", { count: "exact", head: true });
-      if (cancelled || (count ?? 0) > 0) return;
-      const rows = SEED_CONCERTS.map((c) => ({
-        user_id: userRes.user!.id,
-        artist: c.artist,
-        tour: c.tour ?? null,
-        openers: c.openers ?? null,
-        date: c.date,
-        venue: c.venue,
-        city: c.city,
-        country: c.country,
-        rating: c.rating,
-        genre: c.genre,
-        notes: c.notes ?? null,
-        ticket_price: c.ticketPrice ?? null,
-        songs_seen: c.songsSeen ?? null,
-      }));
-      await supabase.from("concerts").insert(rows);
-      if (!cancelled) qc.invalidateQueries({ queryKey: ["concerts"] });
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [enabled, qc]);
+        .update({
+          artist: c.artist,
+          tour: c.tour,
+          openers: c.openers,
+          date: c.date,
+          venue: c.venue,
+          city: c.city,
+          country: c.country,
+          rating: c.rating,
+          genre: c.genre,
+          notes: c.notes,
+          ticket_price: c.ticketPrice,
+          songs_seen: c.songsSeen,
+        })
+        .eq("id", id)
+        .select()
+        .single();
+      if (error) throw error;
+      return fromRow(data as Row);
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["concerts"] }),
+  });
 }
+
+export function useDeleteConcert() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("concerts").delete().eq("id", id);
+      if (error) throw error;
+      return id;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["concerts"] }),
+  });
+}
+
 
 // ---------- Pure derivations (operate on the loaded list) ----------
 
