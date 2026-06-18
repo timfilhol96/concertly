@@ -148,14 +148,40 @@ function AddShow() {
           <input required value={form.artist} onChange={(e) => set("artist", e.target.value)} className={inputCls} placeholder="e.g. Fred again.." />
         </Field>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
           <Field icon={Calendar} label="Date">
             <input required type="date" value={form.date} onChange={(e) => set("date", e.target.value)} className={inputCls} />
           </Field>
-          <Field icon={Ticket} label="Tour (optional)">
-            <input value={form.tour} onChange={(e) => set("tour", e.target.value)} className={inputCls} placeholder="e.g. Ten Days Tour" />
-          </Field>
+          <button
+            type="button"
+            onClick={onAutoFill}
+            disabled={looking}
+            className="inline-flex h-[46px] items-center justify-center gap-2 rounded-xl border border-brand/40 bg-brand/10 px-4 text-sm font-semibold text-brand transition-colors hover:bg-brand/20 disabled:opacity-60"
+          >
+            <Sparkles className="h-4 w-4" />
+            {looking ? "Searching setlist.fm…" : "Auto-fill from setlist.fm"}
+          </button>
         </div>
+
+        <Field icon={Ticket} label="Tour (optional)">
+          <input value={form.tour} onChange={(e) => set("tour", e.target.value)} className={inputCls} placeholder="e.g. Ten Days Tour" />
+        </Field>
+
+        {(openers?.length || songsSeen) && (
+          <div className="rounded-2xl border border-hairline bg-surface p-4">
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">From setlist.fm</p>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              {openers?.map((o) => (
+                <span key={o} className="rounded-full border border-hairline px-3 py-1 text-xs">
+                  opener · {o}
+                </span>
+              ))}
+              {songsSeen ? (
+                <span className="rounded-full border border-hairline px-3 py-1 text-xs">{songsSeen} songs played</span>
+              ) : null}
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2">
           <Field icon={MapPin} label="Venue">
