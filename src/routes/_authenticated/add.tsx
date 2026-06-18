@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Calendar, MapPin, Music, Star, Ticket, Trash2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Calendar, MapPin, Music, Sparkles, Star, Ticket, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAddConcert, useConcerts, useDeleteConcert, useUpdateConcert } from "@/lib/concerts";
+import { lookupSetlist } from "@/lib/setlistfm.functions";
 
 type Search = { id?: string };
 
@@ -24,8 +26,12 @@ function AddShow() {
   const add = useAddConcert();
   const update = useUpdateConcert();
   const del = useDeleteConcert();
+  const fetchSetlist = useServerFn(lookupSetlist);
 
   const [rating, setRating] = useState(existing?.rating ?? 8);
+  const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
+  const [songsSeen, setSongsSeen] = useState<number | null>(existing?.songsSeen ?? null);
+  const [looking, setLooking] = useState(false);
   const [form, setForm] = useState({
     artist: existing?.artist ?? "",
     tour: existing?.tour ?? "",
@@ -42,12 +48,49 @@ function AddShow() {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
+  async function onAutoFill() {
+    if (!form.artist.trim() || !form.date) {
+      toast.error("Add an artist and date first");
+      return;
+    }
+    setLooking(true);
+    try {
+      const r = await fetchSetlist({ data: { artist: form.artist.trim(), date: form.date } });
+      if (!r.found) {
+        toast.message("No setlist found", {
+          description: "Try the exact artist spelling, or fill the details manually.",
+        });
+        return;
+      }
+      setForm((f) => ({
+        ...f,
+        artist: r.artist ?? f.artist,
+        tour: r.tour ?? f.tour,
+        venue: r.venue ?? f.venue,
+        city: r.city ?? f.city,
+        country: r.country ?? f.country,
+      }));
+      setOpeners(r.openers.length ? r.openers : null);
+      setSongsSeen(r.songsSeen);
+      toast.success("Pulled from setlist.fm", {
+        description:
+          [r.tour, r.openers.length ? `${r.openers.length} opener(s)` : null, r.songsSeen ? `${r.songsSeen} songs` : null]
+            .filter(Boolean)
+            .join(" · ") || "Details filled in.",
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Lookup failed");
+    } finally {
+      setLooking(false);
+    }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     const payload = {
       artist: form.artist.trim(),
       tour: form.tour.trim() || null,
-      openers: existing?.openers ?? null,
+      openers,
       date: form.date,
       venue: form.venue.trim(),
       city: form.city.trim(),
@@ -56,7 +99,7 @@ function AddShow() {
       genre: form.genre.trim() || null,
       notes: form.notes.trim() || null,
       ticketPrice: form.ticketPrice ? Number(form.ticketPrice) : null,
-      songsSeen: existing?.songsSeen ?? null,
+      songsSeen,
     };
     try {
       if (isEdit && existing) {
@@ -105,14 +148,40 @@ function AddShow() {
           <input required value={form.artist} onChange={(e) => set("artist", e.target.value)} className={inputCls} placeholder="e.g. Fred again.." />
         </Field>
 
-        <div className="grid gap-6 md:grid-cols-2">
+        <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
           <Field icon={Calendar} label="Date">
             <input required type="date" value={form.date} onChange={(e) => set("date", e.target.value)} className={inputCls} />
           </Field>
-          <Field icon={Ticket} label="Tour (optional)">
-            <input value={form.tour} onChange={(e) => set("tour", e.target.value)} className={inputCls} placeholder="e.g. Ten Days Tour" />
-          </Field>
+          <button
+            type="button"
+            onClick={onAutoFill}
+            disabled={looking}
+            className="inline-flex h-[46px] items-center justify-center gap-2 rounded-xl border border-brand/40 bg-brand/10 px-4 text-sm font-semibold text-brand transition-colors hover:bg-brand/20 disabled:opacity-60"
+          >
+            <Sparkles className="h-4 w-4" />
+            {looking ? "Searching setlist.fm…" : "Auto-fill from setlist.fm"}
+          </button>
         </div>
+
+        <Field icon={Ticket} label="Tour (optional)">
+          <input value={form.tour} onChange={(e) => set("tour", e.target.value)} className={inputCls} placeholder="e.g. Ten Days Tour" />
+        </Field>
+
+        {(openers?.length || songsSeen) && (
+          <div className="rounded-2xl border border-hairline bg-surface p-4">
+            <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">From setlist.fm</p>
+            <div className="flex flex-wrap items-center gap-2 text-sm">
+              {openers?.map((o) => (
+                <span key={o} className="rounded-full border border-hairline px-3 py-1 text-xs">
+                  opener · {o}
+                </span>
+              ))}
+              {songsSeen ? (
+                <span className="rounded-full border border-hairline px-3 py-1 text-xs">{songsSeen} songs played</span>
+              ) : null}
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2">
           <Field icon={MapPin} label="Venue">
