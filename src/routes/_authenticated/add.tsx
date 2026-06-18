@@ -1,8 +1,10 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useState } from "react";
-import { Calendar, MapPin, Music, Star, Ticket, Trash2 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Calendar, MapPin, Music, Sparkles, Star, Ticket, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAddConcert, useConcerts, useDeleteConcert, useUpdateConcert } from "@/lib/concerts";
+import { lookupSetlist } from "@/lib/setlistfm.functions";
 
 type Search = { id?: string };
 
@@ -24,8 +26,12 @@ function AddShow() {
   const add = useAddConcert();
   const update = useUpdateConcert();
   const del = useDeleteConcert();
+  const fetchSetlist = useServerFn(lookupSetlist);
 
   const [rating, setRating] = useState(existing?.rating ?? 8);
+  const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
+  const [songsSeen, setSongsSeen] = useState<number | null>(existing?.songsSeen ?? null);
+  const [looking, setLooking] = useState(false);
   const [form, setForm] = useState({
     artist: existing?.artist ?? "",
     tour: existing?.tour ?? "",
@@ -40,6 +46,43 @@ function AddShow() {
 
   function set<K extends keyof typeof form>(k: K, v: string) {
     setForm((f) => ({ ...f, [k]: v }));
+  }
+
+  async function onAutoFill() {
+    if (!form.artist.trim() || !form.date) {
+      toast.error("Add an artist and date first");
+      return;
+    }
+    setLooking(true);
+    try {
+      const r = await fetchSetlist({ data: { artist: form.artist.trim(), date: form.date } });
+      if (!r.found) {
+        toast.message("No setlist found", {
+          description: "Try the exact artist spelling, or fill the details manually.",
+        });
+        return;
+      }
+      setForm((f) => ({
+        ...f,
+        artist: r.artist ?? f.artist,
+        tour: r.tour ?? f.tour,
+        venue: r.venue ?? f.venue,
+        city: r.city ?? f.city,
+        country: r.country ?? f.country,
+      }));
+      setOpeners(r.openers.length ? r.openers : null);
+      setSongsSeen(r.songsSeen);
+      toast.success("Pulled from setlist.fm", {
+        description:
+          [r.tour, r.openers.length ? `${r.openers.length} opener(s)` : null, r.songsSeen ? `${r.songsSeen} songs` : null]
+            .filter(Boolean)
+            .join(" · ") || "Details filled in.",
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Lookup failed");
+    } finally {
+      setLooking(false);
+    }
   }
 
   async function onSubmit(e: React.FormEvent) {
