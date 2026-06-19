@@ -90,7 +90,7 @@ function AddShow() {
       setForm((f) => ({
         ...f,
         artist: r.artist ?? f.artist,
-        tour: r.tour ?? f.tour,
+        tour: r.tour ?? "",
         venue: r.venue ?? f.venue,
         city: r.city ?? f.city,
         country: r.country ?? f.country,
