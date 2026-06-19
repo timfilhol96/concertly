@@ -350,3 +350,12 @@ export const lookupCoPerformers = createServerFn({ method: "POST" })
     }
     return out;
   });
+
+const ArtistImageInput = z.object({ artist: z.string().min(1).max(200) });
+
+export const lookupArtistImageFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => ArtistImageInput.parse(input))
+  .handler(async ({ data }): Promise<{ url: string | null }> => {
+    const url = await lookupArtistImage(data.artist);
+    return { url };
+  });
