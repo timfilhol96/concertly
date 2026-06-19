@@ -162,7 +162,16 @@ function Insights() {
         <ChartCard title="Genre mix" subtitle="All time">
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
-              <Pie data={genres} dataKey="count" nameKey="name" innerRadius={55} outerRadius={95} paddingAngle={2}>
+              <Pie
+                data={genres}
+                dataKey="count"
+                nameKey="name"
+                innerRadius={55}
+                outerRadius={95}
+                paddingAngle={2}
+                onClick={(d: { name?: string }) => d?.name && handleGenreClick(d.name)}
+                style={{ cursor: "pointer" }}
+              >
                 {genres.map((_, i) => (
                   <Cell key={i} fill={CHART_COLORS[i % CHART_COLORS.length]} stroke="var(--card)" strokeWidth={2} />
                 ))}
@@ -175,16 +184,21 @@ function Insights() {
           </ResponsiveContainer>
           <div className="mt-3 flex flex-wrap gap-2 text-[11px]">
             {genres.map((g, i) => (
-              <span
+              <button
                 key={g.name}
-                className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2 py-1"
-                title={`${g.artists} artist${g.artists === 1 ? "" : "s"} · ${g.count} concert${g.count === 1 ? "" : "s"}`}
+                type="button"
+                onClick={() => handleGenreClick(g.name)}
+                className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2 py-1 transition hover:bg-surface-3 hover:ring-1 hover:ring-hairline"
+                title={`${g.artists} artist${g.artists === 1 ? "" : "s"} · ${g.count} show${g.count === 1 ? "" : "s"} · click to view`}
               >
                 <span className="h-2 w-2 rounded-full" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
                 {g.name} · {g.pct}%
-              </span>
+              </button>
             ))}
           </div>
+          {genres.length > 0 && (
+            <p className="mt-2 text-[11px] text-muted-foreground">Click a slice or chip to see those shows.</p>
+          )}
         </ChartCard>
 
         <ChartCard className="lg:col-span-2" title="Top artists by shows" subtitle="All time">
