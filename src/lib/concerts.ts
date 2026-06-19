@@ -1,17 +1,17 @@
 // Concertly data layer — backed by Lovable Cloud (Supabase).
-// Exposes typed query hooks + helpers that mirror the old mock-data API
-// so the dashboard / shows / insights / wrapped pages can stay structural.
 
+import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
+export type OpenerSetlist = { artist: string; songs: string[] };
 
 export type Concert = {
   id: string;
   artist: string;
   tour: string | null;
   openers: string[] | null;
-  date: string; // ISO yyyy-mm-dd
+  date: string;
   venue: string;
   city: string;
   country: string | null;
@@ -21,6 +21,8 @@ export type Concert = {
   ticketPrice: number | null;
   songsSeen: number | null;
   setlist: string[] | null;
+  artistImageUrl: string | null;
+  openerSetlists: OpenerSetlist[] | null;
 };
 
 type Row = {
@@ -38,9 +40,17 @@ type Row = {
   ticket_price: number | null;
   songs_seen: number | null;
   setlist: string[] | null;
+  artist_image_url: string | null;
+  opener_setlists: unknown;
 };
 
 function fromRow(r: Row): Concert {
+  let openerSetlists: OpenerSetlist[] | null = null;
+  if (Array.isArray(r.opener_setlists)) {
+    openerSetlists = (r.opener_setlists as Array<{ artist?: string; songs?: string[] }>)
+      .filter((x) => x && typeof x.artist === "string" && Array.isArray(x.songs))
+      .map((x) => ({ artist: x.artist as string, songs: x.songs as string[] }));
+  }
   return {
     id: r.id,
     artist: r.artist,
@@ -56,6 +66,8 @@ function fromRow(r: Row): Concert {
     ticketPrice: r.ticket_price == null ? null : Number(r.ticket_price),
     songsSeen: r.songs_seen,
     setlist: r.setlist,
+    artistImageUrl: r.artist_image_url,
+    openerSetlists,
   };
 }
 
@@ -87,14 +99,85 @@ export function useProfile() {
       return {
         userId: userRes.user.id,
         email: userRes.user.email ?? "",
-        displayName: (data?.display_name as string | null) ?? userRes.user.email?.split("@")[0] ?? "You",
-        avatarUrl: (data?.avatar_url as string | null) ?? null,
+        displayName:
+          (data?.display_name as string | null) ??
+          userRes.user.email?.split("@")[0] ??
+          "You",
+        avatarPath: (data?.avatar_url as string | null) ?? null,
       };
     },
   });
 }
 
+// Resolves a stored avatar path to a temporary signed URL.
+export function useAvatarUrl(avatarPath: string | null | undefined) {
+  const [url, setUrl] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (!avatarPath) {
+      setUrl(null);
+      return;
+    }
+    // Allow either a stored bucket path or a direct URL.
+    if (/^https?:\/\//.test(avatarPath)) {
+      setUrl(avatarPath);
+      return;
+    }
+    supabase.storage
+      .from("avatars")
+      .createSignedUrl(avatarPath, 60 * 60)
+      .then((res) => {
+        if (cancelled) return;
+        setUrl(res.data?.signedUrl ?? null);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [avatarPath]);
+  return url;
+}
+
 export type NewConcert = Omit<Concert, "id">;
+
+type InsertPayload = {
+  user_id: string;
+  artist: string;
+  tour: string | null;
+  openers: string[] | null;
+  date: string;
+  venue: string;
+  city: string;
+  country: string | null;
+  rating: number;
+  genre: string | null;
+  notes: string | null;
+  ticket_price: number | null;
+  songs_seen: number | null;
+  setlist: string[] | null;
+  artist_image_url: string | null;
+  opener_setlists: OpenerSetlist[] | null;
+};
+
+function toInsert(c: NewConcert, userId: string): InsertPayload {
+  return {
+    user_id: userId,
+    artist: c.artist,
+    tour: c.tour,
+    openers: c.openers,
+    date: c.date,
+    venue: c.venue,
+    city: c.city,
+    country: c.country,
+    rating: c.rating,
+    genre: c.genre,
+    notes: c.notes,
+    ticket_price: c.ticketPrice,
+    songs_seen: c.songsSeen,
+    setlist: c.setlist,
+    artist_image_url: c.artistImageUrl,
+    opener_setlists: c.openerSetlists,
+  };
+}
 
 export function useAddConcert() {
   const qc = useQueryClient();
@@ -104,22 +187,7 @@ export function useAddConcert() {
       if (!userRes.user) throw new Error("Not signed in");
       const { error, data } = await supabase
         .from("concerts")
-        .insert({
-          user_id: userRes.user.id,
-          artist: c.artist,
-          tour: c.tour,
-          openers: c.openers,
-          date: c.date,
-          venue: c.venue,
-          city: c.city,
-          country: c.country,
-          rating: c.rating,
-          genre: c.genre,
-          notes: c.notes,
-          ticket_price: c.ticketPrice,
-          songs_seen: c.songsSeen,
-          setlist: c.setlist,
-        })
+        .insert(toInsert(c, userRes.user.id))
         .select()
         .single();
       if (error) throw error;
@@ -133,23 +201,12 @@ export function useUpdateConcert() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...c }: NewConcert & { id: string }) => {
+      const payload = toInsert(c, ""); // user_id is ignored on update
+      const { user_id: _ignored, ...update } = payload;
+      void _ignored;
       const { error, data } = await supabase
         .from("concerts")
-        .update({
-          artist: c.artist,
-          tour: c.tour,
-          openers: c.openers,
-          date: c.date,
-          venue: c.venue,
-          city: c.city,
-          country: c.country,
-          rating: c.rating,
-          genre: c.genre,
-          notes: c.notes,
-          ticket_price: c.ticketPrice,
-          songs_seen: c.songsSeen,
-          setlist: c.setlist,
-        })
+        .update(update)
         .eq("id", id)
         .select()
         .single();
@@ -172,8 +229,7 @@ export function useDeleteConcert() {
   });
 }
 
-
-// ---------- Pure derivations (operate on the loaded list) ----------
+// ---------- Pure derivations ----------
 
 export type RankedItem = { name: string; count: number };
 
@@ -188,7 +244,11 @@ export function getStats(list: Concert[]) {
   return { total, uniqueArtists, uniqueCities, uniqueCountries, hoursLive, avgRating, totalSpend };
 }
 
-export function rankBy(list: Concert[], key: "artist" | "venue" | "city", limit = 5): RankedItem[] {
+export function rankBy(
+  list: Concert[],
+  key: "artist" | "venue" | "city" | "country",
+  limit = 5,
+): RankedItem[] {
   const counts = new Map<string, number>();
   for (const c of list) {
     const v = String(c[key] ?? "");
@@ -201,19 +261,34 @@ export function rankBy(list: Concert[], key: "artist" | "venue" | "city", limit 
     .map(([name, count]) => ({ name, count }));
 }
 
-export function genreBreakdown(list: Concert[]) {
+export type GenreBreakdownItem = {
+  name: string;
+  count: number;
+  artists: number;
+  pct: number;
+};
+
+export function genreBreakdown(list: Concert[]): GenreBreakdownItem[] {
   const counts = new Map<string, number>();
+  const artistSets = new Map<string, Set<string>>();
   for (const c of list) {
     const g = c.genre ?? "Unknown";
     counts.set(g, (counts.get(g) ?? 0) + 1);
+    if (!artistSets.has(g)) artistSets.set(g, new Set());
+    artistSets.get(g)!.add(c.artist);
   }
   const total = list.length || 1;
   return [...counts.entries()]
     .sort((a, b) => b[1] - a[1])
-    .map(([name, count]) => ({ name, count, pct: Math.round((count / total) * 100) }));
+    .map(([name, count]) => ({
+      name,
+      count,
+      artists: artistSets.get(name)?.size ?? 0,
+      pct: Math.round((count / total) * 100),
+    }));
 }
 
-export function showsByMonth(list: Concert[], year: number) {
+export function showsByMonth(list: Concert[], year: number | "all") {
   const arr = Array.from({ length: 12 }, (_, i) => ({
     month: i,
     label: new Date(2024, i, 1).toLocaleString("en", { month: "short" }),
@@ -221,7 +296,7 @@ export function showsByMonth(list: Concert[], year: number) {
   }));
   for (const c of list) {
     const d = new Date(c.date);
-    if (d.getFullYear() === year) arr[d.getMonth()].count++;
+    if (year === "all" || d.getFullYear() === year) arr[d.getMonth()].count++;
   }
   return arr;
 }
@@ -237,23 +312,19 @@ export function showsByYear(list: Concert[]) {
     .map(([year, count]) => ({ year: String(year), count }));
 }
 
-export function heatmap(list: Concert[], year: number) {
-  const start = new Date(year, 0, 1);
-  const startDow = start.getDay();
-  const days: { date: string; count: number }[] = [];
-  for (let i = 0; i < startDow; i++) days.push({ date: "", count: 0 });
-  const daysInYear =
-    (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0 ? 366 : 365;
-  const byDate = new Map<string, number>();
-  for (const c of list) byDate.set(c.date, (byDate.get(c.date) ?? 0) + 1);
-  for (let i = 0; i < daysInYear; i++) {
-    const d = new Date(year, 0, 1 + i);
-    const iso = d.toISOString().slice(0, 10);
-    days.push({ date: iso, count: byDate.get(iso) ?? 0 });
+// Monthly heatmap: 12 buckets for the given year (or all-time max month count).
+export function monthlyHeatmap(list: Concert[], year: number) {
+  const months = Array.from({ length: 12 }, (_, i) => ({
+    month: i,
+    label: new Date(2024, i, 1).toLocaleString("en", { month: "short" }),
+    count: 0,
+    key: `${year}-${String(i + 1).padStart(2, "0")}`,
+  }));
+  for (const c of list) {
+    const d = new Date(c.date);
+    if (d.getFullYear() === year) months[d.getMonth()].count++;
   }
-  const weeks: { date: string; count: number }[][] = [];
-  for (let i = 0; i < days.length; i += 7) weeks.push(days.slice(i, i + 7));
-  return weeks;
+  return months;
 }
 
 export function getConcertAge(list: Concert[]): number {
@@ -265,4 +336,69 @@ export function getConcertAge(list: Concert[]): number {
 
 export function recentConcerts(list: Concert[], n = 5) {
   return [...list].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, n);
+}
+
+export function availableYears(list: Concert[]): number[] {
+  const set = new Set<number>();
+  for (const c of list) set.add(new Date(c.date).getFullYear());
+  return [...set].sort((a, b) => b - a);
+}
+
+// Monthly streak: count of consecutive months (ending in current month, or the
+// most recent month with a show) where at least one show is logged.
+export function monthlyStreak(list: Concert[]): {
+  current: number;
+  longest: number;
+} {
+  if (list.length === 0) return { current: 0, longest: 0 };
+  const monthsWithShows = new Set<string>();
+  for (const c of list) {
+    const d = new Date(c.date);
+    monthsWithShows.add(
+      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`,
+    );
+  }
+  const key = (y: number, m: number) =>
+    `${y}-${String(m + 1).padStart(2, "0")}`;
+  // longest run
+  const sorted = [...monthsWithShows].sort();
+  let longest = 0;
+  let run = 0;
+  let prev: { y: number; m: number } | null = null;
+  for (const s of sorted) {
+    const [ys, ms] = s.split("-").map(Number);
+    const y = ys;
+    const m = ms - 1;
+    if (
+      prev &&
+      ((prev.m === 11 && y === prev.y + 1 && m === 0) ||
+        (y === prev.y && m === prev.m + 1))
+    ) {
+      run++;
+    } else {
+      run = 1;
+    }
+    if (run > longest) longest = run;
+    prev = { y, m };
+  }
+  // current streak — walk back from today
+  const now = new Date();
+  let y = now.getFullYear();
+  let m = now.getMonth();
+  let current = 0;
+  // If the current month has no show, start counting from the prior month.
+  if (!monthsWithShows.has(key(y, m))) {
+    if (m === 0) {
+      y -= 1;
+      m = 11;
+    } else m -= 1;
+  }
+  while (monthsWithShows.has(key(y, m))) {
+    current++;
+    if (m === 0) {
+      y -= 1;
+      m = 11;
+    } else m -= 1;
+  }
+  return { current, longest };
 }

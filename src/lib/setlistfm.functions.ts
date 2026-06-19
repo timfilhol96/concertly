@@ -6,6 +6,8 @@ const InputSchema = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Expected YYYY-MM-DD"),
 });
 
+export type OpenerSetlist = { artist: string; songs: string[] };
+
 export type SetlistLookupResult = {
   found: boolean;
   tour: string | null;
@@ -13,10 +15,12 @@ export type SetlistLookupResult = {
   city: string | null;
   country: string | null;
   openers: string[];
+  openerSetlists: OpenerSetlist[];
   songs: string[];
   songsSeen: number | null;
   genre: string | null;
   artist: string | null;
+  artistImageUrl: string | null;
   setlistUrl: string | null;
 };
 
@@ -59,6 +63,59 @@ async function lookupGenre(mbid: string | undefined): Promise<string | null> {
   }
 }
 
+// Use Deezer's public search (no API key required) for artist images.
+async function lookupArtistImage(name: string): Promise<string | null> {
+  try {
+    const url = `https://api.deezer.com/search/artist?q=${encodeURIComponent(name)}&limit=1`;
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      data?: Array<{ picture_xl?: string; picture_big?: string; picture_medium?: string }>;
+    };
+    const a = json.data?.[0];
+    return a?.picture_xl ?? a?.picture_big ?? a?.picture_medium ?? null;
+  } catch {
+    return null;
+  }
+}
+
+async function lookupOpenerSetlist(
+  artist: string,
+  isoDate: string,
+  apiKey: string,
+): Promise<string[]> {
+  try {
+    const url = new URL("https://api.setlist.fm/rest/1.0/search/setlists");
+    url.searchParams.set("artistName", artist);
+    url.searchParams.set("date", toSetlistDate(isoDate));
+    url.searchParams.set("p", "1");
+    const res = await fetch(url.toString(), {
+      headers: { "x-api-key": apiKey, Accept: "application/json", "Accept-Language": "en" },
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as {
+      setlist?: Array<{
+        artist?: { name?: string };
+        sets?: { set?: Array<{ song?: Array<{ name?: string }> }> };
+      }>;
+    };
+    const target = artist.toLowerCase();
+    const match =
+      json.setlist?.find((s) => s.artist?.name?.toLowerCase() === target) ??
+      json.setlist?.[0];
+    const songs: string[] = [];
+    for (const s of match?.sets?.set ?? []) {
+      for (const song of s.song ?? []) {
+        const n = song.name?.trim();
+        if (n) songs.push(n);
+      }
+    }
+    return songs;
+  } catch {
+    return [];
+  }
+}
+
 export const lookupSetlist = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<SetlistLookupResult> => {
@@ -72,10 +129,12 @@ export const lookupSetlist = createServerFn({ method: "POST" })
       city: null,
       country: null,
       openers: [],
+      openerSetlists: [],
       songs: [],
       songsSeen: null,
       genre: null,
       artist: null,
+      artistImageUrl: null,
       setlistUrl: null,
     };
 
@@ -93,9 +152,7 @@ export const lookupSetlist = createServerFn({ method: "POST" })
     });
 
     if (res.status === 404) return empty;
-    if (!res.ok) {
-      throw new Error(`Setlist.fm request failed (${res.status})`);
-    }
+    if (!res.ok) throw new Error(`Setlist.fm request failed (${res.status})`);
 
     const json = (await res.json()) as {
       setlist?: Array<{
@@ -104,10 +161,7 @@ export const lookupSetlist = createServerFn({ method: "POST" })
         tour?: { name?: string };
         venue?: {
           name?: string;
-          city?: {
-            name?: string;
-            country?: { name?: string; code?: string };
-          };
+          city?: { name?: string; country?: { name?: string; code?: string } };
         };
         sets?: { set?: Array<{ name?: string; song?: Array<{ name?: string }> }> };
       }>;
@@ -124,7 +178,10 @@ export const lookupSetlist = createServerFn({ method: "POST" })
       new Set(
         matches
           .map((s) => s.artist?.name)
-          .filter((n): n is string => !!n && n.toLowerCase() !== (headliner.artist?.name ?? "").toLowerCase()),
+          .filter(
+            (n): n is string =>
+              !!n && n.toLowerCase() !== (headliner.artist?.name ?? "").toLowerCase(),
+          ),
       ),
     ).slice(0, 5);
 
@@ -138,14 +195,22 @@ export const lookupSetlist = createServerFn({ method: "POST" })
     }
 
     let tour = headliner.tour?.name ?? null;
-
-    // Fallback: setlist.fm often omits tour on individual shows. Look up the
-    // artist's nearby setlists by MBID and use the closest dated tour name.
     if (!tour && headliner.artist?.mbid) {
       tour = await lookupTourNearby(headliner.artist.mbid, data.date, apiKey);
     }
 
-    const genre = await lookupGenre(headliner.artist?.mbid);
+    // In parallel: genre, artist image, opener setlists.
+    const [genre, artistImageUrl, openerSetlistsRaw] = await Promise.all([
+      lookupGenre(headliner.artist?.mbid),
+      lookupArtistImage(headliner.artist?.name ?? data.artist),
+      Promise.all(
+        openers.slice(0, 3).map(async (name) => ({
+          artist: name,
+          songs: await lookupOpenerSetlist(name, data.date, apiKey),
+        })),
+      ),
+    ]);
+    const openerSetlists = openerSetlistsRaw.filter((o) => o.songs.length > 0);
 
     return {
       found: true,
@@ -158,9 +223,11 @@ export const lookupSetlist = createServerFn({ method: "POST" })
         headliner.venue?.city?.country?.code ??
         null,
       openers,
+      openerSetlists,
       songs,
       songsSeen: songs.length > 0 ? songs.length : null,
       genre,
+      artistImageUrl,
       setlistUrl: headliner.url ?? null,
     };
   });
@@ -181,21 +248,12 @@ async function lookupTourNearby(
   try {
     const target = Date.parse(isoDate);
     if (!Number.isFinite(target)) return null;
-
-    // Pull the first two pages of the artist's setlists and pick the
-    // tour name from the chronologically closest show that has one.
     const candidates: Array<{ tour: string; date: number }> = [];
     for (const page of [1, 2]) {
-      const url = new URL(
-        `https://api.setlist.fm/rest/1.0/artist/${mbid}/setlists`,
-      );
+      const url = new URL(`https://api.setlist.fm/rest/1.0/artist/${mbid}/setlists`);
       url.searchParams.set("p", String(page));
       const res = await fetch(url.toString(), {
-        headers: {
-          "x-api-key": apiKey,
-          Accept: "application/json",
-          "Accept-Language": "en",
-        },
+        headers: { "x-api-key": apiKey, Accept: "application/json", "Accept-Language": "en" },
       });
       if (!res.ok) break;
       const json = (await res.json()) as {
@@ -208,11 +266,8 @@ async function lookupTourNearby(
       }
       if ((json.setlist?.length ?? 0) < 20) break;
     }
-
     if (candidates.length === 0) return null;
-    candidates.sort(
-      (a, b) => Math.abs(a.date - target) - Math.abs(b.date - target),
-    );
+    candidates.sort((a, b) => Math.abs(a.date - target) - Math.abs(b.date - target));
     return candidates[0].tour;
   } catch {
     return null;
