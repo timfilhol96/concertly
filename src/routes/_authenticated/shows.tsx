@@ -599,6 +599,16 @@ function Shows() {
                 </td>
                 <td className="px-4 py-4 md:px-6" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1">
+                    <button
+                      type="button"
+                      onClick={() => handleRefreshOne(c)}
+                      disabled={refresh.running}
+                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground disabled:opacity-50"
+                      aria-label={`Refresh ${c.artist}`}
+                      title="Refresh info for this show"
+                    >
+                      <RefreshCw className="h-4 w-4" />
+                    </button>
                     <Link
                       to="/add"
                       search={{ id: c.id }}
