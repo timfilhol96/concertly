@@ -63,20 +63,66 @@ async function lookupGenre(mbid: string | undefined): Promise<string | null> {
   }
 }
 
-// Use Deezer's public search (no API key required) for artist images.
-async function lookupArtistImage(name: string): Promise<string | null> {
+// Use Deezer's public search (no API key required) for artist images + genre.
+async function lookupDeezerArtist(
+  name: string,
+): Promise<{ image: string | null; genre: string | null }> {
   try {
     const url = `https://api.deezer.com/search/artist?q=${encodeURIComponent(name)}&limit=1`;
     const res = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!res.ok) return null;
+    if (!res.ok) return { image: null, genre: null };
     const json = (await res.json()) as {
-      data?: Array<{ picture_xl?: string; picture_big?: string; picture_medium?: string }>;
+      data?: Array<{
+        id?: number;
+        picture_xl?: string;
+        picture_big?: string;
+        picture_medium?: string;
+      }>;
     };
     const a = json.data?.[0];
-    return a?.picture_xl ?? a?.picture_big ?? a?.picture_medium ?? null;
+    if (!a) return { image: null, genre: null };
+    const image = a.picture_xl ?? a.picture_big ?? a.picture_medium ?? null;
+    let genre: string | null = null;
+    if (a.id) {
+      try {
+        const albRes = await fetch(
+          `https://api.deezer.com/artist/${a.id}/albums?limit=10`,
+          { headers: { Accept: "application/json" } },
+        );
+        if (albRes.ok) {
+          const albJson = (await albRes.json()) as {
+            data?: Array<{ genre_id?: number }>;
+          };
+          const counts = new Map<number, number>();
+          for (const al of albJson.data ?? []) {
+            if (typeof al.genre_id === "number" && al.genre_id > 0) {
+              counts.set(al.genre_id, (counts.get(al.genre_id) ?? 0) + 1);
+            }
+          }
+          const top = [...counts.entries()].sort((x, y) => y[1] - x[1])[0]?.[0];
+          if (top) {
+            const gRes = await fetch(`https://api.deezer.com/genre/${top}`, {
+              headers: { Accept: "application/json" },
+            });
+            if (gRes.ok) {
+              const gJson = (await gRes.json()) as { name?: string };
+              if (gJson.name) genre = gJson.name;
+            }
+          }
+        }
+      } catch {
+        // ignore genre failure
+      }
+    }
+    return { image, genre };
   } catch {
-    return null;
+    return { image: null, genre: null };
   }
+}
+
+async function lookupArtistImage(name: string): Promise<string | null> {
+  const { image } = await lookupDeezerArtist(name);
+  return image;
 }
 
 async function lookupOpenerSetlist(
