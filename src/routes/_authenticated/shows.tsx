@@ -1,28 +1,39 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Pencil, Search, Star, Trash2 } from "lucide-react";
+import { Pencil, Search, Star, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
 import { useConcerts, useDeleteConcert } from "@/lib/concerts";
 
+type Search = { month?: string };
+
 export const Route = createFileRoute("/_authenticated/shows")({
   head: () => ({ meta: [{ title: "My Shows · Concertly" }] }),
+  validateSearch: (s: Record<string, unknown>): Search => ({
+    month: typeof s.month === "string" && /^\d{4}-\d{2}$/.test(s.month) ? s.month : undefined,
+  }),
   component: Shows,
 });
 
 function Shows() {
   const nav = useNavigate();
+  const { month } = Route.useSearch();
   const { data: concerts = [], isLoading } = useConcerts();
   const del = useDeleteConcert();
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"date" | "rating">("date");
   const list = useMemo(() => {
-    const filtered = concerts.filter((c) =>
+    let filtered = concerts.filter((c) =>
       [c.artist, c.venue, c.city, c.tour ?? ""].join(" ").toLowerCase().includes(q.toLowerCase()),
     );
+    if (month) filtered = filtered.filter((c) => c.date.startsWith(month));
     return filtered.sort((a, b) =>
       sort === "date" ? (a.date < b.date ? 1 : -1) : b.rating - a.rating,
     );
-  }, [q, sort, concerts]);
+  }, [q, sort, concerts, month]);
+
+  const monthLabel = month
+    ? new Date(`${month}-01T00:00:00`).toLocaleString("en", { month: "long", year: "numeric" })
+    : null;
 
   async function handleDelete(id: string, artist: string) {
     if (!confirm(`Delete "${artist}" from your archive?`)) return;
@@ -40,8 +51,19 @@ function Shows() {
         <div>
           <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">My Shows</h1>
           <p className="mt-2 text-muted-foreground">
-            Every gig in your archive — {concerts.length} total.
+            {monthLabel
+              ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} in ${monthLabel}`
+              : `Every gig in your archive — ${concerts.length} total.`}
           </p>
+          {month && (
+            <button
+              type="button"
+              onClick={() => nav({ to: "/shows", search: {} })}
+              className="mt-2 inline-flex items-center gap-1 rounded-full border border-hairline bg-surface px-3 py-1 text-xs font-semibold hover:bg-surface-2"
+            >
+              <X className="h-3 w-3" /> Clear month filter
+            </button>
+          )}
         </div>
         <div className="flex w-full items-center gap-3 md:w-auto">
           <div className="relative flex-grow md:w-72">
@@ -84,8 +106,15 @@ function Shows() {
                 className="cursor-pointer transition-colors hover:bg-surface-2/60"
               >
                 <td className="px-4 py-4 md:px-6">
-                  <div className="font-semibold">{c.artist}</div>
-                  <div className="text-xs text-muted-foreground md:hidden">{c.venue} · {c.city}</div>
+                  <div className="flex items-center gap-3">
+                    {c.artistImageUrl ? (
+                      <img src={c.artistImageUrl} alt="" className="h-9 w-9 flex-shrink-0 rounded-full object-cover" />
+                    ) : null}
+                    <div>
+                      <div className="font-semibold">{c.artist}</div>
+                      <div className="text-xs text-muted-foreground md:hidden">{c.venue} · {c.city}</div>
+                    </div>
+                  </div>
                 </td>
                 <td className="hidden px-4 py-4 text-sm text-muted-foreground md:table-cell md:px-6">
                   {c.venue}
@@ -128,7 +157,7 @@ function Shows() {
             ))}
             {!isLoading && list.length === 0 && (
               <tr><td colSpan={6} className="px-6 py-12 text-center text-sm text-muted-foreground">
-                {concerts.length === 0 ? "No shows yet — log your first one!" : "No shows match that search."}
+                {concerts.length === 0 ? "No shows yet — log your first one!" : "No shows match that filter."}
               </td></tr>
             )}
           </tbody>
@@ -137,4 +166,3 @@ function Shows() {
     </main>
   );
 }
-

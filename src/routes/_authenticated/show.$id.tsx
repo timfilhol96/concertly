@@ -56,16 +56,25 @@ function ShowDetail() {
       </Link>
 
       <header className="mt-6 flex flex-col gap-6 md:flex-row md:items-end md:justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-brand">
-            {d.toLocaleString("en", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
-          </p>
-          <h1 className="mt-2 font-display text-5xl font-extrabold leading-[0.95] tracking-tight md:text-7xl">
-            {concert.artist}
-          </h1>
-          {concert.tour && (
-            <p className="mt-3 text-lg text-muted-foreground">{concert.tour}</p>
-          )}
+        <div className="flex items-center gap-5">
+          {concert.artistImageUrl ? (
+            <img
+              src={concert.artistImageUrl}
+              alt={concert.artist}
+              className="h-24 w-24 flex-shrink-0 rounded-2xl object-cover md:h-32 md:w-32"
+            />
+          ) : null}
+          <div>
+            <p className="text-xs font-bold uppercase tracking-widest text-brand">
+              {d.toLocaleString("en", { weekday: "long", day: "2-digit", month: "long", year: "numeric" })}
+            </p>
+            <h1 className="mt-2 font-display text-5xl font-extrabold leading-[0.95] tracking-tight md:text-7xl">
+              {concert.artist}
+            </h1>
+            {concert.tour && (
+              <p className="mt-3 text-lg text-muted-foreground">{concert.tour}</p>
+            )}
+          </div>
         </div>
         <div className="flex items-center gap-2">
           <Link
@@ -94,27 +103,55 @@ function ShowDetail() {
       </section>
 
       <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]">
-        <article className="rounded-3xl border border-hairline bg-card p-6 md:p-8">
-          <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
-            <Music className="h-4 w-4 text-brand" /> Setlist
-          </h2>
-          {concert.setlist?.length ? (
-            <ol className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
-              {concert.setlist.map((song, i) => (
-                <li
-                  key={`${song}-${i}`}
-                  className="flex items-baseline gap-3 rounded-lg border border-hairline bg-surface/50 px-3 py-2"
-                >
-                  <span className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
-                  <span className="truncate text-sm">{song}</span>
-                </li>
-              ))}
-            </ol>
-          ) : (
-            <p className="mt-4 text-sm text-muted-foreground">
-              No setlist recorded for this show. Edit it and run auto-fill to pull from setlist.fm.
-            </p>
-          )}
+        <article className="space-y-8">
+          <div className="rounded-3xl border border-hairline bg-card p-6 md:p-8">
+            <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
+              <Music className="h-4 w-4 text-brand" /> Setlist
+            </h2>
+            {concert.setlist?.length ? (
+              <ol className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
+                {concert.setlist.map((song, i) => (
+                  <li
+                    key={`${song}-${i}`}
+                    className="flex items-baseline gap-3 rounded-lg border border-hairline bg-surface/50 px-3 py-2"
+                  >
+                    <span className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="truncate text-sm">{song}</span>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="mt-4 text-sm text-muted-foreground">
+                No setlist recorded for this show. Edit it and run auto-fill to pull from setlist.fm.
+              </p>
+            )}
+          </div>
+
+          {concert.openerSetlists?.length ? (
+            <div className="rounded-3xl border border-hairline bg-card p-6 md:p-8">
+              <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
+                <Users className="h-4 w-4 text-pink" /> Opener setlists
+              </h2>
+              <div className="mt-6 space-y-5">
+                {concert.openerSetlists.map((o) => (
+                  <div key={o.artist}>
+                    <h3 className="text-sm font-bold">{o.artist} <span className="text-muted-foreground">· {o.songs.length} songs</span></h3>
+                    <ol className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                      {o.songs.map((song, i) => (
+                        <li
+                          key={`${o.artist}-${i}`}
+                          className="flex items-baseline gap-3 rounded-lg border border-hairline bg-surface/40 px-3 py-1.5"
+                        >
+                          <span className="font-mono text-[11px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+                          <span className="truncate text-xs">{song}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </article>
 
         <aside className="space-y-6">

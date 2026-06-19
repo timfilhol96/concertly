@@ -1,10 +1,11 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowUpRight, Star, TrendingUp } from "lucide-react";
 import {
   genreBreakdown,
   getConcertAge,
   getStats,
-  heatmap,
+  monthlyHeatmap,
+  monthlyStreak,
   rankBy,
   recentConcerts,
   useConcerts,
@@ -23,16 +24,18 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 
 const YEAR = new Date().getFullYear();
 
-function heatColor(count: number): string {
+function heatColor(count: number, max: number): string {
   if (count === 0) return "bg-surface-2";
-  if (count === 1) return "bg-brand/40";
-  if (count === 2) return "bg-brand/70";
+  const ratio = max ? count / max : 0;
+  if (ratio < 0.34) return "bg-brand/40";
+  if (ratio < 0.67) return "bg-brand/70";
   return "bg-brand";
 }
 
 function Dashboard() {
   const { data: profile } = useProfile();
   const { data: concerts, isLoading } = useConcerts();
+  const nav = useNavigate();
 
   if (isLoading || !concerts) return <LoadingState />;
   if (concerts.length === 0) return <EmptyState name={profile?.displayName ?? "you"} />;
@@ -42,12 +45,14 @@ function Dashboard() {
   const topVenues = rankBy(concerts, "venue", 5);
   const topCities = rankBy(concerts, "city", 4);
   const genres = genreBreakdown(concerts);
-  const weeks = heatmap(concerts, YEAR);
+  const months = monthlyHeatmap(concerts, YEAR);
+  const maxMonth = months.reduce((m, x) => Math.max(m, x.count), 0);
   const recent = recentConcerts(concerts, 4);
   const inYear = concerts.filter((c) => new Date(c.date).getFullYear() === YEAR);
   const yearShows = inYear.length;
   const yearArtists = new Set(inYear.map((c) => c.artist)).size;
   const yearCities = new Set(inYear.map((c) => c.city)).size;
+  const streak = monthlyStreak(concerts);
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
@@ -72,7 +77,7 @@ function Dashboard() {
         <BigStat label={`Shows in ${YEAR}`} value={yearShows} sub={`${stats.total} all-time`} />
         <BigStat label="Unique artists" value={stats.uniqueArtists} sub="across all shows" />
         <BigStat label="Cities visited" value={stats.uniqueCities} sub={`${stats.uniqueCountries} countries`} />
-        <BigStat label="Hours live" value={stats.hoursLive} sub={`$${stats.totalSpend} spent`} />
+        <BigStat label="Monthly streak" value={streak.current} sub={`longest ${streak.longest}`} />
       </div>
 
       <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">
@@ -80,37 +85,33 @@ function Dashboard() {
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h2 className="font-display text-2xl font-extrabold">Yearly Attendance</h2>
-              <p className="text-xs text-muted-foreground">{yearShows} shows in {YEAR}</p>
+              <p className="text-xs text-muted-foreground">{yearShows} shows in {YEAR} · click a month to see them</p>
             </div>
           </div>
-          <div className="overflow-x-auto">
-            <div className="flex gap-[3px]">
-              {weeks.map((week, i) => (
-                <div key={i} className="flex flex-col gap-[3px]">
-                  {Array.from({ length: 7 }).map((_, d) => {
-                    const day = week[d];
-                    if (!day || !day.date) return <div key={d} className="h-3 w-3 rounded-sm bg-transparent" />;
-                    return (
-                      <div
-                        key={d}
-                        title={`${day.date} — ${day.count} show${day.count === 1 ? "" : "s"}`}
-                        className={`h-3 w-3 rounded-sm transition-transform hover:scale-150 ${heatColor(day.count)}`}
-                      />
-                    );
-                  })}
-                </div>
-              ))}
-            </div>
+          <div className="grid grid-cols-6 gap-3 md:grid-cols-12">
+            {months.map((m) => (
+              <button
+                key={m.key}
+                type="button"
+                disabled={m.count === 0}
+                onClick={() => nav({ to: "/shows", search: { month: m.key } })}
+                className={`group flex aspect-square flex-col items-center justify-center rounded-xl ${heatColor(m.count, maxMonth)} transition-transform hover:scale-105 disabled:cursor-default disabled:hover:scale-100`}
+                title={`${m.label} ${YEAR} — ${m.count} show${m.count === 1 ? "" : "s"}`}
+              >
+                <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/70">{m.label}</span>
+                <span className="font-display text-xl font-extrabold">{m.count}</span>
+              </button>
+            ))}
           </div>
           <div className="mt-6 flex items-center justify-between text-xs text-muted-foreground">
-            <span>Less</span>
+            <span>Quiet</span>
             <div className="flex gap-1">
               <div className="h-3 w-3 rounded-sm bg-surface-2" />
               <div className="h-3 w-3 rounded-sm bg-brand/40" />
               <div className="h-3 w-3 rounded-sm bg-brand/70" />
               <div className="h-3 w-3 rounded-sm bg-brand" />
             </div>
-            <span>More</span>
+            <span>Packed</span>
           </div>
           <div className="pointer-events-none absolute right-6 top-4 font-display text-[10rem] font-black leading-none opacity-[0.04]">
             {YEAR}
@@ -122,9 +123,16 @@ function Dashboard() {
             <h2 className="font-display text-2xl font-extrabold">Your #1 Artist</h2>
             {topArtists[0] ? (
               <div className="mt-6 flex items-center gap-4">
-                <div className="grid h-16 w-16 flex-shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand to-pink font-display text-2xl font-black text-brand-foreground">
-                  {topArtists[0].name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
-                </div>
+                {(() => {
+                  const c = concerts.find((c) => c.artist === topArtists[0].name && c.artistImageUrl);
+                  return c?.artistImageUrl ? (
+                    <img src={c.artistImageUrl} alt={topArtists[0].name} className="h-16 w-16 flex-shrink-0 rounded-2xl object-cover" />
+                  ) : (
+                    <div className="grid h-16 w-16 flex-shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand to-pink font-display text-2xl font-black text-brand-foreground">
+                      {topArtists[0].name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                    </div>
+                  );
+                })()}
                 <div>
                   <h3 className="text-xl font-bold leading-tight">{topArtists[0].name}</h3>
                   <p className="text-sm text-muted-foreground">{topArtists[0].count} shows attended</p>
@@ -158,6 +166,7 @@ function Dashboard() {
                 city={c.city}
                 rating={c.rating}
                 notes={c.notes ?? undefined}
+                imageUrl={c.artistImageUrl ?? undefined}
               />
             </Link>
           ))}
@@ -298,21 +307,25 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 export function ConcertCard({
-  artist, tour, date, venue, city, rating, notes,
+  artist, tour, date, venue, city, rating, notes, imageUrl,
 }: {
-  artist: string; tour?: string; date: string; venue: string; city: string; rating: number; notes?: string;
+  artist: string; tour?: string; date: string; venue: string; city: string; rating: number; notes?: string; imageUrl?: string;
 }) {
   const d = new Date(date);
   return (
     <article className="group rounded-2xl border border-hairline bg-card/60 p-5 transition-colors hover:border-brand/30">
       <div className="flex flex-col gap-5 md:flex-row">
-        <div className="grid w-full flex-shrink-0 place-items-center rounded-xl bg-gradient-to-br from-brand/30 via-surface-2 to-teal/20 md:h-32 md:w-32">
-          <div className="py-6 text-center md:py-0">
-            <p className="font-display text-3xl font-black leading-none">{d.getDate()}</p>
-            <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              {d.toLocaleString("en", { month: "short" })} {d.getFullYear()}
-            </p>
-          </div>
+        <div className="grid w-full flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-surface-2 to-teal/20 md:h-32 md:w-32">
+          {imageUrl ? (
+            <img src={imageUrl} alt={artist} className="h-full w-full object-cover" />
+          ) : (
+            <div className="py-6 text-center md:py-0">
+              <p className="font-display text-3xl font-black leading-none">{d.getDate()}</p>
+              <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                {d.toLocaleString("en", { month: "short" })} {d.getFullYear()}
+              </p>
+            </div>
+          )}
         </div>
         <div className="flex-grow">
           <div className="flex items-start justify-between gap-4">
