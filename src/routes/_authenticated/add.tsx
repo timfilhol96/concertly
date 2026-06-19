@@ -10,7 +10,8 @@ import {
   useUpdateConcert,
   type OpenerSetlist,
 } from "@/lib/concerts";
-import { lookupSetlist } from "@/lib/setlistfm.functions";
+import { lookupCoPerformers, lookupSetlist, type CoPerformer } from "@/lib/setlistfm.functions";
+import { Users } from "lucide-react";
 
 type Search = { id?: string };
 
@@ -33,6 +34,7 @@ function AddShow() {
   const update = useUpdateConcert();
   const del = useDeleteConcert();
   const fetchSetlist = useServerFn(lookupSetlist);
+  const fetchCoPerformers = useServerFn(lookupCoPerformers);
 
   const [rating, setRating] = useState(existing?.rating ?? 8);
   const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
@@ -45,6 +47,9 @@ function AddShow() {
     existing?.openerSetlists ?? null,
   );
   const [looking, setLooking] = useState(false);
+  const [coPerformers, setCoPerformers] = useState<CoPerformer[] | null>(null);
+  const [selectedCo, setSelectedCo] = useState<Set<string>>(new Set());
+  const [loggingCo, setLoggingCo] = useState(false);
   const [form, setForm] = useState({
     artist: existing?.artist ?? "",
     tour: existing?.tour ?? "",
@@ -101,6 +106,26 @@ function AddShow() {
             .filter(Boolean)
             .join(" · ") || "Details filled in.",
       });
+
+      // Look for other artists at the same venue/date
+      const venue = r.venue ?? form.venue;
+      if (venue) {
+        try {
+          const exclude = [r.artist ?? form.artist, ...r.openers];
+          const co = await fetchCoPerformers({
+            data: { date: form.date, venue, excludeArtists: exclude },
+          });
+          if (co.length > 0) {
+            setCoPerformers(co);
+            setSelectedCo(new Set(co.map((c) => c.artist)));
+          } else {
+            setCoPerformers(null);
+            setSelectedCo(new Set());
+          }
+        } catch {
+          // non-fatal
+        }
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Lookup failed");
     } finally {
@@ -152,6 +177,43 @@ function AddShow() {
       toast.error(err instanceof Error ? err.message : "Couldn't delete");
     }
   }
+
+  async function onLogSelectedCoPerformers() {
+    if (!coPerformers || selectedCo.size === 0) return;
+    const targets = coPerformers.filter((c) => selectedCo.has(c.artist));
+    setLoggingCo(true);
+    let ok = 0;
+    try {
+      for (const c of targets) {
+        await add.mutateAsync({
+          artist: c.artist,
+          tour: c.tour,
+          openers: null,
+          date: form.date,
+          venue: c.venue || form.venue,
+          city: c.city ?? form.city,
+          country: c.country ?? (form.country || null),
+          rating,
+          genre: form.genre.trim() || null,
+          notes: null,
+          ticketPrice: null,
+          songsSeen: c.songs.length || null,
+          setlist: c.songs.length ? c.songs : null,
+          artistImageUrl: null,
+          openerSetlists: null,
+        });
+        ok += 1;
+      }
+      toast.success(`Logged ${ok} additional ${ok === 1 ? "show" : "shows"}`);
+      setCoPerformers(null);
+      setSelectedCo(new Set());
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't log all performers");
+    } finally {
+      setLoggingCo(false);
+    }
+  }
+
 
   const pending = add.isPending || update.isPending;
 
@@ -243,6 +305,73 @@ function AddShow() {
             ) : null}
           </div>
         )}
+
+        {coPerformers && coPerformers.length > 0 && (
+          <div className="rounded-2xl border border-brand/40 bg-brand/5 p-4">
+            <div className="mb-3 flex items-start gap-3">
+              <Users className="mt-0.5 h-5 w-5 text-brand" />
+              <div className="flex-1">
+                <p className="text-sm font-bold">
+                  {coPerformers.length} other {coPerformers.length === 1 ? "artist" : "artists"} performed at {form.venue} on this date
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Log them as separate shows in your archive?
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCoPerformers(null)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Dismiss
+              </button>
+            </div>
+            <div className="space-y-2">
+              {coPerformers.map((c) => {
+                const checked = selectedCo.has(c.artist);
+                return (
+                  <label
+                    key={c.artist}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-hairline bg-card/60 p-3 hover:border-brand/40"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => {
+                        setSelectedCo((prev) => {
+                          const next = new Set(prev);
+                          if (e.target.checked) next.add(c.artist);
+                          else next.delete(c.artist);
+                          return next;
+                        });
+                      }}
+                      className="h-4 w-4 accent-brand"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{c.artist}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {[c.tour, c.songs.length ? `${c.songs.length} songs` : null]
+                          .filter(Boolean)
+                          .join(" · ") || "Setlist available"}
+                      </p>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={onLogSelectedCoPerformers}
+                disabled={loggingCo || selectedCo.size === 0}
+                className="rounded-full bg-brand px-4 py-2 text-xs font-bold text-brand-foreground disabled:opacity-50"
+              >
+                {loggingCo ? "Logging…" : `Log ${selectedCo.size} selected`}
+              </button>
+            </div>
+          </div>
+        )}
+
 
         <div className="grid gap-6 md:grid-cols-2">
           <Field icon={MapPin} label="Venue">

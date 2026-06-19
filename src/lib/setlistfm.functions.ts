@@ -273,3 +273,80 @@ async function lookupTourNearby(
     return null;
   }
 }
+
+const CoPerformersInput = z.object({
+  date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
+  venue: z.string().min(1),
+  excludeArtists: z.array(z.string()).default([]),
+});
+
+export type CoPerformer = {
+  artist: string;
+  songs: string[];
+  tour: string | null;
+  city: string | null;
+  country: string | null;
+  venue: string;
+};
+
+export const lookupCoPerformers = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => CoPerformersInput.parse(input))
+  .handler(async ({ data }): Promise<CoPerformer[]> => {
+    const apiKey = process.env.SETLISTFM_API_KEY;
+    if (!apiKey) throw new Error("Setlist.fm API key is not configured");
+
+    const url = new URL("https://api.setlist.fm/rest/1.0/search/setlists");
+    url.searchParams.set("venueName", data.venue);
+    url.searchParams.set("date", toSetlistDate(data.date));
+    url.searchParams.set("p", "1");
+
+    const res = await fetch(url.toString(), {
+      headers: { "x-api-key": apiKey, Accept: "application/json", "Accept-Language": "en" },
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as {
+      setlist?: Array<{
+        artist?: { name?: string };
+        tour?: { name?: string };
+        venue?: {
+          name?: string;
+          city?: { name?: string; country?: { name?: string; code?: string } };
+        };
+        sets?: { set?: Array<{ song?: Array<{ name?: string }> }> };
+      }>;
+    };
+
+    const excluded = new Set(data.excludeArtists.map((a) => a.trim().toLowerCase()));
+    const venueLc = data.venue.trim().toLowerCase();
+    const seen = new Set<string>();
+    const out: CoPerformer[] = [];
+    for (const s of json.setlist ?? []) {
+      const name = s.artist?.name?.trim();
+      if (!name) continue;
+      const key = name.toLowerCase();
+      if (excluded.has(key) || seen.has(key)) continue;
+      // ensure venue actually matches (setlist.fm does fuzzy matching)
+      const vName = s.venue?.name?.trim().toLowerCase();
+      if (!vName || (vName !== venueLc && !vName.includes(venueLc) && !venueLc.includes(vName))) {
+        continue;
+      }
+      seen.add(key);
+      const songs: string[] = [];
+      for (const set of s.sets?.set ?? []) {
+        for (const song of set.song ?? []) {
+          const n = song.name?.trim();
+          if (n) songs.push(n);
+        }
+      }
+      out.push({
+        artist: name,
+        songs,
+        tour: s.tour?.name ?? null,
+        venue: s.venue?.name ?? data.venue,
+        city: s.venue?.city?.name ?? null,
+        country:
+          s.venue?.city?.country?.name ?? s.venue?.city?.country?.code ?? null,
+      });
+    }
+    return out;
+  });
