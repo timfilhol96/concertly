@@ -306,6 +306,73 @@ function AddShow() {
           </div>
         )}
 
+        {coPerformers && coPerformers.length > 0 && (
+          <div className="rounded-2xl border border-brand/40 bg-brand/5 p-4">
+            <div className="mb-3 flex items-start gap-3">
+              <Users className="mt-0.5 h-5 w-5 text-brand" />
+              <div className="flex-1">
+                <p className="text-sm font-bold">
+                  {coPerformers.length} other {coPerformers.length === 1 ? "artist" : "artists"} performed at {form.venue} on this date
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  Log them as separate shows in your archive?
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCoPerformers(null)}
+                className="text-xs text-muted-foreground hover:text-foreground"
+              >
+                Dismiss
+              </button>
+            </div>
+            <div className="space-y-2">
+              {coPerformers.map((c) => {
+                const checked = selectedCo.has(c.artist);
+                return (
+                  <label
+                    key={c.artist}
+                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-hairline bg-card/60 p-3 hover:border-brand/40"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(e) => {
+                        setSelectedCo((prev) => {
+                          const next = new Set(prev);
+                          if (e.target.checked) next.add(c.artist);
+                          else next.delete(c.artist);
+                          return next;
+                        });
+                      }}
+                      className="h-4 w-4 accent-brand"
+                    />
+                    <div className="flex-1">
+                      <p className="text-sm font-semibold">{c.artist}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {[c.tour, c.songs.length ? `${c.songs.length} songs` : null]
+                          .filter(Boolean)
+                          .join(" · ") || "Setlist available"}
+                      </p>
+                    </div>
+                  </label>
+                );
+              })}
+            </div>
+            <div className="mt-3 flex justify-end">
+              <button
+                type="button"
+                onClick={onLogSelectedCoPerformers}
+                disabled={loggingCo || selectedCo.size === 0}
+                className="rounded-full bg-brand px-4 py-2 text-xs font-bold text-brand-foreground disabled:opacity-50"
+              >
+                {loggingCo ? "Logging…" : `Log ${selectedCo.size} selected`}
+              </button>
+            </div>
+          </div>
+        )}
+
+
         <div className="grid gap-6 md:grid-cols-2">
           <Field icon={MapPin} label="Venue">
             <input required value={form.venue} onChange={(e) => set("venue", e.target.value)} className={inputCls} placeholder="e.g. Alexandra Palace" />
