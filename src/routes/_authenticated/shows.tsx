@@ -121,7 +121,17 @@ function Shows() {
       suggestions: ArtistSuggestion[],
     ) =>
       new Promise<ArtistSuggestion | "skip" | "cancel">((resolve) => {
-        setPrompt({ kind: "artist", artistKind, concert, query, suggestions, resolve });
+        setPrompt({
+          kind: "artist",
+          artistKind,
+          concert,
+          query,
+          suggestions,
+          resolve: (v) => {
+            setPrompt(null);
+            resolve(v);
+          },
+        });
       }),
     [],
   );
@@ -133,7 +143,15 @@ function Shows() {
         | { kind: "skip" }
         | { kind: "cancel" }
       >((resolve) => {
-        setPrompt({ kind: "co_performers", concert, coPerformers, resolve });
+        setPrompt({
+          kind: "co_performers",
+          concert,
+          coPerformers,
+          resolve: (v) => {
+            setPrompt(null);
+            resolve(v);
+          },
+        });
       }),
     [],
   );
@@ -144,7 +162,15 @@ function Shows() {
       fallback: { image: string | null; genre: string | null } | null,
     ) =>
       new Promise<"apply" | "skip" | "cancel">((resolve) => {
-        setPrompt({ kind: "not_found", concert, fallback, resolve });
+        setPrompt({
+          kind: "not_found",
+          concert,
+          fallback,
+          resolve: (v) => {
+            setPrompt(null);
+            resolve(v);
+          },
+        });
       }),
     [],
   );
