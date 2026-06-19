@@ -81,6 +81,7 @@ function Shows() {
     total: 0,
   });
   const [prompt, setPrompt] = useState<Prompt | null>(null);
+  const [fetching, setFetching] = useState<{ artist: string; step: string } | null>(null);
   // Cache picked Deezer artist per artist-name (lowercase) so we don't re-ask within a batch.
   const artistChoiceCache = useRef(new Map<string, ArtistSuggestion>());
 
