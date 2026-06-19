@@ -17,6 +17,7 @@ export type Database = {
       concerts: {
         Row: {
           artist: string
+          artist_image_url: string | null
           city: string
           country: string | null
           created_at: string
@@ -24,6 +25,7 @@ export type Database = {
           genre: string | null
           id: string
           notes: string | null
+          opener_setlists: Json | null
           openers: string[] | null
           rating: number
           setlist: string[] | null
@@ -35,6 +37,7 @@ export type Database = {
         }
         Insert: {
           artist: string
+          artist_image_url?: string | null
           city: string
           country?: string | null
           created_at?: string
@@ -42,6 +45,7 @@ export type Database = {
           genre?: string | null
           id?: string
           notes?: string | null
+          opener_setlists?: Json | null
           openers?: string[] | null
           rating?: number
           setlist?: string[] | null
@@ -53,6 +57,7 @@ export type Database = {
         }
         Update: {
           artist?: string
+          artist_image_url?: string | null
           city?: string
           country?: string | null
           created_at?: string
@@ -60,6 +65,7 @@ export type Database = {
           genre?: string | null
           id?: string
           notes?: string | null
+          opener_setlists?: Json | null
           openers?: string[] | null
           rating?: number
           setlist?: string[] | null
