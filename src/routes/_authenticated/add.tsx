@@ -62,6 +62,12 @@ function AddShow() {
   const [selectedCo, setSelectedCo] = useState<Set<string>>(new Set());
   const [headliner, setHeadliner] = useState<string>(existing?.artist ?? "");
   const [loggingCo, setLoggingCo] = useState(false);
+  const [picker, setPicker] = useState<{
+    title: string;
+    description: string;
+    options: ArtistSuggestion[];
+    resolve: (a: ArtistSuggestion | null) => void;
+  } | null>(null);
   const [form, setForm] = useState({
     artist: existing?.artist ?? "",
     tour: existing?.tour ?? "",
