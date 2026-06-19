@@ -178,6 +178,43 @@ function AddShow() {
     }
   }
 
+  async function onLogSelectedCoPerformers() {
+    if (!coPerformers || selectedCo.size === 0) return;
+    const targets = coPerformers.filter((c) => selectedCo.has(c.artist));
+    setLoggingCo(true);
+    let ok = 0;
+    try {
+      for (const c of targets) {
+        await add.mutateAsync({
+          artist: c.artist,
+          tour: c.tour,
+          openers: null,
+          date: form.date,
+          venue: c.venue || form.venue,
+          city: c.city ?? form.city,
+          country: c.country ?? (form.country || null),
+          rating,
+          genre: form.genre.trim() || null,
+          notes: null,
+          ticketPrice: null,
+          songsSeen: c.songs.length || null,
+          setlist: c.songs.length ? c.songs : null,
+          artistImageUrl: null,
+          openerSetlists: null,
+        });
+        ok += 1;
+      }
+      toast.success(`Logged ${ok} additional ${ok === 1 ? "show" : "shows"}`);
+      setCoPerformers(null);
+      setSelectedCo(new Set());
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't log all performers");
+    } finally {
+      setLoggingCo(false);
+    }
+  }
+
+
   const pending = add.isPending || update.isPending;
 
   return (
