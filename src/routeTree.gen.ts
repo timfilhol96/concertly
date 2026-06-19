@@ -14,6 +14,7 @@ import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AuthenticatedWrappedRouteImport } from './routes/_authenticated/wrapped'
 import { Route as AuthenticatedShowsRouteImport } from './routes/_authenticated/shows'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAddRouteImport } from './routes/_authenticated/add'
@@ -43,6 +44,11 @@ const AuthenticatedShowsRoute = AuthenticatedShowsRouteImport.update({
   path: '/shows',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
   id: '/insights',
   path: '/insights',
@@ -70,6 +76,7 @@ export interface FileRoutesByFullPath {
   '/add': typeof AuthenticatedAddRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/insights': typeof AuthenticatedInsightsRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/shows': typeof AuthenticatedShowsRoute
   '/wrapped': typeof AuthenticatedWrappedRoute
   '/show/$id': typeof AuthenticatedShowIdRoute
@@ -80,6 +87,7 @@ export interface FileRoutesByTo {
   '/add': typeof AuthenticatedAddRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/insights': typeof AuthenticatedInsightsRoute
+  '/profile': typeof AuthenticatedProfileRoute
   '/shows': typeof AuthenticatedShowsRoute
   '/wrapped': typeof AuthenticatedWrappedRoute
   '/show/$id': typeof AuthenticatedShowIdRoute
@@ -92,6 +100,7 @@ export interface FileRoutesById {
   '/_authenticated/add': typeof AuthenticatedAddRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
+  '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/shows': typeof AuthenticatedShowsRoute
   '/_authenticated/wrapped': typeof AuthenticatedWrappedRoute
   '/_authenticated/show/$id': typeof AuthenticatedShowIdRoute
@@ -104,6 +113,7 @@ export interface FileRouteTypes {
     | '/add'
     | '/dashboard'
     | '/insights'
+    | '/profile'
     | '/shows'
     | '/wrapped'
     | '/show/$id'
@@ -114,6 +124,7 @@ export interface FileRouteTypes {
     | '/add'
     | '/dashboard'
     | '/insights'
+    | '/profile'
     | '/shows'
     | '/wrapped'
     | '/show/$id'
@@ -125,6 +136,7 @@ export interface FileRouteTypes {
     | '/_authenticated/add'
     | '/_authenticated/dashboard'
     | '/_authenticated/insights'
+    | '/_authenticated/profile'
     | '/_authenticated/shows'
     | '/_authenticated/wrapped'
     | '/_authenticated/show/$id'
@@ -173,6 +185,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedShowsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/insights': {
       id: '/_authenticated/insights'
       path: '/insights'
@@ -208,6 +227,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedAddRoute: typeof AuthenticatedAddRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
+  AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedShowsRoute: typeof AuthenticatedShowsRoute
   AuthenticatedWrappedRoute: typeof AuthenticatedWrappedRoute
   AuthenticatedShowIdRoute: typeof AuthenticatedShowIdRoute
@@ -217,6 +237,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAddRoute: AuthenticatedAddRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
+  AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedShowsRoute: AuthenticatedShowsRoute,
   AuthenticatedWrappedRoute: AuthenticatedWrappedRoute,
   AuthenticatedShowIdRoute: AuthenticatedShowIdRoute,
