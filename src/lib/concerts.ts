@@ -20,6 +20,7 @@ export type Concert = {
   notes: string | null;
   ticketPrice: number | null;
   songsSeen: number | null;
+  setlist: string[] | null;
 };
 
 type Row = {
@@ -36,6 +37,7 @@ type Row = {
   notes: string | null;
   ticket_price: number | null;
   songs_seen: number | null;
+  setlist: string[] | null;
 };
 
 function fromRow(r: Row): Concert {
@@ -53,6 +55,7 @@ function fromRow(r: Row): Concert {
     notes: r.notes,
     ticketPrice: r.ticket_price == null ? null : Number(r.ticket_price),
     songsSeen: r.songs_seen,
+    setlist: r.setlist,
   };
 }
 
