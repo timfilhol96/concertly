@@ -108,6 +108,7 @@ function AddShow() {
       notes: form.notes.trim() || null,
       ticketPrice: form.ticketPrice ? Number(form.ticketPrice) : null,
       songsSeen,
+      setlist,
     };
     try {
       if (isEdit && existing) {
