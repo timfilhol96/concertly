@@ -31,6 +31,7 @@ function AddShow() {
   const [rating, setRating] = useState(existing?.rating ?? 8);
   const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
   const [songsSeen, setSongsSeen] = useState<number | null>(existing?.songsSeen ?? null);
+  const [setlist, setSetlist] = useState<string[] | null>(existing?.setlist ?? null);
   const [looking, setLooking] = useState(false);
   const [form, setForm] = useState({
     artist: existing?.artist ?? "",
