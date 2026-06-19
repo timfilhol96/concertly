@@ -192,26 +192,64 @@ function AddShow() {
     setLoggingCo(true);
     let ok = 0;
     try {
+      // Fetch profile images for all selected co-performers in parallel.
+      const images = await Promise.all(
+        targets.map(async (c) => {
+          try {
+            const { url } = await fetchArtistImage({ data: { artist: c.artist } });
+            return [c.artist, url] as const;
+          } catch {
+            return [c.artist, null] as const;
+          }
+        }),
+      );
+      const imageMap = new Map(images);
+
+      const headlinerName = headliner.trim();
+      const allArtistsInGroup = [form.artist.trim(), ...targets.map((t) => t.artist)];
+
       for (const c of targets) {
+        const isHeadliner =
+          headlinerName.length > 0 && c.artist.toLowerCase() === headlinerName.toLowerCase();
+        const supportNote = isHeadliner ? null : `Support act for ${headlinerName}`;
+        const openersForRow = isHeadliner
+          ? allArtistsInGroup.filter(
+              (a) => a && a.toLowerCase() !== c.artist.toLowerCase(),
+            )
+          : null;
         await add.mutateAsync({
           artist: c.artist,
           tour: c.tour,
-          openers: null,
+          openers: openersForRow && openersForRow.length ? openersForRow : null,
           date: form.date,
           venue: c.venue || form.venue,
           city: c.city ?? form.city,
           country: c.country ?? (form.country || null),
           rating,
           genre: form.genre.trim() || null,
-          notes: null,
+          notes: supportNote,
           ticketPrice: null,
           songsSeen: c.songs.length || null,
           setlist: c.songs.length ? c.songs : null,
-          artistImageUrl: null,
+          artistImageUrl: imageMap.get(c.artist) ?? null,
           openerSetlists: null,
         });
         ok += 1;
       }
+
+      // If user picked a co-performer as the headliner, the main form's artist
+      // is actually a support act — reflect that in the main form before submit.
+      if (
+        headlinerName &&
+        headlinerName.toLowerCase() !== form.artist.trim().toLowerCase()
+      ) {
+        setForm((f) => ({
+          ...f,
+          notes: f.notes?.trim() ? f.notes : `Support act for ${headlinerName}`,
+        }));
+        setOpeners(null);
+      }
+
       toast.success(`Logged ${ok} additional ${ok === 1 ? "show" : "shows"}`);
       setCoPerformers(null);
       setSelectedCo(new Set());
