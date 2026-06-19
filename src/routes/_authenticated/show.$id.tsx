@@ -155,20 +155,18 @@ function ShowDetail() {
         </article>
 
         <aside className="space-y-6">
-          <div className="rounded-3xl border border-hairline bg-card p-6">
-            <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              <Users className="h-3.5 w-3.5" /> Openers
-            </h3>
-            {concert.openers?.length ? (
+          {concert.openers?.length ? (
+            <div className="rounded-3xl border border-hairline bg-card p-6">
+              <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+                <Users className="h-3.5 w-3.5" /> Openers
+              </h3>
               <ul className="mt-3 space-y-2">
                 {concert.openers.map((o) => (
                   <li key={o} className="text-sm font-semibold">{o}</li>
                 ))}
               </ul>
-            ) : (
-              <p className="mt-3 text-sm text-muted-foreground">No openers logged.</p>
-            )}
-          </div>
+            </div>
+          ) : null}
 
           {concert.notes && (
             <div className="rounded-3xl border border-hairline bg-card p-6">
