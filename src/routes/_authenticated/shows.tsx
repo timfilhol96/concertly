@@ -907,3 +907,35 @@ function formatFans(n: number): string {
   if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
   return String(n);
 }
+
+function FetchingOverlay({
+  artist,
+  step,
+  progress,
+}: {
+  artist: string;
+  step: string;
+  progress: { done: number; total: number };
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+      <div className="w-full max-w-sm overflow-hidden rounded-2xl border border-hairline bg-card shadow-2xl">
+        <div className="flex items-center justify-between border-b border-hairline bg-surface px-5 py-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          <span>Fetching info</span>
+          {progress.total > 1 && (
+            <span>
+              {Math.min(progress.done + 1, progress.total)} / {progress.total}
+            </span>
+          )}
+        </div>
+        <div className="flex items-center gap-4 p-6">
+          <RefreshCw className="h-6 w-6 flex-shrink-0 animate-spin text-brand" />
+          <div className="min-w-0">
+            <div className="truncate font-display text-lg font-extrabold">{artist}</div>
+            <div className="truncate text-sm text-muted-foreground">{step}</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
