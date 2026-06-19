@@ -47,6 +47,9 @@ function AddShow() {
     existing?.openerSetlists ?? null,
   );
   const [looking, setLooking] = useState(false);
+  const [coPerformers, setCoPerformers] = useState<CoPerformer[] | null>(null);
+  const [selectedCo, setSelectedCo] = useState<Set<string>>(new Set());
+  const [loggingCo, setLoggingCo] = useState(false);
   const [form, setForm] = useState({
     artist: existing?.artist ?? "",
     tour: existing?.tour ?? "",
