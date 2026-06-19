@@ -70,12 +70,19 @@ function AddShow() {
         venue: r.venue ?? f.venue,
         city: r.city ?? f.city,
         country: r.country ?? f.country,
+        genre: r.genre ?? f.genre,
       }));
       setOpeners(r.openers.length ? r.openers : null);
       setSongsSeen(r.songsSeen);
+      setSetlist(r.songs.length ? r.songs : null);
       toast.success("Pulled from setlist.fm", {
         description:
-          [r.tour, r.openers.length ? `${r.openers.length} opener(s)` : null, r.songsSeen ? `${r.songsSeen} songs` : null]
+          [
+            r.tour,
+            r.openers.length ? `${r.openers.length} opener(s)` : null,
+            r.songs.length ? `${r.songs.length} songs` : null,
+            r.genre,
+          ]
             .filter(Boolean)
             .join(" · ") || "Details filled in.",
       });
