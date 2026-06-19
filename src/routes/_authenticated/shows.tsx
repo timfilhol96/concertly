@@ -19,12 +19,13 @@ import {
   type CoPerformer,
 } from "@/lib/setlistfm.functions";
 
-type Search = { month?: string };
+type Search = { month?: string; genre?: string };
 
 export const Route = createFileRoute("/_authenticated/shows")({
   head: () => ({ meta: [{ title: "My Shows · Concertly" }] }),
   validateSearch: (s: Record<string, unknown>): Search => ({
     month: typeof s.month === "string" && /^\d{4}-\d{2}$/.test(s.month) ? s.month : undefined,
+    genre: typeof s.genre === "string" && s.genre.length > 0 ? s.genre : undefined,
   }),
   component: Shows,
 });
@@ -65,7 +66,7 @@ type Prompt = ArtistPrompt | CoPerformerPrompt | NotFoundPrompt;
 
 function Shows() {
   const nav = useNavigate();
-  const { month } = Route.useSearch();
+  const { month, genre } = Route.useSearch();
   const { data: concerts = [], isLoading } = useConcerts();
   const del = useDeleteConcert();
   const update = useUpdateConcert();
@@ -92,10 +93,14 @@ function Shows() {
       [c.artist, c.venue, c.city, c.tour ?? ""].join(" ").toLowerCase().includes(q.toLowerCase()),
     );
     if (month) filtered = filtered.filter((c) => c.date.startsWith(month));
+    if (genre) {
+      const g = genre.toLowerCase();
+      filtered = filtered.filter((c) => (c.genre ?? "Unknown").toLowerCase() === g);
+    }
     return filtered.sort((a, b) =>
       sort === "date" ? (a.date < b.date ? 1 : -1) : b.rating - a.rating,
     );
-  }, [q, sort, concerts, month]);
+  }, [q, sort, concerts, month, genre]);
 
   const monthLabel = month
     ? new Date(`${month}-01T00:00:00`).toLocaleString("en", { month: "long", year: "numeric" })
@@ -506,15 +511,17 @@ function Shows() {
           <p className="mt-2 text-muted-foreground">
             {monthLabel
               ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} in ${monthLabel}`
-              : `Every gig in your archive — ${concerts.length} total.`}
+              : genre
+                ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} tagged ${genre}`
+                : `Every gig in your archive — ${concerts.length} total.`}
           </p>
-          {month && (
+          {(month || genre) && (
             <button
               type="button"
               onClick={() => nav({ to: "/shows", search: {} })}
               className="mt-2 inline-flex items-center gap-1 rounded-full border border-hairline bg-surface px-3 py-1 text-xs font-semibold hover:bg-surface-2"
             >
-              <X className="h-3 w-3" /> Clear month filter
+              <X className="h-3 w-3" /> Clear {month ? "month" : "genre"} filter
             </button>
           )}
         </div>
