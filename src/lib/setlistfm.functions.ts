@@ -137,12 +137,20 @@ export const lookupSetlist = createServerFn({ method: "POST" })
       }
     }
 
+    let tour = headliner.tour?.name ?? null;
+
+    // Fallback: setlist.fm often omits tour on individual shows. Look up the
+    // artist's nearby setlists by MBID and use the closest dated tour name.
+    if (!tour && headliner.artist?.mbid) {
+      tour = await lookupTourNearby(headliner.artist.mbid, data.date, apiKey);
+    }
+
     const genre = await lookupGenre(headliner.artist?.mbid);
 
     return {
       found: true,
       artist: headliner.artist?.name ?? null,
-      tour: headliner.tour?.name ?? null,
+      tour,
       venue: headliner.venue?.name ?? null,
       city: headliner.venue?.city?.name ?? null,
       country:
@@ -156,3 +164,57 @@ export const lookupSetlist = createServerFn({ method: "POST" })
       setlistUrl: headliner.url ?? null,
     };
   });
+
+function parseSetlistDate(ddmmyyyy: string | undefined): number | null {
+  if (!ddmmyyyy) return null;
+  const [d, m, y] = ddmmyyyy.split("-");
+  if (!d || !m || !y) return null;
+  const t = Date.parse(`${y}-${m}-${d}`);
+  return Number.isFinite(t) ? t : null;
+}
+
+async function lookupTourNearby(
+  mbid: string,
+  isoDate: string,
+  apiKey: string,
+): Promise<string | null> {
+  try {
+    const target = Date.parse(isoDate);
+    if (!Number.isFinite(target)) return null;
+
+    // Pull the first two pages of the artist's setlists and pick the
+    // tour name from the chronologically closest show that has one.
+    const candidates: Array<{ tour: string; date: number }> = [];
+    for (const page of [1, 2]) {
+      const url = new URL(
+        `https://api.setlist.fm/rest/1.0/artist/${mbid}/setlists`,
+      );
+      url.searchParams.set("p", String(page));
+      const res = await fetch(url.toString(), {
+        headers: {
+          "x-api-key": apiKey,
+          Accept: "application/json",
+          "Accept-Language": "en",
+        },
+      });
+      if (!res.ok) break;
+      const json = (await res.json()) as {
+        setlist?: Array<{ eventDate?: string; tour?: { name?: string } }>;
+      };
+      for (const s of json.setlist ?? []) {
+        const name = s.tour?.name?.trim();
+        const d = parseSetlistDate(s.eventDate);
+        if (name && d !== null) candidates.push({ tour: name, date: d });
+      }
+      if ((json.setlist?.length ?? 0) < 20) break;
+    }
+
+    if (candidates.length === 0) return null;
+    candidates.sort(
+      (a, b) => Math.abs(a.date - target) - Math.abs(b.date - target),
+    );
+    return candidates[0].tour;
+  } catch {
+    return null;
+  }
+}
