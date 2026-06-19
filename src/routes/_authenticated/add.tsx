@@ -13,6 +13,7 @@ import {
 import {
   lookupArtistImageFn,
   lookupCoPerformers,
+  lookupDeezerArtistByIdFn,
   lookupSetlist,
   searchArtists,
   type ArtistSuggestion,
