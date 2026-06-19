@@ -152,6 +152,18 @@ function Shows() {
             <option value="date">Newest</option>
             <option value="rating">Top rated</option>
           </select>
+          <button
+            type="button"
+            onClick={handleRefreshAll}
+            disabled={refresh.running || concerts.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-2 text-xs font-semibold hover:bg-surface-2 disabled:opacity-50"
+            title="Re-fetch tour, setlist, genre & artist image for every show"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${refresh.running ? "animate-spin" : ""}`} />
+            {refresh.running
+              ? `Refreshing ${refresh.done}/${refresh.total}`
+              : "Refresh all info"}
+          </button>
         </div>
       </div>
 
