@@ -1,5 +1,5 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Calendar, MapPin, Music, Sparkles, Star, Ticket, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -14,6 +14,8 @@ import {
   lookupArtistImageFn,
   lookupCoPerformers,
   lookupSetlist,
+  searchArtists,
+  type ArtistSuggestion,
   type CoPerformer,
 } from "@/lib/setlistfm.functions";
 import { Crown, Users } from "lucide-react";
