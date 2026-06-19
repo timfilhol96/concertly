@@ -26,6 +26,7 @@ export type Database = {
           notes: string | null
           openers: string[] | null
           rating: number
+          setlist: string[] | null
           songs_seen: number | null
           ticket_price: number | null
           tour: string | null
@@ -43,6 +44,7 @@ export type Database = {
           notes?: string | null
           openers?: string[] | null
           rating?: number
+          setlist?: string[] | null
           songs_seen?: number | null
           ticket_price?: number | null
           tour?: string | null
@@ -60,6 +62,7 @@ export type Database = {
           notes?: string | null
           openers?: string[] | null
           rating?: number
+          setlist?: string[] | null
           songs_seen?: number | null
           ticket_price?: number | null
           tour?: string | null
