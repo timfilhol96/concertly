@@ -64,6 +64,35 @@ async function lookupGenre(mbid: string | undefined): Promise<string | null> {
 }
 
 // Use Deezer's public search (no API key required) for artist images + genre.
+async function genreForArtistId(id: number): Promise<string | null> {
+  try {
+    const albRes = await fetch(
+      `https://api.deezer.com/artist/${id}/albums?limit=10`,
+      { headers: { Accept: "application/json" } },
+    );
+    if (!albRes.ok) return null;
+    const albJson = (await albRes.json()) as {
+      data?: Array<{ genre_id?: number }>;
+    };
+    const counts = new Map<number, number>();
+    for (const al of albJson.data ?? []) {
+      if (typeof al.genre_id === "number" && al.genre_id > 0) {
+        counts.set(al.genre_id, (counts.get(al.genre_id) ?? 0) + 1);
+      }
+    }
+    const top = [...counts.entries()].sort((x, y) => y[1] - x[1])[0]?.[0];
+    if (!top) return null;
+    const gRes = await fetch(`https://api.deezer.com/genre/${top}`, {
+      headers: { Accept: "application/json" },
+    });
+    if (!gRes.ok) return null;
+    const gJson = (await gRes.json()) as { name?: string };
+    return gJson.name ?? null;
+  } catch {
+    return null;
+  }
+}
+
 async function lookupDeezerArtist(
   name: string,
 ): Promise<{ image: string | null; genre: string | null }> {
@@ -82,38 +111,7 @@ async function lookupDeezerArtist(
     const a = json.data?.[0];
     if (!a) return { image: null, genre: null };
     const image = a.picture_xl ?? a.picture_big ?? a.picture_medium ?? null;
-    let genre: string | null = null;
-    if (a.id) {
-      try {
-        const albRes = await fetch(
-          `https://api.deezer.com/artist/${a.id}/albums?limit=10`,
-          { headers: { Accept: "application/json" } },
-        );
-        if (albRes.ok) {
-          const albJson = (await albRes.json()) as {
-            data?: Array<{ genre_id?: number }>;
-          };
-          const counts = new Map<number, number>();
-          for (const al of albJson.data ?? []) {
-            if (typeof al.genre_id === "number" && al.genre_id > 0) {
-              counts.set(al.genre_id, (counts.get(al.genre_id) ?? 0) + 1);
-            }
-          }
-          const top = [...counts.entries()].sort((x, y) => y[1] - x[1])[0]?.[0];
-          if (top) {
-            const gRes = await fetch(`https://api.deezer.com/genre/${top}`, {
-              headers: { Accept: "application/json" },
-            });
-            if (gRes.ok) {
-              const gJson = (await gRes.json()) as { name?: string };
-              if (gJson.name) genre = gJson.name;
-            }
-          }
-        }
-      } catch {
-        // ignore genre failure
-      }
-    }
+    const genre = a.id ? await genreForArtistId(a.id) : null;
     return { image, genre };
   } catch {
     return { image: null, genre: null };
@@ -280,7 +278,12 @@ export const lookupSetlist = createServerFn({ method: "POST" })
 
 const ArtistSearchInput = z.object({ query: z.string().min(1).max(120) });
 
-export type ArtistSuggestion = { name: string; image: string | null };
+export type ArtistSuggestion = {
+  id: number | null;
+  name: string;
+  image: string | null;
+  nbFan: number | null;
+};
 
 export const searchArtists = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => ArtistSearchInput.parse(input))
@@ -293,9 +296,11 @@ export const searchArtists = createServerFn({ method: "POST" })
       if (!res.ok) return [];
       const json = (await res.json()) as {
         data?: Array<{
+          id?: number;
           name?: string;
           picture_medium?: string;
           picture_small?: string;
+          nb_fan?: number;
         }>;
       };
       const seen = new Set<string>();
@@ -303,16 +308,49 @@ export const searchArtists = createServerFn({ method: "POST" })
       for (const a of json.data ?? []) {
         const name = a.name?.trim();
         if (!name) continue;
-        const key = name.toLowerCase();
+        const key = `${name.toLowerCase()}::${a.id ?? ""}`;
         if (seen.has(key)) continue;
         seen.add(key);
-        out.push({ name, image: a.picture_medium ?? a.picture_small ?? null });
+        out.push({
+          id: typeof a.id === "number" ? a.id : null,
+          name,
+          image: a.picture_medium ?? a.picture_small ?? null,
+          nbFan: typeof a.nb_fan === "number" ? a.nb_fan : null,
+        });
       }
       return out;
     } catch {
       return [];
     }
   });
+
+const ArtistByIdInput = z.object({ id: z.number().int().positive() });
+
+export const lookupDeezerArtistByIdFn = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => ArtistByIdInput.parse(input))
+  .handler(
+    async ({
+      data,
+    }): Promise<{ image: string | null; genre: string | null }> => {
+      try {
+        const res = await fetch(`https://api.deezer.com/artist/${data.id}`, {
+          headers: { Accept: "application/json" },
+        });
+        if (!res.ok) return { image: null, genre: null };
+        const json = (await res.json()) as {
+          picture_xl?: string;
+          picture_big?: string;
+          picture_medium?: string;
+        };
+        const image =
+          json.picture_xl ?? json.picture_big ?? json.picture_medium ?? null;
+        const genre = await genreForArtistId(data.id);
+        return { image, genre };
+      } catch {
+        return { image: null, genre: null };
+      }
+    },
+  );
 
 const CoPerformersInput = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),

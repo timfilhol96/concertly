@@ -1,10 +1,23 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Pencil, RefreshCw, Search, Star, Trash2, X } from "lucide-react";
+import { Crown, Pencil, RefreshCw, Search, Star, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
-import { useConcerts, useDeleteConcert, useUpdateConcert } from "@/lib/concerts";
-import { lookupSetlist } from "@/lib/setlistfm.functions";
+import {
+  useAddConcert,
+  useConcerts,
+  useDeleteConcert,
+  useUpdateConcert,
+  type Concert,
+} from "@/lib/concerts";
+import {
+  lookupCoPerformers,
+  lookupDeezerArtistByIdFn,
+  lookupSetlist,
+  searchArtists,
+  type ArtistSuggestion,
+  type CoPerformer,
+} from "@/lib/setlistfm.functions";
 
 type Search = { month?: string };
 
@@ -16,18 +29,61 @@ export const Route = createFileRoute("/_authenticated/shows")({
   component: Shows,
 });
 
+// ---------- Wizard prompt types ----------
+
+type ArtistPromptKind = "ambiguous" | "not_found";
+
+type ArtistPrompt = {
+  kind: "artist";
+  artistKind: ArtistPromptKind;
+  concert: Concert;
+  query: string;
+  suggestions: ArtistSuggestion[];
+  resolve: (choice: ArtistSuggestion | "skip" | "cancel") => void;
+};
+
+type CoPerformerPrompt = {
+  kind: "co_performers";
+  concert: Concert;
+  coPerformers: CoPerformer[];
+  resolve: (
+    choice:
+      | { kind: "log"; selected: string[]; headliner: string }
+      | { kind: "skip" }
+      | { kind: "cancel" },
+  ) => void;
+};
+
+type NotFoundPrompt = {
+  kind: "not_found";
+  concert: Concert;
+  fallback: { image: string | null; genre: string | null } | null;
+  resolve: (choice: "apply" | "skip" | "cancel") => void;
+};
+
+type Prompt = ArtistPrompt | CoPerformerPrompt | NotFoundPrompt;
+
 function Shows() {
   const nav = useNavigate();
   const { month } = Route.useSearch();
   const { data: concerts = [], isLoading } = useConcerts();
   const del = useDeleteConcert();
   const update = useUpdateConcert();
+  const add = useAddConcert();
   const fetchSetlist = useServerFn(lookupSetlist);
+  const fetchSearchArtists = useServerFn(searchArtists);
+  const fetchDeezerById = useServerFn(lookupDeezerArtistByIdFn);
+  const fetchCoPerformers = useServerFn(lookupCoPerformers);
+
   const [refresh, setRefresh] = useState<{ running: boolean; done: number; total: number }>({
     running: false,
     done: 0,
     total: 0,
   });
+  const [prompt, setPrompt] = useState<Prompt | null>(null);
+  // Cache picked Deezer artist per artist-name (lowercase) so we don't re-ask within a batch.
+  const artistChoiceCache = useRef(new Map<string, ArtistSuggestion>());
+
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"date" | "rating">("date");
   const list = useMemo(() => {
@@ -54,6 +110,89 @@ function Shows() {
     }
   }
 
+  // ---------- Wizard helpers ----------
+
+  const askArtist = useCallback(
+    (
+      concert: Concert,
+      artistKind: ArtistPromptKind,
+      query: string,
+      suggestions: ArtistSuggestion[],
+    ) =>
+      new Promise<ArtistSuggestion | "skip" | "cancel">((resolve) => {
+        setPrompt({ kind: "artist", artistKind, concert, query, suggestions, resolve });
+      }),
+    [],
+  );
+
+  const askCoPerformers = useCallback(
+    (concert: Concert, coPerformers: CoPerformer[]) =>
+      new Promise<
+        | { kind: "log"; selected: string[]; headliner: string }
+        | { kind: "skip" }
+        | { kind: "cancel" }
+      >((resolve) => {
+        setPrompt({ kind: "co_performers", concert, coPerformers, resolve });
+      }),
+    [],
+  );
+
+  const askNotFound = useCallback(
+    (
+      concert: Concert,
+      fallback: { image: string | null; genre: string | null } | null,
+    ) =>
+      new Promise<"apply" | "skip" | "cancel">((resolve) => {
+        setPrompt({ kind: "not_found", concert, fallback, resolve });
+      }),
+    [],
+  );
+
+  // Resolve a Deezer artist for a concert, asking if ambiguous / not found.
+  // Returns null if user skipped, "cancel" if they cancelled the whole batch.
+  async function resolveArtist(
+    concert: Concert,
+  ): Promise<ArtistSuggestion | null | "cancel"> {
+    const key = concert.artist.trim().toLowerCase();
+    const cached = artistChoiceCache.current.get(key);
+    if (cached) return cached;
+    let suggestions: ArtistSuggestion[] = [];
+    try {
+      suggestions = await fetchSearchArtists({ data: { query: concert.artist } });
+    } catch {
+      suggestions = [];
+    }
+    // Exact match (case-insensitive) wins automatically.
+    const exact = suggestions.filter((s) => s.name.toLowerCase() === key);
+    if (exact.length === 1) {
+      artistChoiceCache.current.set(key, exact[0]);
+      return exact[0];
+    }
+    if (suggestions.length === 0) {
+      // Truly nothing found — ask user to broaden / pick closest (we already have none).
+      const choice = await askArtist(concert, "not_found", concert.artist, []);
+      if (choice === "cancel") return "cancel";
+      if (choice === "skip") return null;
+      artistChoiceCache.current.set(key, choice);
+      return choice;
+    }
+    if (exact.length > 1 || suggestions.length > 1) {
+      const choice = await askArtist(
+        concert,
+        exact.length > 1 ? "ambiguous" : "not_found",
+        concert.artist,
+        suggestions,
+      );
+      if (choice === "cancel") return "cancel";
+      if (choice === "skip") return null;
+      artistChoiceCache.current.set(key, choice);
+      return choice;
+    }
+    // exactly one suggestion, not exact name match — accept it but cache it.
+    artistChoiceCache.current.set(key, suggestions[0]);
+    return suggestions[0];
+  }
+
   async function handleRefreshAll() {
     if (refresh.running) return;
     const targets = concerts;
@@ -63,55 +202,252 @@ function Shows() {
     }
     if (
       !confirm(
-        `Fetch fresh setlist.fm info for all ${targets.length} show${
+        `Fetch fresh info for all ${targets.length} show${
           targets.length === 1 ? "" : "s"
-        }? Existing rating, notes, and ticket price will be kept.`,
+        }? You'll be asked to confirm when something's ambiguous. Existing rating, notes, and ticket price are always kept.`,
       )
     )
       return;
+    artistChoiceCache.current.clear();
     setRefresh({ running: true, done: 0, total: targets.length });
     let updated = 0;
     let skipped = 0;
     let failed = 0;
+    let coLogged = 0;
+    let cancelled = false;
+
     for (let i = 0; i < targets.length; i++) {
       const c = targets[i];
       try {
+        // 1. Resolve artist on Deezer.
+        const artistChoice = await resolveArtist(c);
+        if (artistChoice === "cancel") {
+          cancelled = true;
+          break;
+        }
+
+        // 2. Look up the show on setlist.fm.
         const res = await fetchSetlist({ data: { artist: c.artist, date: c.date } });
-        if (res.found) {
+
+        if (!res.found) {
+          // Fallback: still apply Deezer image + genre if the user picked something.
+          let fallback: { image: string | null; genre: string | null } | null = null;
+          if (artistChoice && artistChoice.id != null) {
+            try {
+              fallback = await fetchDeezerById({ data: { id: artistChoice.id } });
+            } catch {
+              fallback = { image: artistChoice.image, genre: null };
+            }
+          } else if (artistChoice) {
+            fallback = { image: artistChoice.image, genre: null };
+          }
+
+          if (!fallback || (!fallback.image && !fallback.genre)) {
+            skipped++;
+          } else {
+            const decision = await askNotFound(c, fallback);
+            if (decision === "cancel") {
+              cancelled = true;
+              break;
+            }
+            if (decision === "apply") {
+              await update.mutateAsync({
+                id: c.id,
+                artist: c.artist,
+                tour: c.tour,
+                openers: c.openers,
+                date: c.date,
+                venue: c.venue,
+                city: c.city,
+                country: c.country,
+                rating: c.rating,
+                genre: fallback.genre ?? c.genre,
+                notes: c.notes,
+                ticketPrice: c.ticketPrice,
+                songsSeen: c.songsSeen,
+                setlist: c.setlist,
+                artistImageUrl: fallback.image ?? c.artistImageUrl,
+                openerSetlists: c.openerSetlists,
+              });
+              updated++;
+            } else {
+              skipped++;
+            }
+          }
+        } else {
+          // Found a setlist. Prefer Deezer artist image/genre if the user picked one explicitly.
+          let imageOverride: string | null = res.artistImageUrl;
+          let genreOverride: string | null = res.genre;
+          if (artistChoice && artistChoice.id != null) {
+            try {
+              const d = await fetchDeezerById({ data: { id: artistChoice.id } });
+              imageOverride = d.image ?? imageOverride;
+              genreOverride = d.genre ?? genreOverride;
+            } catch {
+              // keep setlist.fm values
+            }
+          }
+
+          // Co-performer probe.
+          let coPerformers: CoPerformer[] = [];
+          const venue = res.venue ?? c.venue;
+          if (venue) {
+            try {
+              const exclude = [
+                res.artist ?? c.artist,
+                ...(res.openers ?? []),
+                ...(c.openers ?? []),
+              ];
+              coPerformers = await fetchCoPerformers({
+                data: { date: c.date, venue, excludeArtists: exclude },
+              });
+              // Drop co-performers already in the user's archive on this date.
+              const sameDay = new Set(
+                concerts
+                  .filter((x) => x.id !== c.id && x.date === c.date)
+                  .map((x) => x.artist.toLowerCase()),
+              );
+              coPerformers = coPerformers.filter(
+                (cp) => !sameDay.has(cp.artist.toLowerCase()),
+              );
+            } catch {
+              coPerformers = [];
+            }
+          }
+
+          // Compute final headliner + opener list (possibly overridden by user).
+          let finalHeadliner = res.artist ?? c.artist;
+          let finalOpeners: string[] | null =
+            res.openers.length > 0 ? res.openers : c.openers;
+          const extraConcerts: Array<{
+            performer: CoPerformer;
+            isHeadliner: boolean;
+            otherInGroup: string[];
+          }> = [];
+
+          if (coPerformers.length > 0) {
+            const decision = await askCoPerformers(c, coPerformers);
+            if (decision.kind === "cancel") {
+              cancelled = true;
+              break;
+            }
+            if (decision.kind === "log" && decision.selected.length > 0) {
+              const selectedSet = new Set(decision.selected);
+              const allGroup = [
+                res.artist ?? c.artist,
+                ...decision.selected,
+              ];
+              finalHeadliner = decision.headliner;
+              if (decision.headliner.toLowerCase() !== (res.artist ?? c.artist).toLowerCase()) {
+                // The original concert is now a support act.
+                finalOpeners = null;
+              } else {
+                // Original is still headliner — include new selections as openers.
+                const existing = new Set(
+                  (finalOpeners ?? []).map((o) => o.toLowerCase()),
+                );
+                finalOpeners = [
+                  ...(finalOpeners ?? []),
+                  ...decision.selected.filter(
+                    (s) => !existing.has(s.toLowerCase()),
+                  ),
+                ];
+              }
+              for (const cp of coPerformers) {
+                if (!selectedSet.has(cp.artist)) continue;
+                const isCpHeadliner =
+                  cp.artist.toLowerCase() === decision.headliner.toLowerCase();
+                const otherInGroup = allGroup.filter(
+                  (a) => a.toLowerCase() !== cp.artist.toLowerCase(),
+                );
+                extraConcerts.push({ performer: cp, isHeadliner: isCpHeadliner, otherInGroup });
+              }
+            }
+          }
+
           await update.mutateAsync({
             id: c.id,
-            artist: res.artist ?? c.artist,
-            tour: res.tour ?? c.tour,
-            openers: res.openers.length > 0 ? res.openers : c.openers,
+            artist: c.artist,
+            tour: res.tour ?? "",
+            openers: finalOpeners,
             date: c.date,
             venue: res.venue ?? c.venue,
             city: res.city ?? c.city,
             country: res.country ?? c.country,
             rating: c.rating,
-            genre: res.genre ?? c.genre,
-            notes: c.notes,
+            genre: genreOverride ?? c.genre,
+            notes:
+              finalHeadliner.toLowerCase() !== c.artist.toLowerCase()
+                ? `Support act for ${finalHeadliner}`
+                : c.notes,
             ticketPrice: c.ticketPrice,
             songsSeen: res.songsSeen ?? c.songsSeen,
             setlist: res.songs.length > 0 ? res.songs : c.setlist,
-            artistImageUrl: res.artistImageUrl ?? c.artistImageUrl,
+            artistImageUrl: imageOverride ?? c.artistImageUrl,
             openerSetlists:
               res.openerSetlists.length > 0 ? res.openerSetlists : c.openerSetlists,
           });
           updated++;
-        } else {
-          skipped++;
+
+          // Log co-performers as new concerts.
+          for (const extra of extraConcerts) {
+            try {
+              let image: string | null = null;
+              let genre: string | null = null;
+              try {
+                const sug = await fetchSearchArtists({ data: { query: extra.performer.artist } });
+                const hit = sug.find(
+                  (s) => s.name.toLowerCase() === extra.performer.artist.toLowerCase(),
+                ) ?? sug[0];
+                if (hit?.id != null) {
+                  const d = await fetchDeezerById({ data: { id: hit.id } });
+                  image = d.image;
+                  genre = d.genre;
+                } else if (hit) {
+                  image = hit.image;
+                }
+              } catch {
+                // ignore image/genre failure
+              }
+              await add.mutateAsync({
+                artist: extra.performer.artist,
+                tour: extra.performer.tour,
+                openers: extra.isHeadliner ? extra.otherInGroup : null,
+                date: c.date,
+                venue: extra.performer.venue,
+                city: extra.performer.city ?? c.city,
+                country: extra.performer.country ?? c.country,
+                rating: 8,
+                genre,
+                notes: extra.isHeadliner ? null : `Support act for ${finalHeadliner}`,
+                ticketPrice: null,
+                songsSeen: extra.performer.songs.length || null,
+                setlist: extra.performer.songs.length ? extra.performer.songs : null,
+                artistImageUrl: image,
+                openerSetlists: null,
+              });
+              coLogged++;
+            } catch {
+              // ignore single add failure
+            }
+          }
         }
       } catch {
         failed++;
       }
       setRefresh({ running: true, done: i + 1, total: targets.length });
     }
+
+    setPrompt(null);
     setRefresh({ running: false, done: 0, total: 0 });
-    toast.success(
+    const msg =
       `Refreshed ${updated} show${updated === 1 ? "" : "s"}` +
-        (skipped ? ` · ${skipped} not found` : "") +
-        (failed ? ` · ${failed} failed` : ""),
-    );
+      (coLogged ? ` · added ${coLogged} co-performer${coLogged === 1 ? "" : "s"}` : "") +
+      (skipped ? ` · ${skipped} skipped` : "") +
+      (failed ? ` · ${failed} failed` : "") +
+      (cancelled ? " · cancelled" : "");
+    if (cancelled) toast.info(msg);
+    else toast.success(msg);
   }
 
   return (
@@ -244,6 +580,269 @@ function Shows() {
           </tbody>
         </table>
       </div>
+
+      {prompt && <WizardModal prompt={prompt} progress={refresh} />}
     </main>
   );
+}
+
+// ---------- Wizard modal ----------
+
+function WizardModal({
+  prompt,
+  progress,
+}: {
+  prompt: Prompt;
+  progress: { done: number; total: number };
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-background/80 backdrop-blur-sm p-4">
+      <div className="w-full max-w-2xl overflow-hidden rounded-2xl border border-hairline bg-card shadow-2xl">
+        <div className="flex items-center justify-between border-b border-hairline bg-surface px-5 py-3 text-xs font-semibold uppercase tracking-widest text-muted-foreground">
+          <span>Refresh wizard</span>
+          <span>{progress.done + 1} / {progress.total}</span>
+        </div>
+        <div className="p-6">
+          {prompt.kind === "artist" && <ArtistPane prompt={prompt} />}
+          {prompt.kind === "co_performers" && <CoPerformerPane prompt={prompt} />}
+          {prompt.kind === "not_found" && <NotFoundPane prompt={prompt} />}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ArtistPane({ prompt }: { prompt: ArtistPrompt }) {
+  const { concert, suggestions, artistKind, query, resolve } = prompt;
+  const heading =
+    artistKind === "ambiguous"
+      ? `Multiple artists named "${query}"`
+      : suggestions.length === 0
+        ? `Couldn't find "${query}" on Deezer`
+        : `Pick the closest match for "${query}"`;
+  const sub =
+    artistKind === "ambiguous"
+      ? `For ${concert.venue}, ${concert.date}. Which one did you see?`
+      : `For ${concert.venue}, ${concert.date}.`;
+
+  return (
+    <div>
+      <h2 className="font-display text-xl font-extrabold">{heading}</h2>
+      <p className="mt-1 text-sm text-muted-foreground">{sub}</p>
+
+      {suggestions.length === 0 ? (
+        <p className="mt-4 rounded-xl border border-hairline bg-surface p-4 text-sm text-muted-foreground">
+          No suggestions to show. Skip to keep the show as-is.
+        </p>
+      ) : (
+        <ul className="mt-4 grid max-h-72 grid-cols-1 gap-2 overflow-auto md:grid-cols-2">
+          {suggestions.map((s) => (
+            <li key={`${s.name}-${s.id ?? ""}`}>
+              <button
+                type="button"
+                onClick={() => resolve(s)}
+                className="flex w-full items-center gap-3 rounded-xl border border-hairline bg-surface p-3 text-left hover:bg-surface-2"
+              >
+                {s.image ? (
+                  <img src={s.image} alt="" className="h-10 w-10 flex-shrink-0 rounded-full object-cover" />
+                ) : (
+                  <div className="h-10 w-10 flex-shrink-0 rounded-full bg-surface-2" />
+                )}
+                <div className="min-w-0">
+                  <div className="truncate text-sm font-semibold">{s.name}</div>
+                  <div className="text-xs text-muted-foreground">
+                    {s.nbFan != null ? `${formatFans(s.nbFan)} fans` : "Deezer artist"}
+                  </div>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+
+      <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => resolve("cancel")}
+          className="rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold hover:bg-destructive/10 hover:text-destructive"
+        >
+          Cancel refresh
+        </button>
+        <button
+          type="button"
+          onClick={() => resolve("skip")}
+          className="rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold hover:bg-surface-2"
+        >
+          Skip this show
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function CoPerformerPane({ prompt }: { prompt: CoPerformerPrompt }) {
+  const { concert, coPerformers, resolve } = prompt;
+  const [selected, setSelected] = useState<Set<string>>(
+    () => new Set(coPerformers.map((c) => c.artist)),
+  );
+  const [headliner, setHeadliner] = useState<string>(concert.artist);
+
+  function toggle(name: string) {
+    setSelected((s) => {
+      const next = new Set(s);
+      if (next.has(name)) next.delete(name);
+      else next.add(name);
+      return next;
+    });
+  }
+
+  return (
+    <div>
+      <h2 className="font-display text-xl font-extrabold flex items-center gap-2">
+        <Users className="h-5 w-5" /> Other artists played here
+      </h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        At {concert.venue} on {concert.date}. Pick which to log and mark the headliner.
+      </p>
+
+      <ul className="mt-4 max-h-72 space-y-2 overflow-auto">
+        <li className="flex items-center gap-3 rounded-xl border border-hairline bg-surface p-3">
+          <input type="checkbox" checked disabled className="h-4 w-4" />
+          <button
+            type="button"
+            onClick={() => setHeadliner(concert.artist)}
+            className={`flex h-7 w-7 items-center justify-center rounded-full border ${
+              headliner.toLowerCase() === concert.artist.toLowerCase()
+                ? "border-brand bg-brand/20 text-brand"
+                : "border-hairline text-muted-foreground hover:bg-surface-2"
+            }`}
+            title="Mark as headliner"
+          >
+            <Crown className="h-3.5 w-3.5" />
+          </button>
+          <div className="min-w-0 flex-grow">
+            <div className="text-sm font-semibold">{concert.artist}</div>
+            <div className="text-xs text-muted-foreground">Already in your archive</div>
+          </div>
+        </li>
+        {coPerformers.map((cp) => {
+          const isSel = selected.has(cp.artist);
+          const isHead = headliner.toLowerCase() === cp.artist.toLowerCase();
+          return (
+            <li key={cp.artist} className="flex items-center gap-3 rounded-xl border border-hairline bg-surface p-3">
+              <input
+                type="checkbox"
+                checked={isSel}
+                onChange={() => toggle(cp.artist)}
+                className="h-4 w-4"
+              />
+              <button
+                type="button"
+                disabled={!isSel}
+                onClick={() => setHeadliner(cp.artist)}
+                className={`flex h-7 w-7 items-center justify-center rounded-full border ${
+                  isHead
+                    ? "border-brand bg-brand/20 text-brand"
+                    : "border-hairline text-muted-foreground hover:bg-surface-2"
+                } disabled:opacity-30`}
+                title="Mark as headliner"
+              >
+                <Crown className="h-3.5 w-3.5" />
+              </button>
+              <div className="min-w-0 flex-grow">
+                <div className="text-sm font-semibold">{cp.artist}</div>
+                <div className="text-xs text-muted-foreground">
+                  {cp.tour ?? "—"} · {cp.songs.length} songs
+                </div>
+              </div>
+            </li>
+          );
+        })}
+      </ul>
+
+      <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => resolve({ kind: "cancel" })}
+          className="rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold hover:bg-destructive/10 hover:text-destructive"
+        >
+          Cancel refresh
+        </button>
+        <button
+          type="button"
+          onClick={() => resolve({ kind: "skip" })}
+          className="rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold hover:bg-surface-2"
+        >
+          Don't log any
+        </button>
+        <button
+          type="button"
+          onClick={() =>
+            resolve({
+              kind: "log",
+              selected: [...selected],
+              headliner,
+            })
+          }
+          className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-brand-foreground hover:opacity-90"
+        >
+          Log {selected.size} & continue
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function NotFoundPane({ prompt }: { prompt: NotFoundPrompt }) {
+  const { concert, fallback, resolve } = prompt;
+  return (
+    <div>
+      <h2 className="font-display text-xl font-extrabold">Show not found on setlist.fm</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {concert.artist} · {concert.venue} · {concert.date}. We can still apply the artist's profile picture and genre.
+      </p>
+
+      <div className="mt-4 flex items-center gap-4 rounded-xl border border-hairline bg-surface p-4">
+        {fallback?.image ? (
+          <img src={fallback.image} alt="" className="h-16 w-16 rounded-full object-cover" />
+        ) : (
+          <div className="h-16 w-16 rounded-full bg-surface-2" />
+        )}
+        <div className="text-sm">
+          <div className="font-semibold">{concert.artist}</div>
+          <div className="text-muted-foreground">{fallback?.genre ?? "No genre found"}</div>
+        </div>
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => resolve("cancel")}
+          className="rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold hover:bg-destructive/10 hover:text-destructive"
+        >
+          Cancel refresh
+        </button>
+        <button
+          type="button"
+          onClick={() => resolve("skip")}
+          className="rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold hover:bg-surface-2"
+        >
+          Skip
+        </button>
+        <button
+          type="button"
+          onClick={() => resolve("apply")}
+          className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-brand-foreground hover:opacity-90"
+        >
+          Apply image & genre
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function formatFans(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`;
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`;
+  return String(n);
 }
