@@ -511,15 +511,17 @@ function Shows() {
           <p className="mt-2 text-muted-foreground">
             {monthLabel
               ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} in ${monthLabel}`
-              : `Every gig in your archive — ${concerts.length} total.`}
+              : genre
+                ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} tagged ${genre}`
+                : `Every gig in your archive — ${concerts.length} total.`}
           </p>
-          {month && (
+          {(month || genre) && (
             <button
               type="button"
               onClick={() => nav({ to: "/shows", search: {} })}
               className="mt-2 inline-flex items-center gap-1 rounded-full border border-hairline bg-surface px-3 py-1 text-xs font-semibold hover:bg-surface-2"
             >
-              <X className="h-3 w-3" /> Clear month filter
+              <X className="h-3 w-3" /> Clear {month ? "month" : "genre"} filter
             </button>
           )}
         </div>
