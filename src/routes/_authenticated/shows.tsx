@@ -1,8 +1,10 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { Pencil, Search, Star, Trash2, X } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { Pencil, RefreshCw, Search, Star, Trash2, X } from "lucide-react";
 import { toast } from "sonner";
-import { useConcerts, useDeleteConcert } from "@/lib/concerts";
+import { useConcerts, useDeleteConcert, useUpdateConcert } from "@/lib/concerts";
+import { lookupSetlist } from "@/lib/setlistfm.functions";
 
 type Search = { month?: string };
 
@@ -19,6 +21,13 @@ function Shows() {
   const { month } = Route.useSearch();
   const { data: concerts = [], isLoading } = useConcerts();
   const del = useDeleteConcert();
+  const update = useUpdateConcert();
+  const fetchSetlist = useServerFn(lookupSetlist);
+  const [refresh, setRefresh] = useState<{ running: boolean; done: number; total: number }>({
+    running: false,
+    done: 0,
+    total: 0,
+  });
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"date" | "rating">("date");
   const list = useMemo(() => {
@@ -43,6 +52,66 @@ function Shows() {
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't delete");
     }
+  }
+
+  async function handleRefreshAll() {
+    if (refresh.running) return;
+    const targets = concerts;
+    if (targets.length === 0) {
+      toast.info("No shows to refresh");
+      return;
+    }
+    if (
+      !confirm(
+        `Fetch fresh setlist.fm info for all ${targets.length} show${
+          targets.length === 1 ? "" : "s"
+        }? Existing rating, notes, and ticket price will be kept.`,
+      )
+    )
+      return;
+    setRefresh({ running: true, done: 0, total: targets.length });
+    let updated = 0;
+    let skipped = 0;
+    let failed = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const c = targets[i];
+      try {
+        const res = await fetchSetlist({ data: { artist: c.artist, date: c.date } });
+        if (res.found) {
+          await update.mutateAsync({
+            id: c.id,
+            artist: res.artist ?? c.artist,
+            tour: res.tour ?? c.tour,
+            openers: res.openers.length > 0 ? res.openers : c.openers,
+            date: c.date,
+            venue: res.venue ?? c.venue,
+            city: res.city ?? c.city,
+            country: res.country ?? c.country,
+            rating: c.rating,
+            genre: res.genre ?? c.genre,
+            notes: c.notes,
+            ticketPrice: c.ticketPrice,
+            songsSeen: res.songsSeen ?? c.songsSeen,
+            setlist: res.songs.length > 0 ? res.songs : c.setlist,
+            artistImageUrl: res.artistImageUrl ?? c.artistImageUrl,
+            openerSetlists:
+              res.openerSetlists.length > 0 ? res.openerSetlists : c.openerSetlists,
+          });
+          updated++;
+        } else {
+          skipped++;
+        }
+      } catch {
+        failed++;
+      }
+      setRefresh({ running: true, done: i + 1, total: targets.length });
+    }
+    setRefresh({ running: false, done: 0, total: 0 });
+    toast.success(
+      `Refreshed ${updated} show${updated === 1 ? "" : "s"}` +
+        (skipped ? ` · ${skipped} not found` : "") +
+        (failed ? ` · ${failed} failed` : ""),
+    );
   }
 
   return (
@@ -83,6 +152,18 @@ function Shows() {
             <option value="date">Newest</option>
             <option value="rating">Top rated</option>
           </select>
+          <button
+            type="button"
+            onClick={handleRefreshAll}
+            disabled={refresh.running || concerts.length === 0}
+            className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-2 text-xs font-semibold hover:bg-surface-2 disabled:opacity-50"
+            title="Re-fetch tour, setlist, genre & artist image for every show"
+          >
+            <RefreshCw className={`h-3.5 w-3.5 ${refresh.running ? "animate-spin" : ""}`} />
+            {refresh.running
+              ? `Refreshing ${refresh.done}/${refresh.total}`
+              : "Refresh all info"}
+          </button>
         </div>
       </div>
 
