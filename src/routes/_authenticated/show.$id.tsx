@@ -15,6 +15,32 @@ function ShowDetail() {
   const del = useDeleteConcert();
   const concert = concerts?.find((c) => c.id === id);
 
+  // Merge stored openers with any same-date/same-venue concerts logged as a
+  // support act for this artist (these are stored as their own row, so the
+  // headliner row's `openers` column doesn't know about them).
+  const mergedOpeners = (() => {
+    if (!concert) return [] as string[];
+    const stored = concert.openers ?? [];
+    const supportNote = `support act for ${concert.artist.toLowerCase()}`;
+    const venueKey = concert.venue.trim().toLowerCase();
+    const implicit = (concerts ?? [])
+      .filter(
+        (c) =>
+          c.id !== concert.id &&
+          c.date === concert.date &&
+          c.venue.trim().toLowerCase() === venueKey &&
+          (c.notes ?? "").trim().toLowerCase().startsWith(supportNote),
+      )
+      .map((c) => c.artist);
+    const seen = new Set<string>();
+    return [...stored, ...implicit].filter((name) => {
+      const k = name.toLowerCase();
+      if (seen.has(k)) return false;
+      seen.add(k);
+      return true;
+    });
+  })();
+
   if (isLoading) {
     return (
       <main className="mx-auto max-w-4xl px-6 py-20">
