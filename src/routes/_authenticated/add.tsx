@@ -125,6 +125,7 @@ function AddShow() {
           if (co.length > 0) {
             setCoPerformers(co);
             setSelectedCo(new Set(co.map((c) => c.artist)));
+            setHeadliner(r.artist ?? form.artist);
           } else {
             setCoPerformers(null);
             setSelectedCo(new Set());
