@@ -40,6 +40,7 @@ function AddShow() {
   const del = useDeleteConcert();
   const fetchSetlist = useServerFn(lookupSetlist);
   const fetchCoPerformers = useServerFn(lookupCoPerformers);
+  const fetchArtistImage = useServerFn(lookupArtistImageFn);
 
   const [rating, setRating] = useState(existing?.rating ?? 8);
   const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
