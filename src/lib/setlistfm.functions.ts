@@ -245,10 +245,10 @@ export const lookupSetlist = createServerFn({ method: "POST" })
       tour = await lookupTourNearby(headliner.artist.mbid, data.date, apiKey);
     }
 
-    // In parallel: genre, artist image, opener setlists.
-    const [genre, artistImageUrl, openerSetlistsRaw] = await Promise.all([
+    // In parallel: MusicBrainz genre (fallback), Deezer artist (image + genre), opener setlists.
+    const [mbGenre, deezer, openerSetlistsRaw] = await Promise.all([
       lookupGenre(headliner.artist?.mbid),
-      lookupArtistImage(headliner.artist?.name ?? data.artist),
+      lookupDeezerArtist(headliner.artist?.name ?? data.artist),
       Promise.all(
         openers.slice(0, 3).map(async (name) => ({
           artist: name,
@@ -256,6 +256,8 @@ export const lookupSetlist = createServerFn({ method: "POST" })
         })),
       ),
     ]);
+    const genre = deezer.genre ?? mbGenre;
+    const artistImageUrl = deezer.image;
     const openerSetlists = openerSetlistsRaw.filter((o) => o.songs.length > 0);
 
     return {
