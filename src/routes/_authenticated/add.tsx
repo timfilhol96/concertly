@@ -544,3 +544,119 @@ function Field({
     </div>
   );
 }
+
+function ArtistAutocomplete({
+  value,
+  onChange,
+  inputClassName,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  inputClassName: string;
+}) {
+  const search = useServerFn(searchArtists);
+  const [suggestions, setSuggestions] = useState<ArtistSuggestion[]>([]);
+  const [open, setOpen] = useState(false);
+  const [highlight, setHighlight] = useState(-1);
+  const wrapRef = useRef<HTMLDivElement>(null);
+  const debounceRef = useRef<number | null>(null);
+  const seqRef = useRef(0);
+
+  useEffect(() => {
+    const q = value.trim();
+    if (q.length < 2) {
+      setSuggestions([]);
+      return;
+    }
+    if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    debounceRef.current = window.setTimeout(async () => {
+      const seq = ++seqRef.current;
+      try {
+        const res = await search({ data: { query: q } });
+        if (seq === seqRef.current) {
+          setSuggestions(res);
+          setHighlight(-1);
+        }
+      } catch {
+        // ignore
+      }
+    }, 200);
+    return () => {
+      if (debounceRef.current) window.clearTimeout(debounceRef.current);
+    };
+  }, [value, search]);
+
+  useEffect(() => {
+    function onDocClick(e: MouseEvent) {
+      if (!wrapRef.current?.contains(e.target as Node)) setOpen(false);
+    }
+    document.addEventListener("mousedown", onDocClick);
+    return () => document.removeEventListener("mousedown", onDocClick);
+  }, []);
+
+  function pick(name: string) {
+    onChange(name);
+    setOpen(false);
+    setSuggestions([]);
+  }
+
+  const showList = open && suggestions.length > 0;
+
+  return (
+    <div ref={wrapRef} className="relative">
+      <input
+        required
+        value={value}
+        onChange={(e) => {
+          onChange(e.target.value);
+          setOpen(true);
+        }}
+        onFocus={() => setOpen(true)}
+        onKeyDown={(e) => {
+          if (!showList) return;
+          if (e.key === "ArrowDown") {
+            e.preventDefault();
+            setHighlight((h) => Math.min(h + 1, suggestions.length - 1));
+          } else if (e.key === "ArrowUp") {
+            e.preventDefault();
+            setHighlight((h) => Math.max(h - 1, 0));
+          } else if (e.key === "Enter" && highlight >= 0) {
+            e.preventDefault();
+            pick(suggestions[highlight].name);
+          } else if (e.key === "Escape") {
+            setOpen(false);
+          }
+        }}
+        className={inputClassName}
+        placeholder="e.g. Fred again.."
+        autoComplete="off"
+      />
+      {showList && (
+        <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-hairline bg-card shadow-xl">
+          {suggestions.map((s, i) => (
+            <li key={s.name}>
+              <button
+                type="button"
+                onMouseDown={(e) => {
+                  e.preventDefault();
+                  pick(s.name);
+                }}
+                onMouseEnter={() => setHighlight(i)}
+                className={`flex w-full items-center gap-3 px-3 py-2 text-left text-sm ${
+                  i === highlight ? "bg-surface-2" : "hover:bg-surface"
+                }`}
+              >
+                {s.image ? (
+                  <img src={s.image} alt="" className="h-7 w-7 flex-shrink-0 rounded-full object-cover" />
+                ) : (
+                  <div className="h-7 w-7 flex-shrink-0 rounded-full bg-surface-2" />
+                )}
+                <span className="font-medium">{s.name}</span>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
