@@ -612,6 +612,17 @@ function AddShow() {
           </div>
         </div>
       </form>
+      {picker && (
+        <ArtistPickerModal
+          title={picker.title}
+          description={picker.description}
+          options={picker.options}
+          onPick={(a) => {
+            picker.resolve(a);
+            setPicker(null);
+          }}
+        />
+      )}
     </main>
   );
 }
