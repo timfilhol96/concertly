@@ -13,6 +13,7 @@ import {
 import {
   lookupArtistImageFn,
   lookupCoPerformers,
+  lookupDeezerArtistByIdFn,
   lookupSetlist,
   searchArtists,
   type ArtistSuggestion,
@@ -43,6 +44,8 @@ function AddShow() {
   const fetchSetlist = useServerFn(lookupSetlist);
   const fetchCoPerformers = useServerFn(lookupCoPerformers);
   const fetchArtistImage = useServerFn(lookupArtistImageFn);
+  const fetchArtistById = useServerFn(lookupDeezerArtistByIdFn);
+  const fetchArtistSuggestions = useServerFn(searchArtists);
 
   const [rating, setRating] = useState(existing?.rating ?? 8);
   const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
@@ -59,6 +62,12 @@ function AddShow() {
   const [selectedCo, setSelectedCo] = useState<Set<string>>(new Set());
   const [headliner, setHeadliner] = useState<string>(existing?.artist ?? "");
   const [loggingCo, setLoggingCo] = useState(false);
+  const [picker, setPicker] = useState<{
+    title: string;
+    description: string;
+    options: ArtistSuggestion[];
+    resolve: (a: ArtistSuggestion | null) => void;
+  } | null>(null);
   const [form, setForm] = useState({
     artist: existing?.artist ?? "",
     tour: existing?.tour ?? "",
@@ -75,6 +84,16 @@ function AddShow() {
     setForm((f) => ({ ...f, [k]: v }));
   }
 
+  function pickArtist(
+    title: string,
+    description: string,
+    options: ArtistSuggestion[],
+  ): Promise<ArtistSuggestion | null> {
+    return new Promise((resolve) => {
+      setPicker({ title, description, options, resolve });
+    });
+  }
+
   async function onAutoFill() {
     if (!form.artist.trim() || !form.date) {
       toast.error("Add an artist and date first");
@@ -82,26 +101,94 @@ function AddShow() {
     }
     setLooking(true);
     try {
-      const r = await fetchSetlist({ data: { artist: form.artist.trim(), date: form.date } });
+      const name = form.artist.trim();
+      const [r, suggestions] = await Promise.all([
+        fetchSetlist({ data: { artist: name, date: form.date } }),
+        fetchArtistSuggestions({ data: { query: name } }).catch(
+          () => [] as ArtistSuggestion[],
+        ),
+      ]);
+
+      // Artist disambiguation: ask the user to pick when there isn't a single
+      // clean match in Deezer.
+      const lc = name.toLowerCase();
+      const exact = suggestions.filter((s) => s.name.toLowerCase() === lc);
+      let chosenArtist: ArtistSuggestion | null = null;
+      if (exact.length === 1) {
+        chosenArtist = exact[0];
+      } else if (exact.length > 1) {
+        chosenArtist = await pickArtist(
+          "Multiple artists share this name",
+          "Pick which one you saw — we use this for the image and genre.",
+          exact,
+        );
+      } else if (suggestions.length > 0) {
+        chosenArtist = await pickArtist(
+          "Artist not found exactly",
+          "Pick the closest match, or cancel to keep the name as-is.",
+          suggestions.slice(0, 6),
+        );
+      }
+
       if (!r.found) {
+        // Concert isn't on setlist.fm — still grab the artist's image + genre
+        // from Deezer so the entry isn't bare.
+        let image: string | null = null;
+        let genre: string | null = null;
+        if (chosenArtist?.id) {
+          try {
+            const d = await fetchArtistById({ data: { id: chosenArtist.id } });
+            image = d.image;
+            genre = d.genre;
+          } catch {
+            // non-fatal
+          }
+        }
+        setForm((f) => ({
+          ...f,
+          artist: chosenArtist?.name ?? f.artist,
+          genre: genre ?? f.genre,
+        }));
+        setArtistImageUrl(image);
         toast.message("No setlist found", {
-          description: "Try the exact artist spelling, or fill the details manually.",
+          description:
+            image || genre
+              ? "Filled in the artist image and genre instead."
+              : "Try the exact artist spelling, or fill the details manually.",
         });
         return;
       }
+
+      // Concert found — prefer setlist.fm data, but if the user picked a
+      // different Deezer artist, use their image + genre instead.
+      let artistImage = r.artistImageUrl;
+      let artistGenre = r.genre;
+      if (
+        chosenArtist?.id &&
+        chosenArtist.name.toLowerCase() !== (r.artist ?? name).toLowerCase()
+      ) {
+        try {
+          const d = await fetchArtistById({ data: { id: chosenArtist.id } });
+          artistImage = d.image ?? artistImage;
+          artistGenre = d.genre ?? artistGenre;
+        } catch {
+          // non-fatal
+        }
+      }
+
       setForm((f) => ({
         ...f,
-        artist: r.artist ?? f.artist,
+        artist: chosenArtist?.name ?? r.artist ?? f.artist,
         tour: r.tour ?? "",
         venue: r.venue ?? f.venue,
         city: r.city ?? f.city,
         country: r.country ?? f.country,
-        genre: r.genre ?? f.genre,
+        genre: artistGenre ?? f.genre,
       }));
       setOpeners(r.openers.length ? r.openers : null);
       setSongsSeen(r.songsSeen);
       setSetlist(r.songs.length ? r.songs : null);
-      setArtistImageUrl(r.artistImageUrl);
+      setArtistImageUrl(artistImage);
       setOpenerSetlists(r.openerSetlists.length ? r.openerSetlists : null);
       toast.success("Pulled from setlist.fm", {
         description:
@@ -110,7 +197,7 @@ function AddShow() {
             r.openers.length ? `${r.openers.length} opener(s)` : null,
             r.openerSetlists.length ? `${r.openerSetlists.length} opener setlists` : null,
             r.songs.length ? `${r.songs.length} songs` : null,
-            r.genre,
+            artistGenre,
           ]
             .filter(Boolean)
             .join(" · ") || "Details filled in.",
@@ -525,6 +612,17 @@ function AddShow() {
           </div>
         </div>
       </form>
+      {picker && (
+        <ArtistPickerModal
+          title={picker.title}
+          description={picker.description}
+          options={picker.options}
+          onPick={(a) => {
+            picker.resolve(a);
+            setPicker(null);
+          }}
+        />
+      )}
     </main>
   );
 }
@@ -657,6 +755,71 @@ function ArtistAutocomplete({
           ))}
         </ul>
       )}
+    </div>
+  );
+}
+
+function ArtistPickerModal({
+  title,
+  description,
+  options,
+  onPick,
+}: {
+  title: string;
+  description: string;
+  options: ArtistSuggestion[];
+  onPick: (a: ArtistSuggestion | null) => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onClick={() => onPick(null)}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border border-hairline bg-card p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="font-display text-lg font-bold">{title}</h2>
+        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        <ul className="mt-4 max-h-80 space-y-1 overflow-auto">
+          {options.map((a) => (
+            <li key={`${a.id ?? a.name}`}>
+              <button
+                type="button"
+                onClick={() => onPick(a)}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface"
+              >
+                {a.image ? (
+                  <img
+                    src={a.image}
+                    alt=""
+                    className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-10 flex-shrink-0 rounded-full bg-surface-2" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{a.name}</p>
+                  {typeof a.nbFan === "number" && a.nbFan > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {a.nbFan.toLocaleString()} fans
+                    </p>
+                  )}
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={() => onPick(null)}
+            className="rounded-full px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
