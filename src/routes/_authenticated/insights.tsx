@@ -44,29 +44,41 @@ type YearSel = number | "all";
 function Insights() {
   const { data: concerts = [] } = useConcerts();
   const nav = useNavigate();
-  const years = availableYears(concerts);
+  // Collapse rows that share date+venue (headliner + support acts) into a
+  // single "show" — counts and streaks reflect shows attended, not artists seen.
+  const shows = useMemo(() => uniqueShows(concerts), [concerts]);
+  const years = availableYears(shows);
   const [year, setYear] = useState<YearSel>(years[0] ?? CURRENT_YEAR);
 
-  const byMonth = showsByMonth(concerts, year);
-  const byYear = showsByYear(concerts);
-  const genres = genreBreakdown(concerts);
+  const byMonth = showsByMonth(shows, year);
+  const byYear = showsByYear(shows);
+  const genres = genreBreakdown(shows);
+  // Top artists is per-artist seen — keep using the full list so support acts count.
   const topArtists = rankBy(concerts, "artist", 8);
-  const topCountries = rankBy(concerts, "country", 6);
-  const streak = monthlyStreak(concerts);
+  const topCountries = rankBy(shows, "country", 6);
+  const streak = monthlyStreak(shows);
 
   const totalInRange = byMonth.reduce((s, m) => s + m.count, 0);
   const monthsCovered =
     year === "all"
-      ? Math.max(1, monthsBetween(concerts))
+      ? Math.max(1, monthsBetween(shows))
       : year === CURRENT_YEAR
         ? new Date().getMonth() + 1
         : 12;
   const avgPerMonth = totalInRange / monthsCovered;
 
+  // Totals header: distinguish shows attended from artists seen.
+  const totalShows = shows.length;
+  const totalArtists = concerts.length;
+
   function handleMonthClick(monthIdx: number) {
     if (year === "all") return;
     const m = String(monthIdx + 1).padStart(2, "0");
     nav({ to: "/shows", search: { month: `${year}-${m}` } });
+  }
+
+  function handleGenreClick(genre: string) {
+    nav({ to: "/shows", search: { genre } });
   }
 
   return (
