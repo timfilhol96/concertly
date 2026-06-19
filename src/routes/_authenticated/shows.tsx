@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_authenticated/shows")({
 });
 
 function Shows() {
+  const nav = useNavigate();
   const { data: concerts = [], isLoading } = useConcerts();
   const del = useDeleteConcert();
   const [q, setQ] = useState("");
