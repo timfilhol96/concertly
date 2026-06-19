@@ -240,10 +240,8 @@ export const lookupSetlist = createServerFn({ method: "POST" })
       }
     }
 
-    let tour = headliner.tour?.name ?? null;
-    if (!tour && headliner.artist?.mbid) {
-      tour = await lookupTourNearby(headliner.artist.mbid, data.date, apiKey);
-    }
+    // Only use the tour name attached to this specific show — no nearby fallback.
+    const tour = headliner.tour?.name ?? null;
 
     // In parallel: MusicBrainz genre (fallback), Deezer artist (image + genre), opener setlists.
     const [mbGenre, deezer, openerSetlistsRaw] = await Promise.all([
