@@ -106,6 +106,26 @@ function AddShow() {
             .filter(Boolean)
             .join(" · ") || "Details filled in.",
       });
+
+      // Look for other artists at the same venue/date
+      const venue = r.venue ?? form.venue;
+      if (venue) {
+        try {
+          const exclude = [r.artist ?? form.artist, ...r.openers];
+          const co = await fetchCoPerformers({
+            data: { date: form.date, venue, excludeArtists: exclude },
+          });
+          if (co.length > 0) {
+            setCoPerformers(co);
+            setSelectedCo(new Set(co.map((c) => c.artist)));
+          } else {
+            setCoPerformers(null);
+            setSelectedCo(new Set());
+          }
+        } catch {
+          // non-fatal
+        }
+      }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Lookup failed");
     } finally {
