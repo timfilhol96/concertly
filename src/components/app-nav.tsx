@@ -1,9 +1,9 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LogOut, Plus, Search } from "lucide-react";
+import { LogOut, Plus, Search, User } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { useProfile } from "@/lib/concerts";
+import { useAvatarUrl, useProfile } from "@/lib/concerts";
 
 const NAV = [
   { to: "/dashboard", label: "Dashboard" },
@@ -15,6 +15,7 @@ const NAV = [
 export function AppNav() {
   const pathname = useRouterState({ select: (s) => s.location.pathname });
   const { data: profile } = useProfile();
+  const avatarUrl = useAvatarUrl(profile?.avatarPath);
   const nav = useNavigate();
   const qc = useQueryClient();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -73,10 +74,14 @@ export function AppNav() {
           <div className="relative">
             <button
               onClick={() => setMenuOpen((v) => !v)}
-              className="flex h-9 w-9 items-center justify-center rounded-full border border-hairline bg-surface-2 text-xs font-bold transition-colors hover:border-brand"
+              className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-hairline bg-surface-2 text-xs font-bold transition-colors hover:border-brand"
               aria-label="Account menu"
             >
-              {initials}
+              {avatarUrl ? (
+                <img src={avatarUrl} alt="" className="h-full w-full object-cover" />
+              ) : (
+                initials
+              )}
             </button>
             {menuOpen && (
               <>
@@ -90,9 +95,16 @@ export function AppNav() {
                     <p className="truncate text-sm font-semibold">{profile?.displayName}</p>
                     <p className="truncate text-xs text-muted-foreground">{profile?.email}</p>
                   </div>
+                  <Link
+                    to="/profile"
+                    onClick={() => setMenuOpen(false)}
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm transition-colors hover:bg-surface-2"
+                  >
+                    <User className="h-3.5 w-3.5" /> Edit profile
+                  </Link>
                   <button
                     onClick={signOut}
-                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm transition-colors hover:bg-surface-2"
+                    className="flex w-full items-center gap-2 border-t border-hairline px-4 py-3 text-left text-sm transition-colors hover:bg-surface-2"
                   >
                     <LogOut className="h-3.5 w-3.5" /> Sign out
                   </button>

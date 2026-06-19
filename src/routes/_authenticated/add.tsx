@@ -3,7 +3,13 @@ import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Calendar, MapPin, Music, Sparkles, Star, Ticket, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { useAddConcert, useConcerts, useDeleteConcert, useUpdateConcert } from "@/lib/concerts";
+import {
+  useAddConcert,
+  useConcerts,
+  useDeleteConcert,
+  useUpdateConcert,
+  type OpenerSetlist,
+} from "@/lib/concerts";
 import { lookupSetlist } from "@/lib/setlistfm.functions";
 
 type Search = { id?: string };
@@ -32,6 +38,12 @@ function AddShow() {
   const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
   const [songsSeen, setSongsSeen] = useState<number | null>(existing?.songsSeen ?? null);
   const [setlist, setSetlist] = useState<string[] | null>(existing?.setlist ?? null);
+  const [artistImageUrl, setArtistImageUrl] = useState<string | null>(
+    existing?.artistImageUrl ?? null,
+  );
+  const [openerSetlists, setOpenerSetlists] = useState<OpenerSetlist[] | null>(
+    existing?.openerSetlists ?? null,
+  );
   const [looking, setLooking] = useState(false);
   const [form, setForm] = useState({
     artist: existing?.artist ?? "",
@@ -75,11 +87,14 @@ function AddShow() {
       setOpeners(r.openers.length ? r.openers : null);
       setSongsSeen(r.songsSeen);
       setSetlist(r.songs.length ? r.songs : null);
+      setArtistImageUrl(r.artistImageUrl);
+      setOpenerSetlists(r.openerSetlists.length ? r.openerSetlists : null);
       toast.success("Pulled from setlist.fm", {
         description:
           [
             r.tour,
             r.openers.length ? `${r.openers.length} opener(s)` : null,
+            r.openerSetlists.length ? `${r.openerSetlists.length} opener setlists` : null,
             r.songs.length ? `${r.songs.length} songs` : null,
             r.genre,
           ]
@@ -109,6 +124,8 @@ function AddShow() {
       ticketPrice: form.ticketPrice ? Number(form.ticketPrice) : null,
       songsSeen,
       setlist,
+      artistImageUrl,
+      openerSetlists,
     };
     try {
       if (isEdit && existing) {
@@ -176,9 +193,15 @@ function AddShow() {
           <input value={form.tour} onChange={(e) => set("tour", e.target.value)} className={inputCls} placeholder="e.g. Ten Days Tour" />
         </Field>
 
-        {(openers?.length || songsSeen || setlist?.length) && (
+        {(artistImageUrl || openers?.length || songsSeen || setlist?.length || openerSetlists?.length) && (
           <div className="rounded-2xl border border-hairline bg-surface p-4">
             <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">From setlist.fm</p>
+            {artistImageUrl && (
+              <div className="mb-3 flex items-center gap-3">
+                <img src={artistImageUrl} alt={form.artist} className="h-14 w-14 rounded-full object-cover" />
+                <span className="text-sm font-semibold">{form.artist}</span>
+              </div>
+            )}
             <div className="flex flex-wrap items-center gap-2 text-sm">
               {openers?.map((o) => (
                 <span key={o} className="rounded-full border border-hairline px-3 py-1 text-xs">
@@ -198,6 +221,25 @@ function AddShow() {
                   </li>
                 ))}
               </ol>
+            ) : null}
+            {openerSetlists?.length ? (
+              <div className="mt-5 space-y-3">
+                {openerSetlists.map((o) => (
+                  <details key={o.artist} className="rounded-xl border border-hairline bg-card/40 p-3">
+                    <summary className="cursor-pointer text-xs font-semibold">
+                      {o.artist} · {o.songs.length} songs
+                    </summary>
+                    <ol className="mt-2 grid grid-cols-1 gap-1 sm:grid-cols-2">
+                      {o.songs.map((s, i) => (
+                        <li key={`${o.artist}-${i}`} className="flex gap-2 text-xs text-muted-foreground">
+                          <span className="w-5 font-mono">{String(i + 1).padStart(2, "0")}</span>
+                          <span className="truncate">{s}</span>
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                ))}
+              </div>
             ) : null}
           </div>
         )}
