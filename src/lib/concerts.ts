@@ -118,6 +118,7 @@ export function useAddConcert() {
           notes: c.notes,
           ticket_price: c.ticketPrice,
           songs_seen: c.songsSeen,
+          setlist: c.setlist,
         })
         .select()
         .single();
