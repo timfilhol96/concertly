@@ -44,6 +44,8 @@ function AddShow() {
   const fetchSetlist = useServerFn(lookupSetlist);
   const fetchCoPerformers = useServerFn(lookupCoPerformers);
   const fetchArtistImage = useServerFn(lookupArtistImageFn);
+  const fetchArtistById = useServerFn(lookupDeezerArtistByIdFn);
+  const fetchArtistSuggestions = useServerFn(searchArtists);
 
   const [rating, setRating] = useState(existing?.rating ?? 8);
   const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
