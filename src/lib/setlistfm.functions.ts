@@ -240,10 +240,8 @@ export const lookupSetlist = createServerFn({ method: "POST" })
       }
     }
 
-    let tour = headliner.tour?.name ?? null;
-    if (!tour && headliner.artist?.mbid) {
-      tour = await lookupTourNearby(headliner.artist.mbid, data.date, apiKey);
-    }
+    // Only use the tour name attached to this specific show — no nearby fallback.
+    const tour = headliner.tour?.name ?? null;
 
     // In parallel: MusicBrainz genre (fallback), Deezer artist (image + genre), opener setlists.
     const [mbGenre, deezer, openerSetlistsRaw] = await Promise.all([
@@ -280,47 +278,41 @@ export const lookupSetlist = createServerFn({ method: "POST" })
     };
   });
 
-function parseSetlistDate(ddmmyyyy: string | undefined): number | null {
-  if (!ddmmyyyy) return null;
-  const [d, m, y] = ddmmyyyy.split("-");
-  if (!d || !m || !y) return null;
-  const t = Date.parse(`${y}-${m}-${d}`);
-  return Number.isFinite(t) ? t : null;
-}
+const ArtistSearchInput = z.object({ query: z.string().min(1).max(120) });
 
-async function lookupTourNearby(
-  mbid: string,
-  isoDate: string,
-  apiKey: string,
-): Promise<string | null> {
-  try {
-    const target = Date.parse(isoDate);
-    if (!Number.isFinite(target)) return null;
-    const candidates: Array<{ tour: string; date: number }> = [];
-    for (const page of [1, 2]) {
-      const url = new URL(`https://api.setlist.fm/rest/1.0/artist/${mbid}/setlists`);
-      url.searchParams.set("p", String(page));
-      const res = await fetch(url.toString(), {
-        headers: { "x-api-key": apiKey, Accept: "application/json", "Accept-Language": "en" },
-      });
-      if (!res.ok) break;
+export type ArtistSuggestion = { name: string; image: string | null };
+
+export const searchArtists = createServerFn({ method: "POST" })
+  .inputValidator((input: unknown) => ArtistSearchInput.parse(input))
+  .handler(async ({ data }): Promise<ArtistSuggestion[]> => {
+    try {
+      const url = `https://api.deezer.com/search/artist?q=${encodeURIComponent(
+        data.query,
+      )}&limit=8`;
+      const res = await fetch(url, { headers: { Accept: "application/json" } });
+      if (!res.ok) return [];
       const json = (await res.json()) as {
-        setlist?: Array<{ eventDate?: string; tour?: { name?: string } }>;
+        data?: Array<{
+          name?: string;
+          picture_medium?: string;
+          picture_small?: string;
+        }>;
       };
-      for (const s of json.setlist ?? []) {
-        const name = s.tour?.name?.trim();
-        const d = parseSetlistDate(s.eventDate);
-        if (name && d !== null) candidates.push({ tour: name, date: d });
+      const seen = new Set<string>();
+      const out: ArtistSuggestion[] = [];
+      for (const a of json.data ?? []) {
+        const name = a.name?.trim();
+        if (!name) continue;
+        const key = name.toLowerCase();
+        if (seen.has(key)) continue;
+        seen.add(key);
+        out.push({ name, image: a.picture_medium ?? a.picture_small ?? null });
       }
-      if ((json.setlist?.length ?? 0) < 20) break;
+      return out;
+    } catch {
+      return [];
     }
-    if (candidates.length === 0) return null;
-    candidates.sort((a, b) => Math.abs(a.date - target) - Math.abs(b.date - target));
-    return candidates[0].tour;
-  } catch {
-    return null;
-  }
-}
+  });
 
 const CoPerformersInput = z.object({
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
