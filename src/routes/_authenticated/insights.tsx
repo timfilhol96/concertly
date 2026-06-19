@@ -89,6 +89,10 @@ function Insights() {
           The patterns behind your live music life — when you go out, who you can't get enough of,
           and what genres own your calendar.
         </p>
+        <p className="mt-3 text-xs text-muted-foreground">
+          <span className="font-semibold text-foreground">{totalShows}</span> show{totalShows === 1 ? "" : "s"} attended ·{" "}
+          <span className="font-semibold text-foreground">{totalArtists}</span> artist{totalArtists === 1 ? "" : "s"} seen
+        </p>
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
