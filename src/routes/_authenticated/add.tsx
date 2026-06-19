@@ -281,7 +281,11 @@ function AddShow() {
 
       <form onSubmit={onSubmit} className="space-y-6 rounded-3xl border border-hairline bg-card p-6 md:p-8">
         <Field icon={Music} label="Artist / Headliner">
-          <input required value={form.artist} onChange={(e) => set("artist", e.target.value)} className={inputCls} placeholder="e.g. Fred again.." />
+          <ArtistAutocomplete
+            value={form.artist}
+            onChange={(v) => set("artist", v)}
+            inputClassName={inputCls}
+          />
         </Field>
 
         <div className="grid gap-6 md:grid-cols-[1fr_auto] md:items-end">
