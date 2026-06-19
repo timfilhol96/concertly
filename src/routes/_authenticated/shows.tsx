@@ -194,6 +194,235 @@ function Shows() {
     return suggestions[0];
   }
 
+  type RefreshOutcome = {
+    status: "updated" | "skipped" | "failed" | "cancelled";
+    coLogged: number;
+  };
+
+  async function refreshOne(c: Concert): Promise<RefreshOutcome> {
+    let coLogged = 0;
+    try {
+      // 1. Resolve artist on Deezer.
+      setFetching({ artist: c.artist, step: "Searching artist on Deezer…" });
+      const artistChoice = await resolveArtist(c);
+      if (artistChoice === "cancel") return { status: "cancelled", coLogged };
+
+      // 2. Look up the show on setlist.fm.
+      setFetching({ artist: c.artist, step: "Looking up setlist…" });
+      const res = await fetchSetlist({ data: { artist: c.artist, date: c.date } });
+
+      if (!res.found) {
+        // Fallback: still apply Deezer image + genre if the user picked something.
+        setFetching({ artist: c.artist, step: "Fetching artist image & genre…" });
+        let fallback: { image: string | null; genre: string | null } | null = null;
+        if (artistChoice && artistChoice.id != null) {
+          try {
+            fallback = await fetchDeezerById({ data: { id: artistChoice.id } });
+          } catch {
+            fallback = { image: artistChoice.image, genre: null };
+          }
+        } else if (artistChoice) {
+          fallback = { image: artistChoice.image, genre: null };
+        }
+
+        if (!fallback || (!fallback.image && !fallback.genre)) {
+          return { status: "skipped", coLogged };
+        }
+        const decision = await askNotFound(c, fallback);
+        if (decision === "cancel") return { status: "cancelled", coLogged };
+        if (decision !== "apply") return { status: "skipped", coLogged };
+
+        setFetching({ artist: c.artist, step: "Saving…" });
+        await update.mutateAsync({
+          id: c.id,
+          artist: c.artist,
+          tour: c.tour,
+          openers: c.openers,
+          date: c.date,
+          venue: c.venue,
+          city: c.city,
+          country: c.country,
+          rating: c.rating,
+          genre: fallback.genre ?? c.genre,
+          notes: c.notes,
+          ticketPrice: c.ticketPrice,
+          songsSeen: c.songsSeen,
+          setlist: c.setlist,
+          artistImageUrl: fallback.image ?? c.artistImageUrl,
+          openerSetlists: c.openerSetlists,
+        });
+        return { status: "updated", coLogged };
+      }
+
+      // Found a setlist. Prefer Deezer artist image/genre if the user picked one explicitly.
+      let imageOverride: string | null = res.artistImageUrl;
+      let genreOverride: string | null = res.genre;
+      if (artistChoice && artistChoice.id != null) {
+        try {
+          setFetching({ artist: c.artist, step: "Fetching artist image & genre…" });
+          const d = await fetchDeezerById({ data: { id: artistChoice.id } });
+          imageOverride = d.image ?? imageOverride;
+          genreOverride = d.genre ?? genreOverride;
+        } catch {
+          // keep setlist.fm values
+        }
+      }
+
+      // Co-performer probe.
+      let coPerformers: CoPerformer[] = [];
+      const venue = res.venue ?? c.venue;
+      if (venue) {
+        try {
+          setFetching({ artist: c.artist, step: "Checking for other artists that day…" });
+          const exclude = [res.artist ?? c.artist, ...(res.openers ?? [])];
+          coPerformers = await fetchCoPerformers({
+            data: { date: c.date, venue, excludeArtists: exclude },
+          });
+          // Drop co-performers already in the user's archive on this date.
+          const sameDay = new Set(
+            concerts
+              .filter((x) => x.id !== c.id && x.date === c.date)
+              .map((x) => x.artist.toLowerCase()),
+          );
+          coPerformers = coPerformers.filter(
+            (cp) => !sameDay.has(cp.artist.toLowerCase()),
+          );
+        } catch {
+          coPerformers = [];
+        }
+      }
+
+      // Start fresh from setlist.fm — do NOT carry over the concert's prior openers,
+      // otherwise repeated refreshes pile up duplicates.
+      let finalHeadliner = res.artist ?? c.artist;
+      let finalOpeners: string[] | null = res.openers.length > 0 ? [...res.openers] : null;
+      const extraConcerts: Array<{
+        performer: CoPerformer;
+        isHeadliner: boolean;
+        otherInGroup: string[];
+      }> = [];
+
+      if (coPerformers.length > 0) {
+        const decision = await askCoPerformers(c, coPerformers);
+        if (decision.kind === "cancel") return { status: "cancelled", coLogged };
+        if (decision.kind === "log" && decision.selected.length > 0) {
+          const selectedSet = new Set(decision.selected);
+          const allGroup = [res.artist ?? c.artist, ...decision.selected];
+          finalHeadliner = decision.headliner;
+          if (decision.headliner.toLowerCase() !== (res.artist ?? c.artist).toLowerCase()) {
+            // The original concert is now a support act.
+            finalOpeners = null;
+          } else {
+            const existing = new Set((finalOpeners ?? []).map((o) => o.toLowerCase()));
+            finalOpeners = [
+              ...(finalOpeners ?? []),
+              ...decision.selected.filter((s) => !existing.has(s.toLowerCase())),
+            ];
+          }
+          for (const cp of coPerformers) {
+            if (!selectedSet.has(cp.artist)) continue;
+            const isCpHeadliner =
+              cp.artist.toLowerCase() === decision.headliner.toLowerCase();
+            const otherInGroup = allGroup.filter(
+              (a) => a.toLowerCase() !== cp.artist.toLowerCase(),
+            );
+            extraConcerts.push({ performer: cp, isHeadliner: isCpHeadliner, otherInGroup });
+          }
+        }
+      }
+
+      setFetching({ artist: c.artist, step: "Saving…" });
+      await update.mutateAsync({
+        id: c.id,
+        artist: c.artist,
+        tour: res.tour ?? "",
+        openers: finalOpeners,
+        date: c.date,
+        venue: res.venue ?? c.venue,
+        city: res.city ?? c.city,
+        country: res.country ?? c.country,
+        rating: c.rating,
+        genre: genreOverride ?? c.genre,
+        notes:
+          finalHeadliner.toLowerCase() !== c.artist.toLowerCase()
+            ? `Support act for ${finalHeadliner}`
+            : c.notes,
+        ticketPrice: c.ticketPrice,
+        songsSeen: res.songsSeen ?? c.songsSeen,
+        setlist: res.songs.length > 0 ? res.songs : c.setlist,
+        artistImageUrl: imageOverride ?? c.artistImageUrl,
+        openerSetlists:
+          res.openerSetlists.length > 0 ? res.openerSetlists : c.openerSetlists,
+      });
+
+      // Log co-performers as new concerts.
+      for (const extra of extraConcerts) {
+        try {
+          setFetching({ artist: extra.performer.artist, step: "Adding co-performer…" });
+          let image: string | null = null;
+          let genre: string | null = null;
+          try {
+            const sug = await fetchSearchArtists({ data: { query: extra.performer.artist } });
+            const hit = sug.find(
+              (s) => s.name.toLowerCase() === extra.performer.artist.toLowerCase(),
+            ) ?? sug[0];
+            if (hit?.id != null) {
+              const d = await fetchDeezerById({ data: { id: hit.id } });
+              image = d.image;
+              genre = d.genre;
+            } else if (hit) {
+              image = hit.image;
+            }
+          } catch {
+            // ignore image/genre failure
+          }
+          await add.mutateAsync({
+            artist: extra.performer.artist,
+            tour: extra.performer.tour,
+            openers: extra.isHeadliner ? extra.otherInGroup : null,
+            date: c.date,
+            venue: extra.performer.venue,
+            city: extra.performer.city ?? c.city,
+            country: extra.performer.country ?? c.country,
+            rating: 8,
+            genre,
+            notes: extra.isHeadliner ? null : `Support act for ${finalHeadliner}`,
+            ticketPrice: null,
+            songsSeen: extra.performer.songs.length || null,
+            setlist: extra.performer.songs.length ? extra.performer.songs : null,
+            artistImageUrl: image,
+            openerSetlists: null,
+          });
+          coLogged++;
+        } catch {
+          // ignore single add failure
+        }
+      }
+
+      return { status: "updated", coLogged };
+    } catch {
+      return { status: "failed", coLogged };
+    }
+  }
+
+  async function handleRefreshOne(c: Concert) {
+    if (refresh.running) return;
+    artistChoiceCache.current.clear();
+    setRefresh({ running: true, done: 0, total: 1 });
+    const r = await refreshOne(c);
+    setPrompt(null);
+    setFetching(null);
+    setRefresh({ running: false, done: 0, total: 0 });
+    if (r.status === "updated") {
+      toast.success(
+        `Refreshed ${c.artist}` +
+          (r.coLogged ? ` · added ${r.coLogged} co-performer${r.coLogged === 1 ? "" : "s"}` : ""),
+      );
+    } else if (r.status === "skipped") toast.info(`Skipped ${c.artist}`);
+    else if (r.status === "cancelled") toast.info("Cancelled");
+    else toast.error(`Couldn't refresh ${c.artist}`);
+  }
+
   async function handleRefreshAll() {
     if (refresh.running) return;
     const targets = concerts;
@@ -218,228 +447,20 @@ function Shows() {
     let cancelled = false;
 
     for (let i = 0; i < targets.length; i++) {
-      const c = targets[i];
-      try {
-        // 1. Resolve artist on Deezer.
-        const artistChoice = await resolveArtist(c);
-        if (artistChoice === "cancel") {
-          cancelled = true;
-          break;
-        }
-
-        // 2. Look up the show on setlist.fm.
-        const res = await fetchSetlist({ data: { artist: c.artist, date: c.date } });
-
-        if (!res.found) {
-          // Fallback: still apply Deezer image + genre if the user picked something.
-          let fallback: { image: string | null; genre: string | null } | null = null;
-          if (artistChoice && artistChoice.id != null) {
-            try {
-              fallback = await fetchDeezerById({ data: { id: artistChoice.id } });
-            } catch {
-              fallback = { image: artistChoice.image, genre: null };
-            }
-          } else if (artistChoice) {
-            fallback = { image: artistChoice.image, genre: null };
-          }
-
-          if (!fallback || (!fallback.image && !fallback.genre)) {
-            skipped++;
-          } else {
-            const decision = await askNotFound(c, fallback);
-            if (decision === "cancel") {
-              cancelled = true;
-              break;
-            }
-            if (decision === "apply") {
-              await update.mutateAsync({
-                id: c.id,
-                artist: c.artist,
-                tour: c.tour,
-                openers: c.openers,
-                date: c.date,
-                venue: c.venue,
-                city: c.city,
-                country: c.country,
-                rating: c.rating,
-                genre: fallback.genre ?? c.genre,
-                notes: c.notes,
-                ticketPrice: c.ticketPrice,
-                songsSeen: c.songsSeen,
-                setlist: c.setlist,
-                artistImageUrl: fallback.image ?? c.artistImageUrl,
-                openerSetlists: c.openerSetlists,
-              });
-              updated++;
-            } else {
-              skipped++;
-            }
-          }
-        } else {
-          // Found a setlist. Prefer Deezer artist image/genre if the user picked one explicitly.
-          let imageOverride: string | null = res.artistImageUrl;
-          let genreOverride: string | null = res.genre;
-          if (artistChoice && artistChoice.id != null) {
-            try {
-              const d = await fetchDeezerById({ data: { id: artistChoice.id } });
-              imageOverride = d.image ?? imageOverride;
-              genreOverride = d.genre ?? genreOverride;
-            } catch {
-              // keep setlist.fm values
-            }
-          }
-
-          // Co-performer probe.
-          let coPerformers: CoPerformer[] = [];
-          const venue = res.venue ?? c.venue;
-          if (venue) {
-            try {
-              const exclude = [
-                res.artist ?? c.artist,
-                ...(res.openers ?? []),
-                ...(c.openers ?? []),
-              ];
-              coPerformers = await fetchCoPerformers({
-                data: { date: c.date, venue, excludeArtists: exclude },
-              });
-              // Drop co-performers already in the user's archive on this date.
-              const sameDay = new Set(
-                concerts
-                  .filter((x) => x.id !== c.id && x.date === c.date)
-                  .map((x) => x.artist.toLowerCase()),
-              );
-              coPerformers = coPerformers.filter(
-                (cp) => !sameDay.has(cp.artist.toLowerCase()),
-              );
-            } catch {
-              coPerformers = [];
-            }
-          }
-
-          // Compute final headliner + opener list (possibly overridden by user).
-          let finalHeadliner = res.artist ?? c.artist;
-          let finalOpeners: string[] | null =
-            res.openers.length > 0 ? res.openers : c.openers;
-          const extraConcerts: Array<{
-            performer: CoPerformer;
-            isHeadliner: boolean;
-            otherInGroup: string[];
-          }> = [];
-
-          if (coPerformers.length > 0) {
-            const decision = await askCoPerformers(c, coPerformers);
-            if (decision.kind === "cancel") {
-              cancelled = true;
-              break;
-            }
-            if (decision.kind === "log" && decision.selected.length > 0) {
-              const selectedSet = new Set(decision.selected);
-              const allGroup = [
-                res.artist ?? c.artist,
-                ...decision.selected,
-              ];
-              finalHeadliner = decision.headliner;
-              if (decision.headliner.toLowerCase() !== (res.artist ?? c.artist).toLowerCase()) {
-                // The original concert is now a support act.
-                finalOpeners = null;
-              } else {
-                // Original is still headliner — include new selections as openers.
-                const existing = new Set(
-                  (finalOpeners ?? []).map((o) => o.toLowerCase()),
-                );
-                finalOpeners = [
-                  ...(finalOpeners ?? []),
-                  ...decision.selected.filter(
-                    (s) => !existing.has(s.toLowerCase()),
-                  ),
-                ];
-              }
-              for (const cp of coPerformers) {
-                if (!selectedSet.has(cp.artist)) continue;
-                const isCpHeadliner =
-                  cp.artist.toLowerCase() === decision.headliner.toLowerCase();
-                const otherInGroup = allGroup.filter(
-                  (a) => a.toLowerCase() !== cp.artist.toLowerCase(),
-                );
-                extraConcerts.push({ performer: cp, isHeadliner: isCpHeadliner, otherInGroup });
-              }
-            }
-          }
-
-          await update.mutateAsync({
-            id: c.id,
-            artist: c.artist,
-            tour: res.tour ?? "",
-            openers: finalOpeners,
-            date: c.date,
-            venue: res.venue ?? c.venue,
-            city: res.city ?? c.city,
-            country: res.country ?? c.country,
-            rating: c.rating,
-            genre: genreOverride ?? c.genre,
-            notes:
-              finalHeadliner.toLowerCase() !== c.artist.toLowerCase()
-                ? `Support act for ${finalHeadliner}`
-                : c.notes,
-            ticketPrice: c.ticketPrice,
-            songsSeen: res.songsSeen ?? c.songsSeen,
-            setlist: res.songs.length > 0 ? res.songs : c.setlist,
-            artistImageUrl: imageOverride ?? c.artistImageUrl,
-            openerSetlists:
-              res.openerSetlists.length > 0 ? res.openerSetlists : c.openerSetlists,
-          });
-          updated++;
-
-          // Log co-performers as new concerts.
-          for (const extra of extraConcerts) {
-            try {
-              let image: string | null = null;
-              let genre: string | null = null;
-              try {
-                const sug = await fetchSearchArtists({ data: { query: extra.performer.artist } });
-                const hit = sug.find(
-                  (s) => s.name.toLowerCase() === extra.performer.artist.toLowerCase(),
-                ) ?? sug[0];
-                if (hit?.id != null) {
-                  const d = await fetchDeezerById({ data: { id: hit.id } });
-                  image = d.image;
-                  genre = d.genre;
-                } else if (hit) {
-                  image = hit.image;
-                }
-              } catch {
-                // ignore image/genre failure
-              }
-              await add.mutateAsync({
-                artist: extra.performer.artist,
-                tour: extra.performer.tour,
-                openers: extra.isHeadliner ? extra.otherInGroup : null,
-                date: c.date,
-                venue: extra.performer.venue,
-                city: extra.performer.city ?? c.city,
-                country: extra.performer.country ?? c.country,
-                rating: 8,
-                genre,
-                notes: extra.isHeadliner ? null : `Support act for ${finalHeadliner}`,
-                ticketPrice: null,
-                songsSeen: extra.performer.songs.length || null,
-                setlist: extra.performer.songs.length ? extra.performer.songs : null,
-                artistImageUrl: image,
-                openerSetlists: null,
-              });
-              coLogged++;
-            } catch {
-              // ignore single add failure
-            }
-          }
-        }
-      } catch {
-        failed++;
+      const r = await refreshOne(targets[i]);
+      coLogged += r.coLogged;
+      if (r.status === "updated") updated++;
+      else if (r.status === "skipped") skipped++;
+      else if (r.status === "failed") failed++;
+      else if (r.status === "cancelled") {
+        cancelled = true;
+        break;
       }
       setRefresh({ running: true, done: i + 1, total: targets.length });
     }
 
     setPrompt(null);
+    setFetching(null);
     setRefresh({ running: false, done: 0, total: 0 });
     const msg =
       `Refreshed ${updated} show${updated === 1 ? "" : "s"}` +
