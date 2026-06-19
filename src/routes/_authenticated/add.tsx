@@ -758,3 +758,68 @@ function ArtistAutocomplete({
     </div>
   );
 }
+
+function ArtistPickerModal({
+  title,
+  description,
+  options,
+  onPick,
+}: {
+  title: string;
+  description: string;
+  options: ArtistSuggestion[];
+  onPick: (a: ArtistSuggestion | null) => void;
+}) {
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4"
+      onClick={() => onPick(null)}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl border border-hairline bg-card p-5 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <h2 className="font-display text-lg font-bold">{title}</h2>
+        <p className="mt-1 text-xs text-muted-foreground">{description}</p>
+        <ul className="mt-4 max-h-80 space-y-1 overflow-auto">
+          {options.map((a) => (
+            <li key={`${a.id ?? a.name}`}>
+              <button
+                type="button"
+                onClick={() => onPick(a)}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2 text-left hover:bg-surface"
+              >
+                {a.image ? (
+                  <img
+                    src={a.image}
+                    alt=""
+                    className="h-10 w-10 flex-shrink-0 rounded-full object-cover"
+                  />
+                ) : (
+                  <div className="h-10 w-10 flex-shrink-0 rounded-full bg-surface-2" />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-semibold">{a.name}</p>
+                  {typeof a.nbFan === "number" && a.nbFan > 0 && (
+                    <p className="text-xs text-muted-foreground">
+                      {a.nbFan.toLocaleString()} fans
+                    </p>
+                  )}
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+        <div className="mt-4 flex justify-end">
+          <button
+            type="button"
+            onClick={() => onPick(null)}
+            className="rounded-full px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
