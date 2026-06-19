@@ -66,7 +66,7 @@ type Prompt = ArtistPrompt | CoPerformerPrompt | NotFoundPrompt;
 
 function Shows() {
   const nav = useNavigate();
-  const { month } = Route.useSearch();
+  const { month, genre } = Route.useSearch();
   const { data: concerts = [], isLoading } = useConcerts();
   const del = useDeleteConcert();
   const update = useUpdateConcert();
@@ -93,10 +93,14 @@ function Shows() {
       [c.artist, c.venue, c.city, c.tour ?? ""].join(" ").toLowerCase().includes(q.toLowerCase()),
     );
     if (month) filtered = filtered.filter((c) => c.date.startsWith(month));
+    if (genre) {
+      const g = genre.toLowerCase();
+      filtered = filtered.filter((c) => (c.genre ?? "Unknown").toLowerCase() === g);
+    }
     return filtered.sort((a, b) =>
       sort === "date" ? (a.date < b.date ? 1 : -1) : b.rating - a.rating,
     );
-  }, [q, sort, concerts, month]);
+  }, [q, sort, concerts, month, genre]);
 
   const monthLabel = month
     ? new Date(`${month}-01T00:00:00`).toLocaleString("en", { month: "long", year: "numeric" })
