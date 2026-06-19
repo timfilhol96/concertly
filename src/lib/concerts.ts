@@ -233,6 +233,26 @@ export function useDeleteConcert() {
 
 export type RankedItem = { name: string; count: number };
 
+// Collapse rows that represent the same physical show (same date + venue) into
+// a single "show". The headliner row (one whose notes don't start with
+// "support act for") is preferred; otherwise the first row wins.
+export function uniqueShows(list: Concert[]): Concert[] {
+  const groups = new Map<string, Concert[]>();
+  for (const c of list) {
+    const key = `${c.date}|${(c.venue ?? "").trim().toLowerCase()}|${(c.city ?? "").trim().toLowerCase()}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(c);
+  }
+  const out: Concert[] = [];
+  for (const rows of groups.values()) {
+    const headliner = rows.find(
+      (r) => !(r.notes ?? "").trim().toLowerCase().startsWith("support act for"),
+    );
+    out.push(headliner ?? rows[0]);
+  }
+  return out;
+}
+
 export function getStats(list: Concert[]) {
   const total = list.length;
   const uniqueArtists = new Set(list.map((c) => c.artist)).size;
