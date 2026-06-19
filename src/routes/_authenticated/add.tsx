@@ -10,8 +10,13 @@ import {
   useUpdateConcert,
   type OpenerSetlist,
 } from "@/lib/concerts";
-import { lookupCoPerformers, lookupSetlist, type CoPerformer } from "@/lib/setlistfm.functions";
-import { Users } from "lucide-react";
+import {
+  lookupArtistImageFn,
+  lookupCoPerformers,
+  lookupSetlist,
+  type CoPerformer,
+} from "@/lib/setlistfm.functions";
+import { Crown, Users } from "lucide-react";
 
 type Search = { id?: string };
 
@@ -35,6 +40,7 @@ function AddShow() {
   const del = useDeleteConcert();
   const fetchSetlist = useServerFn(lookupSetlist);
   const fetchCoPerformers = useServerFn(lookupCoPerformers);
+  const fetchArtistImage = useServerFn(lookupArtistImageFn);
 
   const [rating, setRating] = useState(existing?.rating ?? 8);
   const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
@@ -49,6 +55,7 @@ function AddShow() {
   const [looking, setLooking] = useState(false);
   const [coPerformers, setCoPerformers] = useState<CoPerformer[] | null>(null);
   const [selectedCo, setSelectedCo] = useState<Set<string>>(new Set());
+  const [headliner, setHeadliner] = useState<string>(existing?.artist ?? "");
   const [loggingCo, setLoggingCo] = useState(false);
   const [form, setForm] = useState({
     artist: existing?.artist ?? "",
@@ -118,6 +125,7 @@ function AddShow() {
           if (co.length > 0) {
             setCoPerformers(co);
             setSelectedCo(new Set(co.map((c) => c.artist)));
+            setHeadliner(r.artist ?? form.artist);
           } else {
             setCoPerformers(null);
             setSelectedCo(new Set());
@@ -184,26 +192,64 @@ function AddShow() {
     setLoggingCo(true);
     let ok = 0;
     try {
+      // Fetch profile images for all selected co-performers in parallel.
+      const images = await Promise.all(
+        targets.map(async (c) => {
+          try {
+            const { url } = await fetchArtistImage({ data: { artist: c.artist } });
+            return [c.artist, url] as const;
+          } catch {
+            return [c.artist, null] as const;
+          }
+        }),
+      );
+      const imageMap = new Map(images);
+
+      const headlinerName = headliner.trim();
+      const allArtistsInGroup = [form.artist.trim(), ...targets.map((t) => t.artist)];
+
       for (const c of targets) {
+        const isHeadliner =
+          headlinerName.length > 0 && c.artist.toLowerCase() === headlinerName.toLowerCase();
+        const supportNote = isHeadliner ? null : `Support act for ${headlinerName}`;
+        const openersForRow = isHeadliner
+          ? allArtistsInGroup.filter(
+              (a) => a && a.toLowerCase() !== c.artist.toLowerCase(),
+            )
+          : null;
         await add.mutateAsync({
           artist: c.artist,
           tour: c.tour,
-          openers: null,
+          openers: openersForRow && openersForRow.length ? openersForRow : null,
           date: form.date,
           venue: c.venue || form.venue,
           city: c.city ?? form.city,
           country: c.country ?? (form.country || null),
           rating,
           genre: form.genre.trim() || null,
-          notes: null,
+          notes: supportNote,
           ticketPrice: null,
           songsSeen: c.songs.length || null,
           setlist: c.songs.length ? c.songs : null,
-          artistImageUrl: null,
+          artistImageUrl: imageMap.get(c.artist) ?? null,
           openerSetlists: null,
         });
         ok += 1;
       }
+
+      // If user picked a co-performer as the headliner, the main form's artist
+      // is actually a support act — reflect that in the main form before submit.
+      if (
+        headlinerName &&
+        headlinerName.toLowerCase() !== form.artist.trim().toLowerCase()
+      ) {
+        setForm((f) => ({
+          ...f,
+          notes: f.notes?.trim() ? f.notes : `Support act for ${headlinerName}`,
+        }));
+        setOpeners(null);
+      }
+
       toast.success(`Logged ${ok} additional ${ok === 1 ? "show" : "shows"}`);
       setCoPerformers(null);
       setSelectedCo(new Set());
@@ -315,7 +361,7 @@ function AddShow() {
                   {coPerformers.length} other {coPerformers.length === 1 ? "artist" : "artists"} performed at {form.venue} on this date
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Log them as separate shows in your archive?
+                  Log them as separate shows. Pick which artist headlined — the rest will be marked as support.
                 </p>
               </div>
               <button
@@ -327,12 +373,33 @@ function AddShow() {
               </button>
             </div>
             <div className="space-y-2">
+              {/* Main form artist row — always present, always "logged" via main submit */}
+              <div className="flex items-center gap-3 rounded-xl border border-hairline bg-card/60 p-3">
+                <span className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground" title="Logged via main form">
+                  ✓
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">{form.artist || "(main entry)"}</p>
+                  <p className="text-xs text-muted-foreground">From the form above</p>
+                </div>
+                <label className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold">
+                  <input
+                    type="radio"
+                    name="co-headliner"
+                    checked={headliner.toLowerCase() === form.artist.trim().toLowerCase()}
+                    onChange={() => setHeadliner(form.artist.trim())}
+                    className="h-3.5 w-3.5 accent-brand"
+                  />
+                  <Crown className="h-3.5 w-3.5" /> Headliner
+                </label>
+              </div>
               {coPerformers.map((c) => {
                 const checked = selectedCo.has(c.artist);
+                const isHeadliner = headliner.toLowerCase() === c.artist.toLowerCase();
                 return (
-                  <label
+                  <div
                     key={c.artist}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-hairline bg-card/60 p-3 hover:border-brand/40"
+                    className={`flex items-center gap-3 rounded-xl border bg-card/60 p-3 ${isHeadliner ? "border-brand/60" : "border-hairline"}`}
                   >
                     <input
                       type="checkbox"
@@ -355,10 +422,22 @@ function AddShow() {
                           .join(" · ") || "Setlist available"}
                       </p>
                     </div>
-                  </label>
+                    <label className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold">
+                      <input
+                        type="radio"
+                        name="co-headliner"
+                        checked={isHeadliner}
+                        onChange={() => setHeadliner(c.artist)}
+                        disabled={!checked}
+                        className="h-3.5 w-3.5 accent-brand"
+                      />
+                      <Crown className="h-3.5 w-3.5" /> Headliner
+                    </label>
+                  </div>
                 );
               })}
             </div>
+
             <div className="mt-3 flex justify-end">
               <button
                 type="button"
