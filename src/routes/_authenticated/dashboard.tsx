@@ -149,16 +149,17 @@ function Dashboard() {
             </Link>
           </div>
           {recent.map((c) => (
-            <ConcertCard
-              key={c.id}
-              artist={c.artist}
-              tour={c.tour ?? undefined}
-              date={c.date}
-              venue={c.venue}
-              city={c.city}
-              rating={c.rating}
-              notes={c.notes ?? undefined}
-            />
+            <Link key={c.id} to="/show/$id" params={{ id: c.id }} className="block">
+              <ConcertCard
+                artist={c.artist}
+                tour={c.tour ?? undefined}
+                date={c.date}
+                venue={c.venue}
+                city={c.city}
+                rating={c.rating}
+                notes={c.notes ?? undefined}
+              />
+            </Link>
           ))}
         </div>
 
