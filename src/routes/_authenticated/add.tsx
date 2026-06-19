@@ -34,6 +34,7 @@ function AddShow() {
   const update = useUpdateConcert();
   const del = useDeleteConcert();
   const fetchSetlist = useServerFn(lookupSetlist);
+  const fetchCoPerformers = useServerFn(lookupCoPerformers);
 
   const [rating, setRating] = useState(existing?.rating ?? 8);
   const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
