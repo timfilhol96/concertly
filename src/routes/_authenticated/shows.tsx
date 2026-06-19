@@ -640,6 +640,9 @@ function Shows() {
       </div>
 
       {prompt && <WizardModal prompt={prompt} progress={refresh} />}
+      {!prompt && fetching && refresh.running && (
+        <FetchingOverlay artist={fetching.artist} step={fetching.step} progress={refresh} />
+      )}
     </main>
   );
 }
