@@ -13,7 +13,9 @@ export type SetlistLookupResult = {
   city: string | null;
   country: string | null;
   openers: string[];
+  songs: string[];
   songsSeen: number | null;
+  genre: string | null;
   artist: string | null;
   setlistUrl: string | null;
 };
@@ -22,6 +24,39 @@ export type SetlistLookupResult = {
 function toSetlistDate(iso: string): string {
   const [y, m, d] = iso.split("-");
   return `${d}-${m}-${y}`;
+}
+
+function titleCase(s: string): string {
+  return s
+    .split(/\s+/)
+    .map((w) => (w ? w[0].toUpperCase() + w.slice(1) : w))
+    .join(" ");
+}
+
+async function lookupGenre(mbid: string | undefined): Promise<string | null> {
+  if (!mbid) return null;
+  try {
+    const res = await fetch(
+      `https://musicbrainz.org/ws/2/artist/${mbid}?inc=genres+tags&fmt=json`,
+      {
+        headers: {
+          "User-Agent": "Concertly/1.0 (https://concertly.lovable.app)",
+          Accept: "application/json",
+        },
+      },
+    );
+    if (!res.ok) return null;
+    const json = (await res.json()) as {
+      genres?: Array<{ name?: string; count?: number }>;
+      tags?: Array<{ name?: string; count?: number }>;
+    };
+    const pool = [...(json.genres ?? []), ...(json.tags ?? [])]
+      .filter((x): x is { name: string; count?: number } => !!x.name)
+      .sort((a, b) => (b.count ?? 0) - (a.count ?? 0));
+    return pool[0] ? titleCase(pool[0].name) : null;
+  } catch {
+    return null;
+  }
 }
 
 export const lookupSetlist = createServerFn({ method: "POST" })
@@ -37,7 +72,9 @@ export const lookupSetlist = createServerFn({ method: "POST" })
       city: null,
       country: null,
       openers: [],
+      songs: [],
       songsSeen: null,
+      genre: null,
       artist: null,
       setlistUrl: null,
     };
@@ -63,7 +100,7 @@ export const lookupSetlist = createServerFn({ method: "POST" })
     const json = (await res.json()) as {
       setlist?: Array<{
         url?: string;
-        artist?: { name?: string };
+        artist?: { name?: string; mbid?: string };
         tour?: { name?: string };
         venue?: {
           name?: string;
@@ -79,8 +116,6 @@ export const lookupSetlist = createServerFn({ method: "POST" })
     const matches = json.setlist ?? [];
     if (matches.length === 0) return empty;
 
-    // Prefer the entry whose artist name matches the query (case-insensitive),
-    // otherwise the first result. Openers = other distinct artists on same date.
     const q = data.artist.trim().toLowerCase();
     const headliner =
       matches.find((s) => s.artist?.name?.toLowerCase() === q) ?? matches[0];
@@ -94,10 +129,15 @@ export const lookupSetlist = createServerFn({ method: "POST" })
     ).slice(0, 5);
 
     const sets = headliner.sets?.set ?? [];
-    const songCount = sets.reduce(
-      (acc, s) => acc + (s.song?.filter((x) => x.name && x.name.trim()).length ?? 0),
-      0,
-    );
+    const songs: string[] = [];
+    for (const s of sets) {
+      for (const song of s.song ?? []) {
+        const n = song.name?.trim();
+        if (n) songs.push(n);
+      }
+    }
+
+    const genre = await lookupGenre(headliner.artist?.mbid);
 
     return {
       found: true,
@@ -110,7 +150,9 @@ export const lookupSetlist = createServerFn({ method: "POST" })
         headliner.venue?.city?.country?.code ??
         null,
       openers,
-      songsSeen: songCount > 0 ? songCount : null,
+      songs,
+      songsSeen: songs.length > 0 ? songs.length : null,
+      genre,
       setlistUrl: headliner.url ?? null,
     };
   });
