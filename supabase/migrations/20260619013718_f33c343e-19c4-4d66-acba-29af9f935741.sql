@@ -1,0 +1,1 @@
+ALTER TABLE public.concerts ADD COLUMN IF NOT EXISTS setlist text[];

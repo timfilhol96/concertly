@@ -31,6 +31,7 @@ function AddShow() {
   const [rating, setRating] = useState(existing?.rating ?? 8);
   const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
   const [songsSeen, setSongsSeen] = useState<number | null>(existing?.songsSeen ?? null);
+  const [setlist, setSetlist] = useState<string[] | null>(existing?.setlist ?? null);
   const [looking, setLooking] = useState(false);
   const [form, setForm] = useState({
     artist: existing?.artist ?? "",
@@ -69,12 +70,19 @@ function AddShow() {
         venue: r.venue ?? f.venue,
         city: r.city ?? f.city,
         country: r.country ?? f.country,
+        genre: r.genre ?? f.genre,
       }));
       setOpeners(r.openers.length ? r.openers : null);
       setSongsSeen(r.songsSeen);
+      setSetlist(r.songs.length ? r.songs : null);
       toast.success("Pulled from setlist.fm", {
         description:
-          [r.tour, r.openers.length ? `${r.openers.length} opener(s)` : null, r.songsSeen ? `${r.songsSeen} songs` : null]
+          [
+            r.tour,
+            r.openers.length ? `${r.openers.length} opener(s)` : null,
+            r.songs.length ? `${r.songs.length} songs` : null,
+            r.genre,
+          ]
             .filter(Boolean)
             .join(" · ") || "Details filled in.",
       });
@@ -100,6 +108,7 @@ function AddShow() {
       notes: form.notes.trim() || null,
       ticketPrice: form.ticketPrice ? Number(form.ticketPrice) : null,
       songsSeen,
+      setlist,
     };
     try {
       if (isEdit && existing) {
@@ -167,7 +176,7 @@ function AddShow() {
           <input value={form.tour} onChange={(e) => set("tour", e.target.value)} className={inputCls} placeholder="e.g. Ten Days Tour" />
         </Field>
 
-        {(openers?.length || songsSeen) && (
+        {(openers?.length || songsSeen || setlist?.length) && (
           <div className="rounded-2xl border border-hairline bg-surface p-4">
             <p className="mb-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">From setlist.fm</p>
             <div className="flex flex-wrap items-center gap-2 text-sm">
@@ -180,6 +189,16 @@ function AddShow() {
                 <span className="rounded-full border border-hairline px-3 py-1 text-xs">{songsSeen} songs played</span>
               ) : null}
             </div>
+            {setlist?.length ? (
+              <ol className="mt-4 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
+                {setlist.map((s, i) => (
+                  <li key={`${s}-${i}`} className="flex items-center gap-2 text-xs">
+                    <span className="w-6 font-mono text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+                    <span className="truncate">{s}</span>
+                  </li>
+                ))}
+              </ol>
+            ) : null}
           </div>
         )}
 

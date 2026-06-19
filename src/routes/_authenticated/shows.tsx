@@ -1,4 +1,4 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { Pencil, Search, Star, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -10,6 +10,7 @@ export const Route = createFileRoute("/_authenticated/shows")({
 });
 
 function Shows() {
+  const nav = useNavigate();
   const { data: concerts = [], isLoading } = useConcerts();
   const del = useDeleteConcert();
   const [q, setQ] = useState("");
@@ -77,7 +78,11 @@ function Shows() {
           </thead>
           <tbody className="divide-y divide-hairline bg-card/40">
             {list.map((c) => (
-              <tr key={c.id} className="transition-colors hover:bg-surface-2/60">
+              <tr
+                key={c.id}
+                onClick={() => nav({ to: "/show/$id", params: { id: c.id } })}
+                className="cursor-pointer transition-colors hover:bg-surface-2/60"
+              >
                 <td className="px-4 py-4 md:px-6">
                   <div className="font-semibold">{c.artist}</div>
                   <div className="text-xs text-muted-foreground md:hidden">{c.venue} · {c.city}</div>
@@ -98,7 +103,7 @@ function Shows() {
                     <span className="font-display text-lg font-extrabold">{c.rating.toFixed(1)}</span>
                   </div>
                 </td>
-                <td className="px-4 py-4 md:px-6">
+                <td className="px-4 py-4 md:px-6" onClick={(e) => e.stopPropagation()}>
                   <div className="flex items-center justify-end gap-1">
                     <Link
                       to="/add"

@@ -17,6 +17,7 @@ import { Route as AuthenticatedShowsRouteImport } from './routes/_authenticated/
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAddRouteImport } from './routes/_authenticated/add'
+import { Route as AuthenticatedShowIdRouteImport } from './routes/_authenticated/show.$id'
 
 const AuthRoute = AuthRouteImport.update({
   id: '/auth',
@@ -57,6 +58,11 @@ const AuthenticatedAddRoute = AuthenticatedAddRouteImport.update({
   path: '/add',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedShowIdRoute = AuthenticatedShowIdRouteImport.update({
+  id: '/show/$id',
+  path: '/show/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -66,6 +72,7 @@ export interface FileRoutesByFullPath {
   '/insights': typeof AuthenticatedInsightsRoute
   '/shows': typeof AuthenticatedShowsRoute
   '/wrapped': typeof AuthenticatedWrappedRoute
+  '/show/$id': typeof AuthenticatedShowIdRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -75,6 +82,7 @@ export interface FileRoutesByTo {
   '/insights': typeof AuthenticatedInsightsRoute
   '/shows': typeof AuthenticatedShowsRoute
   '/wrapped': typeof AuthenticatedWrappedRoute
+  '/show/$id': typeof AuthenticatedShowIdRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -86,6 +94,7 @@ export interface FileRoutesById {
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/shows': typeof AuthenticatedShowsRoute
   '/_authenticated/wrapped': typeof AuthenticatedWrappedRoute
+  '/_authenticated/show/$id': typeof AuthenticatedShowIdRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -97,6 +106,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/shows'
     | '/wrapped'
+    | '/show/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -106,6 +116,7 @@ export interface FileRouteTypes {
     | '/insights'
     | '/shows'
     | '/wrapped'
+    | '/show/$id'
   id:
     | '__root__'
     | '/'
@@ -116,6 +127,7 @@ export interface FileRouteTypes {
     | '/_authenticated/insights'
     | '/_authenticated/shows'
     | '/_authenticated/wrapped'
+    | '/_authenticated/show/$id'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -182,6 +194,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAddRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/show/$id': {
+      id: '/_authenticated/show/$id'
+      path: '/show/$id'
+      fullPath: '/show/$id'
+      preLoaderRoute: typeof AuthenticatedShowIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -191,6 +210,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedShowsRoute: typeof AuthenticatedShowsRoute
   AuthenticatedWrappedRoute: typeof AuthenticatedWrappedRoute
+  AuthenticatedShowIdRoute: typeof AuthenticatedShowIdRoute
 }
 
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
@@ -199,6 +219,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedShowsRoute: AuthenticatedShowsRoute,
   AuthenticatedWrappedRoute: AuthenticatedWrappedRoute,
+  AuthenticatedShowIdRoute: AuthenticatedShowIdRoute,
 }
 
 const AuthenticatedRouteRouteWithChildren =
