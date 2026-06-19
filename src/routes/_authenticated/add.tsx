@@ -10,7 +10,8 @@ import {
   useUpdateConcert,
   type OpenerSetlist,
 } from "@/lib/concerts";
-import { lookupSetlist } from "@/lib/setlistfm.functions";
+import { lookupCoPerformers, lookupSetlist, type CoPerformer } from "@/lib/setlistfm.functions";
+import { Users } from "lucide-react";
 
 type Search = { id?: string };
 
