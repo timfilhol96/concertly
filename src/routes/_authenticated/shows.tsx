@@ -21,6 +21,13 @@ function Shows() {
   const { month } = Route.useSearch();
   const { data: concerts = [], isLoading } = useConcerts();
   const del = useDeleteConcert();
+  const update = useUpdateConcert();
+  const fetchSetlist = useServerFn(lookupSetlist);
+  const [refresh, setRefresh] = useState<{ running: boolean; done: number; total: number }>({
+    running: false,
+    done: 0,
+    total: 0,
+  });
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"date" | "rating">("date");
   const list = useMemo(() => {
