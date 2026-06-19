@@ -361,7 +361,7 @@ function AddShow() {
                   {coPerformers.length} other {coPerformers.length === 1 ? "artist" : "artists"} performed at {form.venue} on this date
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Log them as separate shows in your archive?
+                  Log them as separate shows. Pick which artist headlined — the rest will be marked as support.
                 </p>
               </div>
               <button
@@ -373,12 +373,33 @@ function AddShow() {
               </button>
             </div>
             <div className="space-y-2">
+              {/* Main form artist row — always present, always "logged" via main submit */}
+              <div className="flex items-center gap-3 rounded-xl border border-hairline bg-card/60 p-3">
+                <span className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground" title="Logged via main form">
+                  ✓
+                </span>
+                <div className="flex-1">
+                  <p className="text-sm font-semibold">{form.artist || "(main entry)"}</p>
+                  <p className="text-xs text-muted-foreground">From the form above</p>
+                </div>
+                <label className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold">
+                  <input
+                    type="radio"
+                    name="co-headliner"
+                    checked={headliner.toLowerCase() === form.artist.trim().toLowerCase()}
+                    onChange={() => setHeadliner(form.artist.trim())}
+                    className="h-3.5 w-3.5 accent-brand"
+                  />
+                  <Crown className="h-3.5 w-3.5" /> Headliner
+                </label>
+              </div>
               {coPerformers.map((c) => {
                 const checked = selectedCo.has(c.artist);
+                const isHeadliner = headliner.toLowerCase() === c.artist.toLowerCase();
                 return (
-                  <label
+                  <div
                     key={c.artist}
-                    className="flex cursor-pointer items-center gap-3 rounded-xl border border-hairline bg-card/60 p-3 hover:border-brand/40"
+                    className={`flex items-center gap-3 rounded-xl border bg-card/60 p-3 ${isHeadliner ? "border-brand/60" : "border-hairline"}`}
                   >
                     <input
                       type="checkbox"
@@ -401,10 +422,22 @@ function AddShow() {
                           .join(" · ") || "Setlist available"}
                       </p>
                     </div>
-                  </label>
+                    <label className="flex cursor-pointer items-center gap-1.5 text-xs font-semibold">
+                      <input
+                        type="radio"
+                        name="co-headliner"
+                        checked={isHeadliner}
+                        onChange={() => setHeadliner(c.artist)}
+                        disabled={!checked}
+                        className="h-3.5 w-3.5 accent-brand"
+                      />
+                      <Crown className="h-3.5 w-3.5" /> Headliner
+                    </label>
+                  </div>
                 );
               })}
             </div>
+
             <div className="mt-3 flex justify-end">
               <button
                 type="button"
