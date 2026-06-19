@@ -54,6 +54,66 @@ function Shows() {
     }
   }
 
+  async function handleRefreshAll() {
+    if (refresh.running) return;
+    const targets = concerts;
+    if (targets.length === 0) {
+      toast.info("No shows to refresh");
+      return;
+    }
+    if (
+      !confirm(
+        `Fetch fresh setlist.fm info for all ${targets.length} show${
+          targets.length === 1 ? "" : "s"
+        }? Existing rating, notes, and ticket price will be kept.`,
+      )
+    )
+      return;
+    setRefresh({ running: true, done: 0, total: targets.length });
+    let updated = 0;
+    let skipped = 0;
+    let failed = 0;
+    for (let i = 0; i < targets.length; i++) {
+      const c = targets[i];
+      try {
+        const res = await fetchSetlist({ data: { artist: c.artist, date: c.date } });
+        if (res.found) {
+          await update.mutateAsync({
+            id: c.id,
+            artist: res.artist ?? c.artist,
+            tour: res.tour ?? c.tour,
+            openers: res.openers.length > 0 ? res.openers : c.openers,
+            date: c.date,
+            venue: res.venue ?? c.venue,
+            city: res.city ?? c.city,
+            country: res.country ?? c.country,
+            rating: c.rating,
+            genre: res.genre ?? c.genre,
+            notes: c.notes,
+            ticketPrice: c.ticketPrice,
+            songsSeen: res.songsSeen ?? c.songsSeen,
+            setlist: res.songs.length > 0 ? res.songs : c.setlist,
+            artistImageUrl: res.artistImageUrl ?? c.artistImageUrl,
+            openerSetlists:
+              res.openerSetlists.length > 0 ? res.openerSetlists : c.openerSetlists,
+          });
+          updated++;
+        } else {
+          skipped++;
+        }
+      } catch {
+        failed++;
+      }
+      setRefresh({ running: true, done: i + 1, total: targets.length });
+    }
+    setRefresh({ running: false, done: 0, total: 0 });
+    toast.success(
+      `Refreshed ${updated} show${updated === 1 ? "" : "s"}` +
+        (skipped ? ` · ${skipped} not found` : "") +
+        (failed ? ` · ${failed} failed` : ""),
+    );
+  }
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
       <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
