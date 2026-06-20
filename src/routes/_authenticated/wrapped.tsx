@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Download, Share2 } from "lucide-react";
-import { getStats, rankBy, useConcerts, useProfile } from "@/lib/concerts";
+import { getStats, rankBy, uniqueShows, useConcerts, useProfile } from "@/lib/concerts";
 
 export const Route = createFileRoute("/_authenticated/wrapped")({
   head: () => ({ meta: [{ title: "Your Wrapped · Concertly" }] }),
