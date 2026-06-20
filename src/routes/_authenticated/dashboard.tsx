@@ -8,6 +8,7 @@ import {
   monthlyStreak,
   rankBy,
   recentConcerts,
+  uniqueShows,
   useConcerts,
   useProfile,
 } from "@/lib/concerts";
@@ -40,19 +41,21 @@ function Dashboard() {
   if (isLoading || !concerts) return <LoadingState />;
   if (concerts.length === 0) return <EmptyState name={profile?.displayName ?? "you"} />;
 
+  const shows = uniqueShows(concerts);
   const stats = getStats(concerts);
+  const showStats = getStats(shows);
   const topArtists = rankBy(concerts, "artist", 6);
-  const topVenues = rankBy(concerts, "venue", 5);
-  const topCities = rankBy(concerts, "city", 4);
-  const genres = genreBreakdown(concerts);
-  const months = monthlyHeatmap(concerts, YEAR);
+  const topVenues = rankBy(shows, "venue", 5);
+  const topCities = rankBy(shows, "city", 4);
+  const genres = genreBreakdown(shows);
+  const months = monthlyHeatmap(shows, YEAR);
   const maxMonth = months.reduce((m, x) => Math.max(m, x.count), 0);
-  const recent = recentConcerts(concerts, 4);
+  const recent = recentConcerts(shows, 4);
   const inYear = concerts.filter((c) => new Date(c.date).getFullYear() === YEAR);
-  const yearShows = inYear.length;
+  const yearShows = uniqueShows(inYear).length;
   const yearArtists = new Set(inYear.map((c) => c.artist)).size;
   const yearCities = new Set(inYear.map((c) => c.city)).size;
-  const streak = monthlyStreak(concerts);
+  const streak = monthlyStreak(shows);
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
@@ -74,7 +77,7 @@ function Dashboard() {
       </div>
 
       <div className="mb-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:grid-cols-4">
-        <BigStat label={`Shows in ${YEAR}`} value={yearShows} sub={`${stats.total} all-time`} />
+        <BigStat label={`Shows in ${YEAR}`} value={yearShows} sub={`${showStats.total} all-time`} />
         <BigStat label="Unique artists" value={stats.uniqueArtists} sub="across all shows" />
         <BigStat label="Cities visited" value={stats.uniqueCities} sub={`${stats.uniqueCountries} countries`} />
         <BigStat label="Monthly streak" value={streak.current} sub={`longest ${streak.longest}`} />
