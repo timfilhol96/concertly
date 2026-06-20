@@ -56,9 +56,9 @@ function Wrapped() {
       <div className="grid grid-cols-1 gap-6 md:grid-cols-6">
         <div className="relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br from-brand via-pink to-teal p-8 text-brand-foreground md:col-span-6 md:p-12">
           <p className="text-xs font-bold uppercase tracking-widest opacity-80">Your year in numbers</p>
-          <p className="mt-4 font-display text-7xl font-black leading-none md:text-9xl">{yearConcerts.length}</p>
+          <p className="mt-4 font-display text-7xl font-black leading-none md:text-9xl">{yearShows.length}</p>
           <p className="mt-3 font-display text-2xl font-extrabold md:text-3xl">
-            shows. {new Set(yearConcerts.map((c) => c.artist)).size} artists. {new Set(yearConcerts.map((c) => c.city)).size} cities.
+            shows. {new Set(yearConcerts.map((c) => c.artist)).size} artists. {new Set(yearShows.map((c) => c.city)).size} cities.
           </p>
           <div className="pointer-events-none absolute -right-10 -top-10 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
         </div>
