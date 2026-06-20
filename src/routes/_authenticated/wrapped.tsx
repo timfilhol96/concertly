@@ -13,9 +13,10 @@ function Wrapped() {
   const { data: profile } = useProfile();
   const { data: concerts = [] } = useConcerts();
   const yearConcerts = concerts.filter((c) => new Date(c.date).getFullYear() === YEAR);
+  const yearShows = uniqueShows(yearConcerts);
   const stats = getStats(concerts);
   const topArtist = rankBy(yearConcerts, "artist", 1)[0];
-  const topVenue = rankBy(yearConcerts, "venue", 1)[0];
+  const topVenue = rankBy(yearShows, "venue", 1)[0];
   const topRated = [...yearConcerts].sort((a, b) => b.rating - a.rating)[0];
 
   if (yearConcerts.length === 0) {
