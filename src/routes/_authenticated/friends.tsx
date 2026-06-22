@@ -1,7 +1,7 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
-import { Check, UserPlus, UserX, X } from "lucide-react";
+import { BarChart3, Check, UserPlus, UserX, X } from "lucide-react";
 import {
   Bar,
   BarChart,
