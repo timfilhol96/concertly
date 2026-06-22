@@ -172,7 +172,7 @@ function Insights() {
           </p>
         </ChartCard>
 
-        <ChartCard title="Genre mix" subtitle="All time">
+        <ChartCard title="Genre mix" subtitle={scopeLabel}>
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
