@@ -190,13 +190,20 @@ function FriendsPage() {
                         (active ? "bg-brand/15 ring-1 ring-brand" : "bg-surface-2 hover:bg-surface-3")
                       }
                     >
-                      <button
-                        type="button"
-                        onClick={() => setSelectedFriendId(f.otherUserId)}
-                        className="flex-1 text-left"
+                      <Link
+                        to="/friend/$id"
+                        params={{ id: f.otherUserId }}
+                        className="flex-1 min-w-0"
+                        title={`Open ${p?.displayName ?? "friend"}'s dashboard`}
                       >
                         <ProfileLabel p={p} />
-                      </button>
+                      </Link>
+                      <button
+                        onClick={() => setSelectedFriendId(f.otherUserId)}
+                        className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-surface hover:text-foreground"
+                        aria-label="Compare"
+                        title="Compare stats"
+                      ><BarChart3 className="h-3.5 w-3.5" /></button>
                       <button
                         onClick={() => {
                           if (confirm(`Remove @${p?.username ?? "friend"}?`)) {
