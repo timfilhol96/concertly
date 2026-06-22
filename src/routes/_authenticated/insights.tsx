@@ -214,7 +214,7 @@ function Insights() {
           )}
         </ChartCard>
 
-        <ChartCard className="lg:col-span-2" title="Top artists by shows" subtitle="All time">
+        <ChartCard className="lg:col-span-2" title="Top artists by shows" subtitle={scopeLabel}>
           <div className="space-y-4">
             {topArtists.map((a, i) => {
               const pct = (a.count / (topArtists[0]?.count || 1)) * 100;
