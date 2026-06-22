@@ -119,12 +119,7 @@ function TrustPage() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mb-8 rounded-2xl border border-hairline bg-card p-6">
-      <h2
-        className="mb-3 font-display text-lg font-extrabold"
-        dangerouslySetInnerHTML={undefined as never}
-      >
-        {title.replace(/&amp;/g, "&")}
-      </h2>
+      <h2 className="mb-3 font-display text-lg font-extrabold">{title}</h2>
       <div className="space-y-2 text-sm leading-relaxed">{children}</div>
     </section>
   );
