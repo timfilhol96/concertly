@@ -317,7 +317,7 @@ function AddShow() {
           rating,
           genre: form.genre.trim() || null,
           notes: supportNote,
-          ticketPrice: form.ticketPrice ? Number(form.ticketPrice) : null,
+          ticketPrice: null,
           songsSeen: c.songs.length || null,
           setlist: c.songs.length ? c.songs : null,
           artistImageUrl: imageMap.get(c.artist) ?? null,
