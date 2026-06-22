@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowUpRight, Star, TrendingUp } from "lucide-react";
+import { ArrowUpRight, Star, TrendingUp, Users } from "lucide-react";
 import {
   genreBreakdown,
   getConcertAge,
@@ -12,6 +12,7 @@ import {
   useConcerts,
   useProfile,
 } from "@/lib/concerts";
+import { useFriendships } from "@/lib/friends";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -36,6 +37,8 @@ function heatColor(count: number, max: number): string {
 function Dashboard() {
   const { data: profile } = useProfile();
   const { data: concerts, isLoading } = useConcerts();
+  const { data: friendships } = useFriendships();
+  const friendCount = friendships?.friends.length ?? 0;
   const nav = useNavigate();
 
   if (isLoading || !concerts) return <LoadingState />;
@@ -76,11 +79,20 @@ function Dashboard() {
         </div>
       </div>
 
-      <div className="mb-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:grid-cols-4">
+      <div className="mb-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:grid-cols-5">
         <BigStat label={`Shows in ${YEAR}`} value={yearShows} sub={`${showStats.total} all-time`} />
         <BigStat label="Unique artists" value={stats.uniqueArtists} sub="across all shows" />
         <BigStat label="Cities visited" value={stats.uniqueCities} sub={`${stats.uniqueCountries} countries`} />
         <BigStat label="Monthly streak" value={streak.current} sub={`longest ${streak.longest}`} />
+        <Link to="/friends" className="bg-card p-6 transition-colors hover:bg-surface-2 md:p-8">
+          <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <Users className="h-3 w-3" /> Friends
+          </p>
+          <p className="mt-2 font-display text-4xl font-extrabold md:text-5xl">{friendCount.toLocaleString()}</p>
+          <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
+            <ArrowUpRight className="h-3 w-3" /> {friendCount === 0 ? "add your first" : "manage friends"}
+          </p>
+        </Link>
       </div>
 
       <div className="mb-10 grid grid-cols-1 gap-6 md:grid-cols-3">

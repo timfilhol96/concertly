@@ -255,16 +255,22 @@ function FriendRow({ friend }: { friend: FriendProfile }) {
   const initials = (friend.displayName || friend.username || "U")
     .split(/\s+/).map((w) => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
   return (
-    <li className="flex items-center gap-2.5">
-      <div className="grid h-8 w-8 flex-none place-items-center overflow-hidden rounded-full border border-hairline bg-surface-2 text-[10px] font-bold">
-        {url ? <img src={url} alt="" className="h-full w-full object-cover" /> : initials}
-      </div>
-      <div className="min-w-0">
-        <p className="truncate text-sm font-semibold">{friend.displayName}</p>
-        {friend.username && (
-          <p className="truncate font-mono text-[10px] text-muted-foreground">@{friend.username}</p>
-        )}
-      </div>
+    <li>
+      <Link
+        to="/friend/$id"
+        params={{ id: friend.userId }}
+        className="flex items-center gap-2.5 rounded-lg -mx-1 px-1 py-1 hover:bg-surface-2"
+      >
+        <div className="grid h-8 w-8 flex-none place-items-center overflow-hidden rounded-full border border-hairline bg-surface-2 text-[10px] font-bold">
+          {url ? <img src={url} alt="" className="h-full w-full object-cover" /> : initials}
+        </div>
+        <div className="min-w-0">
+          <p className="truncate text-sm font-semibold">{friend.displayName}</p>
+          {friend.username && (
+            <p className="truncate font-mono text-[10px] text-muted-foreground">@{friend.username}</p>
+          )}
+        </div>
+      </Link>
     </li>
   );
 }
