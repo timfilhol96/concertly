@@ -69,7 +69,7 @@ type Prompt = ArtistPrompt | CoPerformerPrompt | NotFoundPrompt;
 
 function Shows() {
   const nav = useNavigate();
-  const { month, genre } = Route.useSearch();
+  const { month, genre, year } = Route.useSearch();
   const { data: concerts = [], isLoading } = useConcerts();
   const del = useDeleteConcert();
   const update = useUpdateConcert();
