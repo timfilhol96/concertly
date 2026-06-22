@@ -1,5 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 const InputSchema = z.object({
   artist: z.string().min(1).max(120),
@@ -161,6 +162,7 @@ async function lookupOpenerSetlist(
 }
 
 export const lookupSetlist = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<SetlistLookupResult> => {
     const apiKey = process.env.SETLISTFM_API_KEY;
@@ -368,6 +370,7 @@ export type CoPerformer = {
 };
 
 export const lookupCoPerformers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => CoPerformersInput.parse(input))
   .handler(async ({ data }): Promise<CoPerformer[]> => {
     const apiKey = process.env.SETLISTFM_API_KEY;
