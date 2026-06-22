@@ -162,6 +162,7 @@ async function lookupOpenerSetlist(
 }
 
 export const lookupSetlist = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => InputSchema.parse(input))
   .handler(async ({ data }): Promise<SetlistLookupResult> => {
     const apiKey = process.env.SETLISTFM_API_KEY;
