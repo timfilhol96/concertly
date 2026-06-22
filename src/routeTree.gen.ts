@@ -21,6 +21,7 @@ import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAddRouteImport } from './routes/_authenticated/add'
 import { Route as AuthenticatedShowIdRouteImport } from './routes/_authenticated/show.$id'
+import { Route as AuthenticatedFriendIdRouteImport } from './routes/_authenticated/friend.$id'
 
 const TrustRoute = TrustRouteImport.update({
   id: '/trust',
@@ -81,6 +82,11 @@ const AuthenticatedShowIdRoute = AuthenticatedShowIdRouteImport.update({
   path: '/show/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFriendIdRoute = AuthenticatedFriendIdRouteImport.update({
+  id: '/friend/$id',
+  path: '/friend/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -93,6 +99,7 @@ export interface FileRoutesByFullPath {
   '/profile': typeof AuthenticatedProfileRoute
   '/shows': typeof AuthenticatedShowsRoute
   '/wrapped': typeof AuthenticatedWrappedRoute
+  '/friend/$id': typeof AuthenticatedFriendIdRoute
   '/show/$id': typeof AuthenticatedShowIdRoute
 }
 export interface FileRoutesByTo {
@@ -106,6 +113,7 @@ export interface FileRoutesByTo {
   '/profile': typeof AuthenticatedProfileRoute
   '/shows': typeof AuthenticatedShowsRoute
   '/wrapped': typeof AuthenticatedWrappedRoute
+  '/friend/$id': typeof AuthenticatedFriendIdRoute
   '/show/$id': typeof AuthenticatedShowIdRoute
 }
 export interface FileRoutesById {
@@ -121,6 +129,7 @@ export interface FileRoutesById {
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/shows': typeof AuthenticatedShowsRoute
   '/_authenticated/wrapped': typeof AuthenticatedWrappedRoute
+  '/_authenticated/friend/$id': typeof AuthenticatedFriendIdRoute
   '/_authenticated/show/$id': typeof AuthenticatedShowIdRoute
 }
 export interface FileRouteTypes {
@@ -136,6 +145,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/shows'
     | '/wrapped'
+    | '/friend/$id'
     | '/show/$id'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -149,6 +159,7 @@ export interface FileRouteTypes {
     | '/profile'
     | '/shows'
     | '/wrapped'
+    | '/friend/$id'
     | '/show/$id'
   id:
     | '__root__'
@@ -163,6 +174,7 @@ export interface FileRouteTypes {
     | '/_authenticated/profile'
     | '/_authenticated/shows'
     | '/_authenticated/wrapped'
+    | '/_authenticated/friend/$id'
     | '/_authenticated/show/$id'
   fileRoutesById: FileRoutesById
 }
@@ -259,6 +271,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedShowIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/friend/$id': {
+      id: '/_authenticated/friend/$id'
+      path: '/friend/$id'
+      fullPath: '/friend/$id'
+      preLoaderRoute: typeof AuthenticatedFriendIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
   }
 }
 
@@ -270,6 +289,7 @@ interface AuthenticatedRouteRouteChildren {
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedShowsRoute: typeof AuthenticatedShowsRoute
   AuthenticatedWrappedRoute: typeof AuthenticatedWrappedRoute
+  AuthenticatedFriendIdRoute: typeof AuthenticatedFriendIdRoute
   AuthenticatedShowIdRoute: typeof AuthenticatedShowIdRoute
 }
 
@@ -281,6 +301,7 @@ const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedShowsRoute: AuthenticatedShowsRoute,
   AuthenticatedWrappedRoute: AuthenticatedWrappedRoute,
+  AuthenticatedFriendIdRoute: AuthenticatedFriendIdRoute,
   AuthenticatedShowIdRoute: AuthenticatedShowIdRoute,
 }
 
