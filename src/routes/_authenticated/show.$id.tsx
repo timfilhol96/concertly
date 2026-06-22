@@ -1,7 +1,8 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Calendar, MapPin, Music, Pencil, Star, Ticket, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
-import { useConcerts, useDeleteConcert } from "@/lib/concerts";
+import { useAvatarUrl, useConcerts, useDeleteConcert } from "@/lib/concerts";
+import { useFriendsAtShow, type FriendProfile } from "@/lib/friends";
 
 export const Route = createFileRoute("/_authenticated/show/$id")({
   head: () => ({ meta: [{ title: "Show · Concertly" }] }),
@@ -194,6 +195,8 @@ function ShowDetail() {
             </div>
           ) : null}
 
+          <FriendsAtShow date={concert.date} venue={concert.venue} city={concert.city} />
+
           {concert.notes && (
             <div className="rounded-3xl border border-hairline bg-card p-6">
               <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
@@ -227,5 +230,41 @@ function Tile({
       </p>
       {sub && <p className="mt-1 text-[11px] text-muted-foreground">{sub}</p>}
     </div>
+  );
+}
+
+function FriendsAtShow({ date, venue, city }: { date: string; venue: string; city: string }) {
+  const { data: friends = [], isLoading } = useFriendsAtShow({ date, venue, city });
+  if (isLoading || friends.length === 0) return null;
+  return (
+    <div className="rounded-3xl border border-hairline bg-card p-6">
+      <h3 className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+        <Users className="h-3.5 w-3.5 text-teal" /> Friends who were there
+      </h3>
+      <ul className="mt-3 space-y-2">
+        {friends.map((f) => (
+          <FriendRow key={f.userId} friend={f} />
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+function FriendRow({ friend }: { friend: FriendProfile }) {
+  const url = useAvatarUrl(friend.avatarPath);
+  const initials = (friend.displayName || friend.username || "U")
+    .split(/\s+/).map((w) => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
+  return (
+    <li className="flex items-center gap-2.5">
+      <div className="grid h-8 w-8 flex-none place-items-center overflow-hidden rounded-full border border-hairline bg-surface-2 text-[10px] font-bold">
+        {url ? <img src={url} alt="" className="h-full w-full object-cover" /> : initials}
+      </div>
+      <div className="min-w-0">
+        <p className="truncate text-sm font-semibold">{friend.displayName}</p>
+        {friend.username && (
+          <p className="truncate font-mono text-[10px] text-muted-foreground">@{friend.username}</p>
+        )}
+      </div>
+    </li>
   );
 }
