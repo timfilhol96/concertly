@@ -50,12 +50,22 @@ function Insights() {
   const years = availableYears(shows);
   const [year, setYear] = useState<YearSel>(years[0] ?? CURRENT_YEAR);
 
+  // Filter to the selected year for all year-aware sections.
+  const showsInYear = useMemo(
+    () => (year === "all" ? shows : shows.filter((s) => s.date.startsWith(String(year)))),
+    [shows, year],
+  );
+  const concertsInYear = useMemo(
+    () => (year === "all" ? concerts : concerts.filter((c) => c.date.startsWith(String(year)))),
+    [concerts, year],
+  );
+
   const byMonth = showsByMonth(shows, year);
   const byYear = showsByYear(shows);
-  const genres = genreBreakdown(shows);
+  const genres = genreBreakdown(showsInYear);
   // Top artists is per-artist seen — keep using the full list so support acts count.
-  const topArtists = rankBy(concerts, "artist", 8);
-  const topCountries = rankBy(shows, "country", 6);
+  const topArtists = rankBy(concertsInYear, "artist", 8);
+  const topCountries = rankBy(showsInYear, "country", 6);
   const streak = monthlyStreak(shows);
 
   const totalInRange = byMonth.reduce((s, m) => s + m.count, 0);
@@ -71,6 +81,8 @@ function Insights() {
   const totalShows = shows.length;
   const totalArtists = concerts.length;
 
+  const scopeLabel = year === "all" ? "All time" : String(year);
+
   function handleMonthClick(monthIdx: number) {
     if (year === "all") return;
     const m = String(monthIdx + 1).padStart(2, "0");
@@ -83,7 +95,7 @@ function Insights() {
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
-      <div className="mb-10 animate-reveal">
+      <div className="mb-8 animate-reveal">
         <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">Insights</h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">
           The patterns behind your live music life — when you go out, who you can't get enough of,
@@ -93,6 +105,22 @@ function Insights() {
           <span className="font-semibold text-foreground">{totalShows}</span> show{totalShows === 1 ? "" : "s"} attended ·{" "}
           <span className="font-semibold text-foreground">{totalArtists}</span> artist{totalArtists === 1 ? "" : "s"} seen
         </p>
+      </div>
+
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-hairline bg-card p-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Viewing</p>
+          <p className="font-display text-lg font-extrabold">{scopeLabel}</p>
+          <p className="text-[11px] text-muted-foreground">
+            Filters monthly chart, genre mix, top artists & top countries
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-1.5">
+          <YearChip active={year === "all"} onClick={() => setYear("all")}>All time</YearChip>
+          {years.map((y) => (
+            <YearChip key={y} active={year === y} onClick={() => setYear(y)}>{y}</YearChip>
+          ))}
+        </div>
       </div>
 
       <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
@@ -115,24 +143,9 @@ function Insights() {
         <ChartCard
           className="lg:col-span-2"
           title="Shows per month"
-          subtitle={year === "all" ? "All time" : String(year)}
-          right={
-            <select
-              value={String(year)}
-              onChange={(e) =>
-                setYear(e.target.value === "all" ? "all" : Number(e.target.value))
-              }
-              className="rounded-full border border-hairline bg-surface px-3 py-1.5 text-xs outline-none"
-            >
-              <option value="all">All time</option>
-              {years.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          }
+          subtitle={scopeLabel}
         >
+
           <ResponsiveContainer width="100%" height={280}>
             <BarChart data={byMonth} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="2 4" stroke="var(--hairline)" />
@@ -159,7 +172,7 @@ function Insights() {
           </p>
         </ChartCard>
 
-        <ChartCard title="Genre mix" subtitle="All time">
+        <ChartCard title="Genre mix" subtitle={scopeLabel}>
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
               <Pie
@@ -201,7 +214,7 @@ function Insights() {
           )}
         </ChartCard>
 
-        <ChartCard className="lg:col-span-2" title="Top artists by shows" subtitle="All time">
+        <ChartCard className="lg:col-span-2" title="Top artists by shows" subtitle={scopeLabel}>
           <div className="space-y-4">
             {topArtists.map((a, i) => {
               const pct = (a.count / (topArtists[0]?.count || 1)) * 100;
@@ -226,7 +239,7 @@ function Insights() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Top countries by shows" subtitle="All time">
+        <ChartCard title="Top countries by shows" subtitle={scopeLabel}>
           {topCountries.length === 0 ? (
             <p className="text-sm text-muted-foreground">No countries logged yet.</p>
           ) : (
@@ -290,6 +303,23 @@ function GenreTooltip({ active, payload }: { active?: boolean; payload?: Array<{
         {g.artists} artist{g.artists === 1 ? "" : "s"} · {g.count} show{g.count === 1 ? "" : "s"} · {g.pct}%
       </div>
     </div>
+  );
+}
+
+function YearChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "rounded-full px-3 py-1.5 text-xs font-semibold transition " +
+        (active
+          ? "bg-foreground text-background"
+          : "border border-hairline bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-2")
+      }
+    >
+      {children}
+    </button>
   );
 }
 
