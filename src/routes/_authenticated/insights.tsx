@@ -123,24 +123,9 @@ function Insights() {
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2">
-        <StreakCard
-          label="Current monthly streak"
-          value={streak.current}
-          sub={streak.current ? "consecutive months with a show" : "log a show this month to start one"}
-          tone="brand"
-        />
-        <StreakCard
-          label="Avg shows / month"
-          value={Number(avgPerMonth.toFixed(2))}
-          sub={year === "all" ? "across your history" : `during ${year}`}
-          tone="pink"
-        />
-      </div>
-
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <ChartCard className="lg:col-span-2" title="Shows by year" subtitle="Lifetime">
-          <ResponsiveContainer width="100%" height={280}>
+      <div className="mb-6">
+        <ChartCard title="Shows by year" subtitle="Lifetime">
+          <ResponsiveContainer width="100%" height={240}>
             <BarChart data={byYear} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="2 4" stroke="var(--hairline)" />
               <XAxis dataKey="year" tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} />
@@ -164,7 +149,24 @@ function Insights() {
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
+      </div>
 
+      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2">
+        <StreakCard
+          label="Current monthly streak"
+          value={streak.current}
+          sub={streak.current ? "consecutive months with a show" : "log a show this month to start one"}
+          tone="brand"
+        />
+        <StreakCard
+          label="Avg shows / month"
+          value={Number(avgPerMonth.toFixed(2))}
+          sub={year === "all" ? "across your history" : `during ${year}`}
+          tone="pink"
+        />
+      </div>
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <ChartCard title="Genre mix" subtitle={scopeLabel}>
           <ResponsiveContainer width="100%" height={280}>
             <PieChart>
