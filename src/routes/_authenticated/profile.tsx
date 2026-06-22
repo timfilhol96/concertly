@@ -5,6 +5,7 @@ import { Camera, Loader2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl, useProfile } from "@/lib/concerts";
+import { useUpdateUsername, USERNAME_RE } from "@/lib/friends";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile · Concertly" }] }),
@@ -17,7 +18,9 @@ function Profile() {
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploading, setUploading] = useState(false);
   const [displayName, setDisplayName] = useState(profile?.displayName ?? "");
+  const [username, setUsername] = useState(profile?.username ?? "");
   const [saving, setSaving] = useState(false);
+  const updateUsername = useUpdateUsername();
   const avatarUrl = useAvatarUrl(profile?.avatarPath);
 
   async function onPickFile(e: React.ChangeEvent<HTMLInputElement>) {
