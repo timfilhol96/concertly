@@ -239,7 +239,7 @@ function Insights() {
           </div>
         </ChartCard>
 
-        <ChartCard title="Top countries by shows" subtitle="All time">
+        <ChartCard title="Top countries by shows" subtitle={scopeLabel}>
           {topCountries.length === 0 ? (
             <p className="text-sm text-muted-foreground">No countries logged yet.</p>
           ) : (
