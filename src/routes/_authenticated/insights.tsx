@@ -306,6 +306,23 @@ function GenreTooltip({ active, payload }: { active?: boolean; payload?: Array<{
   );
 }
 
+function YearChip({ active, onClick, children }: { active: boolean; onClick: () => void; children: React.ReactNode }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={
+        "rounded-full px-3 py-1.5 text-xs font-semibold transition " +
+        (active
+          ? "bg-foreground text-background"
+          : "border border-hairline bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-2")
+      }
+    >
+      {children}
+    </button>
+  );
+}
+
 function StreakCard({
   label, value, sub, tone,
 }: { label: string; value: number; sub: string; tone: "brand" | "teal" | "pink" }) {
