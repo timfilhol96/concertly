@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowUpRight, Star, TrendingUp } from "lucide-react";
+import { ArrowUpRight, Star, TrendingUp, Users } from "lucide-react";
 import {
   genreBreakdown,
   getConcertAge,
@@ -12,6 +12,7 @@ import {
   useConcerts,
   useProfile,
 } from "@/lib/concerts";
+import { useFriendships } from "@/lib/friends";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
