@@ -222,6 +222,62 @@ export function useRemoveFriend() {
   });
 }
 
+// Friends who attended the same physical show (same date + venue + city, case-insensitive).
+export function useFriendsAtShow(args: {
+  date: string;
+  venue: string;
+  city: string;
+} | null) {
+  return useQuery({
+    enabled: !!args,
+    queryKey: ["friends-at-show", args?.date, args?.venue?.toLowerCase(), args?.city?.toLowerCase()],
+    queryFn: async (): Promise<FriendProfile[]> => {
+      if (!args) return [];
+      const { data: userRes } = await supabase.auth.getUser();
+      const me = userRes.user?.id;
+      if (!me) return [];
+
+      // Accepted friends only
+      const { data: friendRows } = await supabase
+        .from("friendships")
+        .select("requester_id, addressee_id, status")
+        .eq("status", "accepted");
+      const friendIds = (friendRows ?? [])
+        .map((r) => (r.requester_id === me ? r.addressee_id : r.requester_id))
+        .filter((id): id is string => !!id);
+      if (friendIds.length === 0) return [];
+
+      const venueKey = args.venue.trim().toLowerCase();
+      const cityKey = args.city.trim().toLowerCase();
+
+      const { data: rows, error } = await supabase
+        .from("concerts")
+        .select("user_id, venue, city")
+        .in("user_id", friendIds)
+        .eq("date", args.date);
+      if (error) throw error;
+
+      const matchedIds = new Set<string>();
+      for (const r of rows ?? []) {
+        if (
+          (r.venue ?? "").trim().toLowerCase() === venueKey &&
+          (r.city ?? "").trim().toLowerCase() === cityKey
+        ) {
+          matchedIds.add(r.user_id as string);
+        }
+      }
+      if (matchedIds.size === 0) return [];
+
+      const { data: profRows } = await supabase
+        .from("profiles")
+        .select("id, username, display_name, avatar_url")
+        .in("id", [...matchedIds]);
+
+      return ((profRows ?? []) as ProfileRow[]).map(rowToFriendProfile);
+    },
+  });
+}
+
 // -------- Friend concert read (RLS-allowed via are_friends policy) --------
 
 type ConcertRow = {
