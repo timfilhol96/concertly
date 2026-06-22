@@ -290,21 +290,6 @@ function Insights() {
             </ul>
           )}
         </ChartCard>
-
-        <ChartCard className="lg:col-span-2" title="Shows by year" subtitle="Lifetime">
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={byYear} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="2 4" stroke="var(--hairline)" />
-              <XAxis dataKey="year" tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} />
-              <YAxis tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} allowDecimals={false} />
-              <Tooltip
-                cursor={{ fill: "var(--surface-2)" }}
-                contentStyle={{ background: "var(--card)", border: "1px solid var(--hairline)", borderRadius: 12, fontSize: 12 }}
-              />
-              <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--teal)" />
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
       </div>
     </main>
   );
