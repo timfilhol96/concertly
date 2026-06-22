@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LogOut, Plus, Search, User } from "lucide-react";
+import { LogOut, Plus, User } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -62,9 +62,6 @@ export function AppNav() {
           </div>
         </div>
         <div className="flex items-center gap-3">
-          <button className="hidden h-9 w-9 items-center justify-center rounded-full border border-hairline text-muted-foreground transition-colors hover:text-foreground md:flex">
-            <Search className="h-4 w-4" />
-          </button>
           <Link
             to="/add"
             className="inline-flex items-center gap-1.5 rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground transition-all hover:scale-[1.03] active:scale-95"
