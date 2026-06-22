@@ -319,6 +319,7 @@ function Shows() {
           artistImageUrl: fallback.image ?? c.artistImageUrl,
           openerSetlists: c.openerSetlists,
         });
+        await syncTicketPriceAcrossShow(c.date, c.venue);
         return { status: "updated", coLogged };
       }
 
