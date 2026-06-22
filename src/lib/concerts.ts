@@ -93,7 +93,7 @@ export function useProfile() {
       if (!userRes.user) return null;
       const { data } = await supabase
         .from("profiles")
-        .select("display_name, avatar_url")
+        .select("display_name, avatar_url, username")
         .eq("id", userRes.user.id)
         .maybeSingle();
       return {
@@ -104,6 +104,7 @@ export function useProfile() {
           userRes.user.email?.split("@")[0] ??
           "You",
         avatarPath: (data?.avatar_url as string | null) ?? null,
+        username: (data?.username as string | null) ?? null,
       };
     },
   });
