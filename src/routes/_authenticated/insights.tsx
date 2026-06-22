@@ -123,14 +123,13 @@ function Insights() {
         </div>
       </div>
 
-      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-3">
+      <div className="mb-6 grid grid-cols-1 gap-3 md:grid-cols-2">
         <StreakCard
           label="Current monthly streak"
           value={streak.current}
           sub={streak.current ? "consecutive months with a show" : "log a show this month to start one"}
           tone="brand"
         />
-        <StreakCard label="Longest monthly streak" value={streak.longest} sub="all-time" tone="teal" />
         <StreakCard
           label="Avg shows / month"
           value={Number(avgPerMonth.toFixed(2))}
@@ -140,36 +139,30 @@ function Insights() {
       </div>
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <ChartCard
-          className="lg:col-span-2"
-          title="Shows per month"
-          subtitle={scopeLabel}
-        >
-
+        <ChartCard className="lg:col-span-2" title="Shows by year" subtitle="Lifetime">
           <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={byMonth} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
+            <BarChart data={byYear} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
               <CartesianGrid strokeDasharray="2 4" stroke="var(--hairline)" />
-              <XAxis dataKey="label" tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} />
+              <XAxis dataKey="year" tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} />
               <YAxis tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} allowDecimals={false} />
               <Tooltip
                 cursor={{ fill: "var(--surface-2)" }}
                 contentStyle={{ background: "var(--card)", border: "1px solid var(--hairline)", borderRadius: 12, fontSize: 12 }}
               />
-              <Bar
-                dataKey="count"
-                radius={[6, 6, 0, 0]}
-                fill="var(--brand)"
-                onClick={(d: { month?: number }) =>
-                  typeof d?.month === "number" && handleMonthClick(d.month)
-                }
-                style={{ cursor: year === "all" ? "default" : "pointer" }}
-              />
+              <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--teal)">
+                {byYear.map((entry, index) => {
+                  const isSelected = String(entry.year) === String(year);
+                  return (
+                    <Cell
+                      key={`cell-${index}`}
+                      fill={isSelected ? "var(--brand)" : "var(--teal)"}
+                      opacity={year === "all" || isSelected ? 1 : 0.5}
+                    />
+                  );
+                })}
+              </Bar>
             </BarChart>
           </ResponsiveContainer>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Average: <span className="font-semibold text-foreground">{avgPerMonth.toFixed(2)}</span> shows / month
-            {year !== "all" && " · click a bar to see those shows"}
-          </p>
         </ChartCard>
 
         <ChartCard title="Genre mix" subtitle={scopeLabel}>
@@ -212,6 +205,37 @@ function Insights() {
           {genres.length > 0 && (
             <p className="mt-2 text-[11px] text-muted-foreground">Click a slice or chip to see those shows.</p>
           )}
+        </ChartCard>
+
+        <ChartCard
+          className="lg:col-span-2"
+          title="Shows per month"
+          subtitle={scopeLabel}
+        >
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart data={byMonth} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
+              <CartesianGrid strokeDasharray="2 4" stroke="var(--hairline)" />
+              <XAxis dataKey="label" tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} />
+              <YAxis tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} allowDecimals={false} />
+              <Tooltip
+                cursor={{ fill: "var(--surface-2)" }}
+                contentStyle={{ background: "var(--card)", border: "1px solid var(--hairline)", borderRadius: 12, fontSize: 12 }}
+              />
+              <Bar
+                dataKey="count"
+                radius={[6, 6, 0, 0]}
+                fill="var(--brand)"
+                onClick={(d: { month?: number }) =>
+                  typeof d?.month === "number" && handleMonthClick(d.month)
+                }
+                style={{ cursor: year === "all" ? "default" : "pointer" }}
+              />
+            </BarChart>
+          </ResponsiveContainer>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            Average: <span className="font-semibold text-foreground">{avgPerMonth.toFixed(2)}</span> shows / month
+            {year !== "all" && " · click a bar to see those shows"}
+          </p>
         </ChartCard>
 
         <ChartCard className="lg:col-span-2" title="Top artists by shows" subtitle={scopeLabel}>
