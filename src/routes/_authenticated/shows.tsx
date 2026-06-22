@@ -21,13 +21,14 @@ import {
   type CoPerformer,
 } from "@/lib/setlistfm.functions";
 
-type Search = { month?: string; genre?: string };
+type Search = { month?: string; genre?: string; year?: string };
 
 export const Route = createFileRoute("/_authenticated/shows")({
   head: () => ({ meta: [{ title: "My Shows · Concertly" }] }),
   validateSearch: (s: Record<string, unknown>): Search => ({
     month: typeof s.month === "string" && /^\d{4}-\d{2}$/.test(s.month) ? s.month : undefined,
     genre: typeof s.genre === "string" && s.genre.length > 0 ? s.genre : undefined,
+    year: typeof s.year === "string" && /^\d{4}$/.test(s.year) ? s.year : undefined,
   }),
   component: Shows,
 });
