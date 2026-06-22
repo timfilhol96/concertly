@@ -16,6 +16,7 @@ import { Route as AuthenticatedWrappedRouteImport } from './routes/_authenticate
 import { Route as AuthenticatedShowsRouteImport } from './routes/_authenticated/shows'
 import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
 import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
+import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated/friends'
 import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
 import { Route as AuthenticatedAddRouteImport } from './routes/_authenticated/add'
 import { Route as AuthenticatedShowIdRouteImport } from './routes/_authenticated/show.$id'
@@ -54,6 +55,11 @@ const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
   path: '/insights',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const AuthenticatedFriendsRoute = AuthenticatedFriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -75,6 +81,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/add': typeof AuthenticatedAddRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/friends': typeof AuthenticatedFriendsRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/shows': typeof AuthenticatedShowsRoute
@@ -86,6 +93,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/add': typeof AuthenticatedAddRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
+  '/friends': typeof AuthenticatedFriendsRoute
   '/insights': typeof AuthenticatedInsightsRoute
   '/profile': typeof AuthenticatedProfileRoute
   '/shows': typeof AuthenticatedShowsRoute
@@ -99,6 +107,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/_authenticated/add': typeof AuthenticatedAddRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
+  '/_authenticated/friends': typeof AuthenticatedFriendsRoute
   '/_authenticated/insights': typeof AuthenticatedInsightsRoute
   '/_authenticated/profile': typeof AuthenticatedProfileRoute
   '/_authenticated/shows': typeof AuthenticatedShowsRoute
@@ -112,6 +121,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/add'
     | '/dashboard'
+    | '/friends'
     | '/insights'
     | '/profile'
     | '/shows'
@@ -123,6 +133,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/add'
     | '/dashboard'
+    | '/friends'
     | '/insights'
     | '/profile'
     | '/shows'
@@ -135,6 +146,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/_authenticated/add'
     | '/_authenticated/dashboard'
+    | '/_authenticated/friends'
     | '/_authenticated/insights'
     | '/_authenticated/profile'
     | '/_authenticated/shows'
@@ -199,6 +211,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedInsightsRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/_authenticated/friends': {
+      id: '/_authenticated/friends'
+      path: '/friends'
+      fullPath: '/friends'
+      preLoaderRoute: typeof AuthenticatedFriendsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
     '/_authenticated/dashboard': {
       id: '/_authenticated/dashboard'
       path: '/dashboard'
@@ -226,6 +245,7 @@ declare module '@tanstack/react-router' {
 interface AuthenticatedRouteRouteChildren {
   AuthenticatedAddRoute: typeof AuthenticatedAddRoute
   AuthenticatedDashboardRoute: typeof AuthenticatedDashboardRoute
+  AuthenticatedFriendsRoute: typeof AuthenticatedFriendsRoute
   AuthenticatedInsightsRoute: typeof AuthenticatedInsightsRoute
   AuthenticatedProfileRoute: typeof AuthenticatedProfileRoute
   AuthenticatedShowsRoute: typeof AuthenticatedShowsRoute
@@ -236,6 +256,7 @@ interface AuthenticatedRouteRouteChildren {
 const AuthenticatedRouteRouteChildren: AuthenticatedRouteRouteChildren = {
   AuthenticatedAddRoute: AuthenticatedAddRoute,
   AuthenticatedDashboardRoute: AuthenticatedDashboardRoute,
+  AuthenticatedFriendsRoute: AuthenticatedFriendsRoute,
   AuthenticatedInsightsRoute: AuthenticatedInsightsRoute,
   AuthenticatedProfileRoute: AuthenticatedProfileRoute,
   AuthenticatedShowsRoute: AuthenticatedShowsRoute,
