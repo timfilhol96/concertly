@@ -37,6 +37,8 @@ function heatColor(count: number, max: number): string {
 function Dashboard() {
   const { data: profile } = useProfile();
   const { data: concerts, isLoading } = useConcerts();
+  const { data: friendships } = useFriendships();
+  const friendCount = friendships?.friends.length ?? 0;
   const nav = useNavigate();
 
   if (isLoading || !concerts) return <LoadingState />;
