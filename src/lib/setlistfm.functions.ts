@@ -370,6 +370,7 @@ export type CoPerformer = {
 };
 
 export const lookupCoPerformers = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => CoPerformersInput.parse(input))
   .handler(async ({ data }): Promise<CoPerformer[]> => {
     const apiKey = process.env.SETLISTFM_API_KEY;
