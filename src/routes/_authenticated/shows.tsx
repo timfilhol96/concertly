@@ -1,8 +1,10 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useCallback, useMemo, useRef, useState } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useServerFn } from "@tanstack/react-start";
 import { Crown, Pencil, RefreshCw, Search, Star, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import {
   useAddConcert,
   useConcerts,
@@ -75,6 +77,41 @@ function Shows() {
   const fetchSearchArtists = useServerFn(searchArtists);
   const fetchDeezerById = useServerFn(lookupDeezerArtistByIdFn);
   const fetchCoPerformers = useServerFn(lookupCoPerformers);
+  const qc = useQueryClient();
+
+  // Propagate the headliner's ticket price to every other row for the same
+  // physical show (same date + venue), so logging the price on one performer
+  // fills it in for the openers / support acts on the next refresh.
+  async function syncTicketPriceAcrossShow(date: string, venue: string) {
+    const { data } = await supabase
+      .from("concerts")
+      .select("id, notes, ticket_price")
+      .eq("date", date)
+      .eq("venue", venue);
+    if (!data || data.length < 2) return;
+    const rows = data as Array<{
+      id: string;
+      notes: string | null;
+      ticket_price: number | null;
+    }>;
+    const isSupport = (n: string | null) =>
+      (n ?? "").trim().toLowerCase().startsWith("support act for");
+    const headliner = rows.find((r) => !isSupport(r.notes)) ?? rows[0];
+    const price = headliner.ticket_price;
+    if (price == null) return;
+    let changed = false;
+    for (const r of rows) {
+      if (r.id === headliner.id) continue;
+      if (r.ticket_price === price) continue;
+      const { error } = await supabase
+        .from("concerts")
+        .update({ ticket_price: price })
+        .eq("id", r.id);
+      if (!error) changed = true;
+    }
+    if (changed) qc.invalidateQueries({ queryKey: ["concerts"] });
+  }
+
 
   const [refresh, setRefresh] = useState<{ running: boolean; done: number; total: number }>({
     running: false,
@@ -282,6 +319,7 @@ function Shows() {
           artistImageUrl: fallback.image ?? c.artistImageUrl,
           openerSetlists: c.openerSetlists,
         });
+        await syncTicketPriceAcrossShow(c.date, c.venue);
         return { status: "updated", coLogged };
       }
 
@@ -430,6 +468,7 @@ function Shows() {
         }
       }
 
+      await syncTicketPriceAcrossShow(c.date, res.venue ?? c.venue);
       return { status: "updated", coLogged };
     } catch {
       return { status: "failed", coLogged };
