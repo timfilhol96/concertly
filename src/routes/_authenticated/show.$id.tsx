@@ -1,7 +1,8 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, Calendar, MapPin, Music, Pencil, Star, Ticket, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
-import { useConcerts, useDeleteConcert } from "@/lib/concerts";
+import { useAvatarUrl, useConcerts, useDeleteConcert } from "@/lib/concerts";
+import { useFriendsAtShow, type FriendProfile } from "@/lib/friends";
 
 export const Route = createFileRoute("/_authenticated/show/$id")({
   head: () => ({ meta: [{ title: "Show · Concertly" }] }),
@@ -193,6 +194,8 @@ function ShowDetail() {
               </ul>
             </div>
           ) : null}
+
+          <FriendsAtShow date={concert.date} venue={concert.venue} city={concert.city} />
 
           {concert.notes && (
             <div className="rounded-3xl border border-hairline bg-card p-6">
