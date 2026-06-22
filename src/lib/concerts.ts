@@ -75,9 +75,12 @@ export function useConcerts() {
   return useQuery({
     queryKey: ["concerts"],
     queryFn: async (): Promise<Concert[]> => {
+      const { data: userRes } = await supabase.auth.getUser();
+      if (!userRes.user) return [];
       const { data, error } = await supabase
         .from("concerts")
         .select("*")
+        .eq("user_id", userRes.user.id)
         .order("date", { ascending: false });
       if (error) throw error;
       return (data as Row[]).map(fromRow);
