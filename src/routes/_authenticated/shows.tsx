@@ -468,6 +468,7 @@ function Shows() {
         }
       }
 
+      await syncTicketPriceAcrossShow(c.date, res.venue ?? c.venue);
       return { status: "updated", coLogged };
     } catch {
       return { status: "failed", coLogged };
