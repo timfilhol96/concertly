@@ -145,6 +145,43 @@ function Profile() {
           </div>
           <div>
             <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-muted-foreground">
+              Username
+            </label>
+            <div className="flex items-stretch gap-2">
+              <div className="flex items-center rounded-xl border border-hairline bg-surface/60 px-3 text-sm text-muted-foreground">@</div>
+              <input
+                value={username}
+                onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ""))}
+                className="flex-1 rounded-xl border border-hairline bg-surface px-4 py-3 text-sm outline-none focus:border-brand"
+                placeholder="yourname"
+                maxLength={20}
+              />
+              <button
+                type="button"
+                disabled={
+                  updateUsername.isPending ||
+                  !USERNAME_RE.test(username) ||
+                  username === (profile?.username ?? "")
+                }
+                onClick={async () => {
+                  try {
+                    await updateUsername.mutateAsync(username);
+                    toast.success("Username saved");
+                  } catch (err) {
+                    toast.error(err instanceof Error ? err.message : "Couldn't save");
+                  }
+                }}
+                className="rounded-xl border border-hairline bg-surface px-4 text-xs font-semibold hover:bg-surface-2 disabled:opacity-50"
+              >
+                {updateUsername.isPending ? "Saving…" : "Save"}
+              </button>
+            </div>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              3–20 chars · lowercase letters, numbers, underscore. Friends use this to find you.
+            </p>
+          </div>
+          <div>
+            <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-muted-foreground">
               Email
             </label>
             <input
