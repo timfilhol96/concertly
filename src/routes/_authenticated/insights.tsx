@@ -93,6 +93,10 @@ function Insights() {
     nav({ to: "/shows", search: { genre } });
   }
 
+  function handleYearClick(y: number) {
+    nav({ to: "/shows", search: { year: String(y) } });
+  }
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
       <div className="mb-8 animate-reveal">
@@ -134,7 +138,15 @@ function Insights() {
                 cursor={{ fill: "var(--surface-2)" }}
                 contentStyle={{ background: "var(--card)", border: "1px solid var(--hairline)", borderRadius: 12, fontSize: 12 }}
               />
-              <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--teal)">
+              <Bar
+                dataKey="count"
+                radius={[6, 6, 0, 0]}
+                fill="var(--teal)"
+                onClick={(d: { year?: number }) =>
+                  typeof d?.year === "number" && handleYearClick(d.year)
+                }
+                style={{ cursor: "pointer" }}
+              >
                 {byYear.map((entry, index) => {
                   const isSelected = String(entry.year) === String(year);
                   return (
@@ -148,6 +160,7 @@ function Insights() {
               </Bar>
             </BarChart>
           </ResponsiveContainer>
+          <p className="mt-2 text-[11px] text-muted-foreground">Click a bar to see those shows.</p>
         </ChartCard>
       </div>
 
