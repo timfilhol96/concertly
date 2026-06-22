@@ -93,6 +93,10 @@ function Insights() {
     nav({ to: "/shows", search: { genre } });
   }
 
+  function handleYearClick(y: number) {
+    nav({ to: "/shows", search: { year: String(y) } });
+  }
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
       <div className="mb-8 animate-reveal">
