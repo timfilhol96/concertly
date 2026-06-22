@@ -142,9 +142,9 @@ function Insights() {
                 dataKey="count"
                 radius={[6, 6, 0, 0]}
                 fill="var(--teal)"
-                onClick={(d: { year?: number }) =>
-                  typeof d?.year === "number" && handleYearClick(d.year)
-                }
+                onClick={(d: { year?: string | number }) => {
+                  if (d?.year != null) handleYearClick(Number(d.year));
+                }}
                 style={{ cursor: "pointer" }}
               >
                 {byYear.map((entry, index) => {
