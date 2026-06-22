@@ -50,12 +50,22 @@ function Insights() {
   const years = availableYears(shows);
   const [year, setYear] = useState<YearSel>(years[0] ?? CURRENT_YEAR);
 
+  // Filter to the selected year for all year-aware sections.
+  const showsInYear = useMemo(
+    () => (year === "all" ? shows : shows.filter((s) => s.date.startsWith(String(year)))),
+    [shows, year],
+  );
+  const concertsInYear = useMemo(
+    () => (year === "all" ? concerts : concerts.filter((c) => c.date.startsWith(String(year)))),
+    [concerts, year],
+  );
+
   const byMonth = showsByMonth(shows, year);
   const byYear = showsByYear(shows);
-  const genres = genreBreakdown(shows);
+  const genres = genreBreakdown(showsInYear);
   // Top artists is per-artist seen — keep using the full list so support acts count.
-  const topArtists = rankBy(concerts, "artist", 8);
-  const topCountries = rankBy(shows, "country", 6);
+  const topArtists = rankBy(concertsInYear, "artist", 8);
+  const topCountries = rankBy(showsInYear, "country", 6);
   const streak = monthlyStreak(shows);
 
   const totalInRange = byMonth.reduce((s, m) => s + m.count, 0);
@@ -70,6 +80,8 @@ function Insights() {
   // Totals header: distinguish shows attended from artists seen.
   const totalShows = shows.length;
   const totalArtists = concerts.length;
+
+  const scopeLabel = year === "all" ? "All time" : String(year);
 
   function handleMonthClick(monthIdx: number) {
     if (year === "all") return;
