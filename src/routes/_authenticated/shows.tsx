@@ -131,6 +131,7 @@ function Shows() {
       [c.artist, c.venue, c.city, c.tour ?? ""].join(" ").toLowerCase().includes(q.toLowerCase()),
     );
     if (month) filtered = filtered.filter((c) => c.date.startsWith(month));
+    if (year && !month) filtered = filtered.filter((c) => c.date.startsWith(year));
     if (genre) {
       const g = genre.toLowerCase();
       filtered = filtered.filter((c) => (c.genre ?? "Unknown").toLowerCase() === g);
@@ -138,7 +139,7 @@ function Shows() {
     return filtered.sort((a, b) =>
       sort === "date" ? (a.date < b.date ? 1 : -1) : b.rating - a.rating,
     );
-  }, [q, sort, concerts, month, genre]);
+  }, [q, sort, concerts, month, genre, year]);
 
   const monthLabel = month
     ? new Date(`${month}-01T00:00:00`).toLocaleString("en", { month: "long", year: "numeric" })
