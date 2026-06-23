@@ -6,16 +6,22 @@ import { CONCERTS, getStats } from "@/lib/mock-data";
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Concertly — Track every show. Discover your live music story." },
+      { title: "Concertly — Track every show you attend" },
       {
         name: "description",
         content:
-          "Concertly is the stats.fm for live music. Log every concert you attend and turn your gig history into a beautiful, personal story.",
+          "The stats.fm for live music. Log every gig and watch your touring history come alive in stats, charts, and shareable year-in-review cards.",
       },
-      { property: "og:title", content: "Concertly — Track every show" },
-      { property: "og:description", content: "Turn your concert history into rich personal stats, year-in-review recaps and shareable cards." },
+      { property: "og:title", content: "Concertly — Track every show you attend" },
+      {
+        property: "og:description",
+        content:
+          "The stats.fm for live music. Log every gig and watch your touring history come alive in stats and shareable year-in-review cards.",
+      },
       { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://concertly.lovable.app/" },
     ],
+    links: [{ rel: "canonical", href: "https://concertly.lovable.app/" }],
   }),
   component: Landing,
 });
