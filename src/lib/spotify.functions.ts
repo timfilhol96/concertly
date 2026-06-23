@@ -135,7 +135,9 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
     const hasPlaylistScope =
       grantedScopes.has("playlist-modify-private") || grantedScopes.has("playlist-modify-public");
     if (!hasPlaylistScope) {
-      throw new Error("Spotify playlist permission is missing. Disconnect Spotify, connect again, and approve playlist access.");
+      throw new Error(
+        "Spotify playlist permission is missing. Disconnect Spotify, connect again, and approve playlist access.",
+      );
     }
 
     // Create playlist
