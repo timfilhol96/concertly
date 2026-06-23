@@ -158,11 +158,13 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
       external_urls?: { spotify?: string };
     };
 
-    // Add tracks in chunks of 100
+    // Add tracks in chunks of 100. Use the current "items" endpoint; the old
+    // "tracks" endpoint is deprecated and can return bare 403s for newer apps.
+    let addTracksError: string | null = null;
     for (let i = 0; i < trackUris.length; i += 100) {
       const chunk = trackUris.slice(i, i + 100);
       if (chunk.length === 0) continue;
-      const ar = await fetch(`https://api.spotify.com/v1/playlists/${pl.id}/tracks`, {
+      const ar = await fetch(`https://api.spotify.com/v1/playlists/${pl.id}/items`, {
         method: "POST",
         headers: {
           Authorization: `Bearer ${accessToken}`,
@@ -173,14 +175,16 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
       if (!ar.ok) {
         const body = await ar.text().catch(() => "");
         console.error("[spotify] add tracks failed", ar.status, body);
-        throw new Error(`Failed to add tracks (${ar.status}): ${body.slice(0, 300)}`);
+        addTracksError = `Spotify created the playlist, but would not add tracks (${ar.status}). Open it in Spotify and try adding songs manually.`;
+        break;
       }
     }
 
     return {
       playlistUrl: pl.external_urls?.spotify ?? null,
-      added: trackUris.length,
+      added: addTracksError ? 0 : trackUris.length,
       notFound,
+      warning: addTracksError,
       total: songs.length,
     };
   });
