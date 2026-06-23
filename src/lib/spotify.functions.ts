@@ -101,18 +101,27 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
     const meRes = await fetch("https://api.spotify.com/v1/me", {
       headers: { Authorization: `Bearer ${accessToken}` },
     });
-    if (!meRes.ok) throw new Error("Spotify auth failed. Please reconnect.");
+    if (!meRes.ok) {
+      const body = await meRes.text().catch(() => "");
+      console.error("[spotify] /me failed", meRes.status, body);
+      throw new Error(`Spotify auth failed (${meRes.status}). Please reconnect.`);
+    }
     const me = (await meRes.json()) as { id: string };
 
-    // Search each song
+    // Search each song (cap to 80 to stay within request budget)
+    const limited = songs.slice(0, 80);
     const trackUris: string[] = [];
     const notFound: string[] = [];
-    for (const song of songs) {
-      const q = encodeURIComponent(`track:"${song}" artist:"${concert.artist}"`);
+    for (const song of limited) {
+      const cleanSong = song.replace(/"/g, "").trim();
+      const cleanArtist = concert.artist.replace(/"/g, "").trim();
+      const q = encodeURIComponent(`track:"${cleanSong}" artist:"${cleanArtist}"`);
       const sr = await fetch(`https://api.spotify.com/v1/search?type=track&limit=1&q=${q}`, {
         headers: { Authorization: `Bearer ${accessToken}` },
       });
       if (!sr.ok) {
+        const body = await sr.text().catch(() => "");
+        console.error("[spotify] search failed", sr.status, body);
         notFound.push(song);
         continue;
       }
@@ -132,7 +141,11 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
       },
       body: JSON.stringify({ name: data.name, public: false, description }),
     });
-    if (!cpRes.ok) throw new Error("Failed to create playlist");
+    if (!cpRes.ok) {
+      const body = await cpRes.text().catch(() => "");
+      console.error("[spotify] create playlist failed", cpRes.status, body);
+      throw new Error(`Failed to create playlist (${cpRes.status}): ${body.slice(0, 300)}`);
+    }
     const pl = (await cpRes.json()) as {
       id: string;
       external_urls?: { spotify?: string };
@@ -150,7 +163,11 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
         },
         body: JSON.stringify({ uris: chunk }),
       });
-      if (!ar.ok) throw new Error("Failed to add tracks");
+      if (!ar.ok) {
+        const body = await ar.text().catch(() => "");
+        console.error("[spotify] add tracks failed", ar.status, body);
+        throw new Error(`Failed to add tracks (${ar.status}): ${body.slice(0, 300)}`);
+      }
     }
 
     return {
