@@ -1,11 +1,18 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, ListMusic, MapPin, Music, Pencil, Star, Ticket, Trash2, Users } from "lucide-react";
+import { ArrowLeft, Calendar, ImagePlus, ListMusic, MapPin, Music, Pencil, Play, Star, Ticket, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { useAvatarUrl, useConcerts, useDeleteConcert } from "@/lib/concerts";
 import { useFriendsAtShow, type FriendProfile } from "@/lib/friends";
 import { createSpotifyPlaylist, getSpotifyStatus } from "@/lib/spotify.functions";
+import {
+  useConcertMedia,
+  useDeleteConcertMedia,
+  useSignedMediaUrl,
+  useUploadConcertMedia,
+  type ConcertMediaItem,
+} from "@/lib/concert-media";
 
 export const Route = createFileRoute("/_authenticated/show/$id")({
   head: () => ({ meta: [{ title: "Show · Concertly" }] }),
