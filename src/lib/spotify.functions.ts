@@ -75,7 +75,7 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
     // Load tokens
     const { data: tok, error: tErr } = await context.supabase
       .from("spotify_tokens")
-      .select("access_token, refresh_token, expires_at")
+      .select("access_token, refresh_token, expires_at, scope")
       .eq("user_id", context.userId)
       .maybeSingle();
     if (tErr) throw new Error(tErr.message);
