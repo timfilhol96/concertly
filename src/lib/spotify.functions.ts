@@ -159,6 +159,7 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
       id: string;
       external_urls?: { spotify?: string };
     };
+    console.info("[spotify] playlist created", { playlistId: pl.id, spotifyUserId: me.id });
 
     // Add tracks in chunks of 100. Use the current "items" endpoint; the old
     // "tracks" endpoint is deprecated and can return bare 403s for newer apps.
@@ -176,7 +177,14 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
       });
       if (!ar.ok) {
         const body = await ar.text().catch(() => "");
-        console.error("[spotify] add tracks failed", ar.status, body);
+        console.error("[spotify] add tracks failed", {
+          status: ar.status,
+          body,
+          playlistId: pl.id,
+          spotifyUserId: me.id,
+          scopes: [...grantedScopes].join(" "),
+          trackCount: chunk.length,
+        });
         addTracksError = `Spotify created the playlist, but would not add tracks (${ar.status}). Open it in Spotify and try adding songs manually.`;
         break;
       }
