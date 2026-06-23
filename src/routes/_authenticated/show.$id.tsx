@@ -1,8 +1,11 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, Calendar, MapPin, Music, Pencil, Star, Ticket, Trash2, Users } from "lucide-react";
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { ArrowLeft, Calendar, ListMusic, MapPin, Music, Pencil, Star, Ticket, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 import { useAvatarUrl, useConcerts, useDeleteConcert } from "@/lib/concerts";
 import { useFriendsAtShow, type FriendProfile } from "@/lib/friends";
+import { createSpotifyPlaylist, getSpotifyStatus } from "@/lib/spotify.functions";
 
 export const Route = createFileRoute("/_authenticated/show/$id")({
   head: () => ({ meta: [{ title: "Show · Concertly" }] }),
@@ -132,9 +135,17 @@ function ShowDetail() {
       <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]">
         <article className="space-y-8">
           <div className="rounded-3xl border border-hairline bg-card p-6 md:p-8">
-            <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
-              <Music className="h-4 w-4 text-brand" /> Setlist
-            </h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
+                <Music className="h-4 w-4 text-brand" /> Setlist
+              </h2>
+              {concert.setlist?.length ? (
+                <SpotifyPlaylistButton
+                  concertId={concert.id}
+                  defaultName={`${concert.artist} - ${concert.country || concert.city} - ${new Date(concert.date).getFullYear()}`}
+                />
+              ) : null}
+            </div>
             {concert.setlist?.length ? (
               <ol className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {concert.setlist.map((song, i) => (
@@ -272,5 +283,111 @@ function FriendRow({ friend }: { friend: FriendProfile }) {
         </div>
       </Link>
     </li>
+  );
+}
+
+function SpotifyPlaylistButton({ concertId, defaultName }: { concertId: string; defaultName: string }) {
+  const [open, setOpen] = useState(false);
+  const [name, setName] = useState(defaultName);
+  const [creating, setCreating] = useState(false);
+  const { data: status } = useQuery({
+    queryKey: ["spotify-status"],
+    queryFn: () => getSpotifyStatus(),
+  });
+
+  async function onCreate() {
+    setCreating(true);
+    try {
+      const res = await createSpotifyPlaylist({ data: { concertId, name: name.trim() } });
+      if (res.playlistUrl) {
+        toast.success(
+          `Playlist created: ${res.added}/${res.total} tracks added`,
+          {
+            action: {
+              label: "Open",
+              onClick: () => window.open(res.playlistUrl!, "_blank", "noopener"),
+            },
+          },
+        );
+      } else {
+        toast.success("Playlist created");
+      }
+      setOpen(false);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't create playlist");
+    } finally {
+      setCreating(false);
+    }
+  }
+
+  if (!status?.connected) {
+    return (
+      <Link
+        to="/profile"
+        className="inline-flex items-center gap-1.5 rounded-full border border-hairline px-3 py-1.5 text-[11px] font-semibold text-muted-foreground hover:bg-surface-2"
+        title="Connect Spotify on your profile"
+      >
+        <ListMusic className="h-3.5 w-3.5" /> Connect Spotify
+      </Link>
+    );
+  }
+
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => {
+          setName(defaultName);
+          setOpen(true);
+        }}
+        className="inline-flex items-center gap-1.5 rounded-full bg-[#1DB954] px-3 py-1.5 text-[11px] font-bold text-black hover:opacity-90"
+      >
+        <ListMusic className="h-3.5 w-3.5" /> Spotify playlist
+      </button>
+
+      {open && (
+        <div
+          className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4"
+          onClick={() => !creating && setOpen(false)}
+        >
+          <div
+            className="w-full max-w-md rounded-3xl border border-hairline bg-card p-6"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-display text-xl font-extrabold">Create Spotify playlist</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              The setlist will be searched on Spotify and added to a new private playlist.
+            </p>
+            <label className="mt-5 block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+              Playlist name
+            </label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={100}
+              className="mt-2 w-full rounded-xl border border-hairline bg-surface px-4 py-3 text-sm outline-none focus:border-brand"
+            />
+            <div className="mt-6 flex justify-end gap-2">
+              <button
+                type="button"
+                onClick={() => setOpen(false)}
+                disabled={creating}
+                className="rounded-full border border-hairline px-4 py-2 text-xs font-semibold hover:bg-surface-2 disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={onCreate}
+                disabled={creating || !name.trim()}
+                className="rounded-full bg-[#1DB954] px-4 py-2 text-xs font-bold text-black hover:opacity-90 disabled:opacity-60"
+              >
+                {creating ? "Creating…" : "Create playlist"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </>
   );
 }
