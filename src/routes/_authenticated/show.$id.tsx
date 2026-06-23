@@ -197,7 +197,10 @@ function ShowDetail() {
               </div>
             </div>
           ) : null}
+
+          <MediaSection concertId={concert.id} />
         </article>
+
 
         <aside className="space-y-6">
           {mergedOpeners.length ? (
