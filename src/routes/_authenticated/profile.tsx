@@ -1,11 +1,16 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useRef, useState } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { Camera, Loader2, Upload } from "lucide-react";
+import { useEffect, useRef, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { Camera, Loader2, Music2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl, useProfile } from "@/lib/concerts";
 import { useUpdateUsername, USERNAME_RE } from "@/lib/friends";
+import {
+  disconnectSpotify,
+  getSpotifyAuthUrl,
+  getSpotifyStatus,
+} from "@/lib/spotify.functions";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({ meta: [{ title: "Profile · Concertly" }] }),
