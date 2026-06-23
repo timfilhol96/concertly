@@ -1,0 +1,11 @@
+# Concertly
+
+> Concertly is the stats.fm for live music — log every concert you attend and turn your gig history into rich personal stats, year-in-review recaps and shareable cards.
+
+Concertly is a web app for concertgoers who want a personal archive of every show they've been to. Users log gigs (artist, date, venue, openers, setlist, rating), then explore their history through dashboards, friend leaderboards, and a year-in-review "Wrapped" experience.
+
+## Pages
+
+- [Home](/): Product overview, key features, and call-to-action to sign up.
+- [Sign in](/auth): Create an account or sign in to start logging concerts.
+- [Trust & Privacy](/trust): How Concertly handles accounts, concert data, and sharing with friends.
