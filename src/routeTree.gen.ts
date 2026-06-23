@@ -22,6 +22,7 @@ import { Route as AuthenticatedDashboardRouteImport } from './routes/_authentica
 import { Route as AuthenticatedAddRouteImport } from './routes/_authenticated/add'
 import { Route as AuthenticatedShowIdRouteImport } from './routes/_authenticated/show.$id'
 import { Route as AuthenticatedFriendIdRouteImport } from './routes/_authenticated/friend.$id'
+import { Route as ApiPublicSpotifyCallbackRouteImport } from './routes/api/public/spotify/callback'
 
 const TrustRoute = TrustRouteImport.update({
   id: '/trust',
@@ -87,6 +88,12 @@ const AuthenticatedFriendIdRoute = AuthenticatedFriendIdRouteImport.update({
   path: '/friend/$id',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
+const ApiPublicSpotifyCallbackRoute =
+  ApiPublicSpotifyCallbackRouteImport.update({
+    id: '/api/public/spotify/callback',
+    path: '/api/public/spotify/callback',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -101,6 +108,7 @@ export interface FileRoutesByFullPath {
   '/wrapped': typeof AuthenticatedWrappedRoute
   '/friend/$id': typeof AuthenticatedFriendIdRoute
   '/show/$id': typeof AuthenticatedShowIdRoute
+  '/api/public/spotify/callback': typeof ApiPublicSpotifyCallbackRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -115,6 +123,7 @@ export interface FileRoutesByTo {
   '/wrapped': typeof AuthenticatedWrappedRoute
   '/friend/$id': typeof AuthenticatedFriendIdRoute
   '/show/$id': typeof AuthenticatedShowIdRoute
+  '/api/public/spotify/callback': typeof ApiPublicSpotifyCallbackRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -131,6 +140,7 @@ export interface FileRoutesById {
   '/_authenticated/wrapped': typeof AuthenticatedWrappedRoute
   '/_authenticated/friend/$id': typeof AuthenticatedFriendIdRoute
   '/_authenticated/show/$id': typeof AuthenticatedShowIdRoute
+  '/api/public/spotify/callback': typeof ApiPublicSpotifyCallbackRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -147,6 +157,7 @@ export interface FileRouteTypes {
     | '/wrapped'
     | '/friend/$id'
     | '/show/$id'
+    | '/api/public/spotify/callback'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -161,6 +172,7 @@ export interface FileRouteTypes {
     | '/wrapped'
     | '/friend/$id'
     | '/show/$id'
+    | '/api/public/spotify/callback'
   id:
     | '__root__'
     | '/'
@@ -176,6 +188,7 @@ export interface FileRouteTypes {
     | '/_authenticated/wrapped'
     | '/_authenticated/friend/$id'
     | '/_authenticated/show/$id'
+    | '/api/public/spotify/callback'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -183,6 +196,7 @@ export interface RootRouteChildren {
   AuthenticatedRouteRoute: typeof AuthenticatedRouteRouteWithChildren
   AuthRoute: typeof AuthRoute
   TrustRoute: typeof TrustRoute
+  ApiPublicSpotifyCallbackRoute: typeof ApiPublicSpotifyCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -278,6 +292,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedFriendIdRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
+    '/api/public/spotify/callback': {
+      id: '/api/public/spotify/callback'
+      path: '/api/public/spotify/callback'
+      fullPath: '/api/public/spotify/callback'
+      preLoaderRoute: typeof ApiPublicSpotifyCallbackRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -313,6 +334,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthenticatedRouteRoute: AuthenticatedRouteRouteWithChildren,
   AuthRoute: AuthRoute,
   TrustRoute: TrustRoute,
+  ApiPublicSpotifyCallbackRoute: ApiPublicSpotifyCallbackRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
