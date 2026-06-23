@@ -10,7 +10,12 @@ export const Route = createFileRoute("/auth")({
     meta: [
       { title: "Sign in · Concertly" },
       { name: "description", content: "Sign in to Concertly to log every show and unlock your live music stats." },
+      { property: "og:title", content: "Sign in · Concertly" },
+      { property: "og:description", content: "Sign in to Concertly to log every show and unlock your live music stats." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://concertly.lovable.app/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://concertly.lovable.app/auth" }],
   }),
   component: AuthPage,
 });
