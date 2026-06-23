@@ -300,15 +300,17 @@ function SpotifyPlaylistButton({ concertId, defaultName }: { concertId: string; 
     try {
       const res = await createSpotifyPlaylist({ data: { concertId, name: name.trim() } });
       if (res.playlistUrl) {
-        toast.success(
-          `Playlist created: ${res.added}/${res.total} tracks added`,
-          {
-            action: {
-              label: "Open",
-              onClick: () => window.open(res.playlistUrl!, "_blank", "noopener"),
-            },
+        const toastOptions = {
+          action: {
+            label: "Open",
+            onClick: () => window.open(res.playlistUrl!, "_blank", "noopener"),
           },
-        );
+        };
+        if (res.warning) {
+          toast.warning(res.warning, toastOptions);
+        } else {
+          toast.success(`Playlist created: ${res.added}/${res.total} tracks added`, toastOptions);
+        }
       } else {
         toast.success("Playlist created");
       }
