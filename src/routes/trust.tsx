@@ -15,7 +15,10 @@ export const Route = createFileRoute("/trust")({
         content:
           "How Concertly handles your account, your concert history, and the data you share with friends.",
       },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://concertly.lovable.app/trust" },
     ],
+    links: [{ rel: "canonical", href: "https://concertly.lovable.app/trust" }],
   }),
   component: TrustPage,
 });

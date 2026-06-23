@@ -10,7 +10,12 @@ export const Route = createFileRoute("/auth")({
     meta: [
       { title: "Sign in · Concertly" },
       { name: "description", content: "Sign in to Concertly to log every show and unlock your live music stats." },
+      { property: "og:title", content: "Sign in · Concertly" },
+      { property: "og:description", content: "Sign in to Concertly to log every show and unlock your live music stats." },
+      { property: "og:type", content: "website" },
+      { property: "og:url", content: "https://concertly.lovable.app/auth" },
     ],
+    links: [{ rel: "canonical", href: "https://concertly.lovable.app/auth" }],
   }),
   component: AuthPage,
 });
@@ -127,6 +132,7 @@ function AuthPage() {
                 type="text"
                 required
                 autoComplete="name"
+                aria-label="Display name"
                 placeholder="Display name"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -137,6 +143,7 @@ function AuthPage() {
               type="email"
               required
               autoComplete="email"
+              aria-label="Email address"
               placeholder="you@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -147,6 +154,7 @@ function AuthPage() {
               required
               minLength={6}
               autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+              aria-label="Password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
