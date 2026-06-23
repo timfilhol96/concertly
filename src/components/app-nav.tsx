@@ -1,5 +1,5 @@
 import { Link, useNavigate, useRouterState } from "@tanstack/react-router";
-import { LogOut, Pencil, Plus, User } from "lucide-react";
+import { LogOut, Plus, User } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
@@ -93,22 +93,12 @@ export function AppNav() {
                     <p className="truncate text-sm font-semibold">{profile?.displayName}</p>
                     <p className="truncate text-xs text-muted-foreground">{profile?.email}</p>
                   </div>
-                  {profile?.userId && (
-                    <Link
-                      to="/friend/$id"
-                      params={{ id: profile.userId }}
-                      onClick={() => setMenuOpen(false)}
-                      className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm transition-colors hover:bg-surface-2"
-                    >
-                      <User className="h-3.5 w-3.5" /> View profile
-                    </Link>
-                  )}
                   <Link
                     to="/profile"
                     onClick={() => setMenuOpen(false)}
-                    className="flex w-full items-center gap-2 border-t border-hairline px-4 py-3 text-left text-sm transition-colors hover:bg-surface-2"
+                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm transition-colors hover:bg-surface-2"
                   >
-                    <Pencil className="h-3.5 w-3.5" /> Edit profile
+                    <User className="h-3.5 w-3.5" /> Edit profile
                   </Link>
                   <button
                     onClick={signOut}
