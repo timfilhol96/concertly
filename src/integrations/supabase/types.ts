@@ -128,6 +128,45 @@ export type Database = {
         }
         Relationships: []
       }
+      spotify_tokens: {
+        Row: {
+          access_token: string
+          created_at: string
+          display_name: string | null
+          expires_at: string
+          refresh_token: string
+          scope: string | null
+          spotify_user_id: string | null
+          token_type: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          access_token: string
+          created_at?: string
+          display_name?: string | null
+          expires_at: string
+          refresh_token: string
+          scope?: string | null
+          spotify_user_id?: string | null
+          token_type?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          access_token?: string
+          created_at?: string
+          display_name?: string | null
+          expires_at?: string
+          refresh_token?: string
+          scope?: string | null
+          spotify_user_id?: string | null
+          token_type?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
