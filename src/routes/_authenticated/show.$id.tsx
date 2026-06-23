@@ -403,3 +403,156 @@ function SpotifyPlaylistButton({ concertId, defaultName }: { concertId: string; 
     </>
   );
 }
+
+function MediaSection({ concertId }: { concertId: string }) {
+  const { data: media = [], isLoading } = useConcertMedia(concertId);
+  const upload = useUploadConcertMedia(concertId);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const [lightbox, setLightbox] = useState<ConcertMediaItem | null>(null);
+
+  async function onFiles(files: FileList | null) {
+    if (!files || files.length === 0) return;
+    const arr = Array.from(files);
+    const tooBig = arr.find((f) => f.size > 50 * 1024 * 1024);
+    if (tooBig) {
+      toast.error(`"${tooBig.name}" is over 50 MB`);
+      return;
+    }
+    try {
+      await upload.mutateAsync(arr);
+      toast.success(`Uploaded ${arr.length} file${arr.length > 1 ? "s" : ""}`);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Upload failed");
+    } finally {
+      if (inputRef.current) inputRef.current.value = "";
+    }
+  }
+
+  return (
+    <div className="rounded-3xl border border-hairline bg-card p-6 md:p-8">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
+          <ImagePlus className="h-4 w-4 text-brand" /> Photos & videos
+        </h2>
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={upload.isPending}
+          className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1.5 text-[11px] font-bold text-brand-foreground hover:opacity-90 disabled:opacity-60"
+        >
+          <ImagePlus className="h-3.5 w-3.5" />
+          {upload.isPending ? "Uploading…" : "Add media"}
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/*,video/*"
+          multiple
+          className="hidden"
+          onChange={(e) => onFiles(e.target.files)}
+        />
+      </div>
+
+      {isLoading ? (
+        <div className="mt-6 h-24 animate-pulse rounded-xl bg-surface-2" />
+      ) : media.length === 0 ? (
+        <p className="mt-4 text-sm text-muted-foreground">
+          No photos or videos yet. Add memories from the show.
+        </p>
+      ) : (
+        <div className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
+          {media.map((m) => (
+            <MediaThumb key={m.path} item={m} concertId={concertId} onOpen={() => setLightbox(m)} />
+          ))}
+        </div>
+      )}
+
+      {lightbox && <MediaLightbox item={lightbox} onClose={() => setLightbox(null)} />}
+    </div>
+  );
+}
+
+function MediaThumb({
+  item,
+  concertId,
+  onOpen,
+}: {
+  item: ConcertMediaItem;
+  concertId: string;
+  onOpen: () => void;
+}) {
+  const url = useSignedMediaUrl(item.path);
+  const del = useDeleteConcertMedia(concertId);
+
+  async function onDelete(e: React.MouseEvent) {
+    e.stopPropagation();
+    if (!confirm("Delete this file?")) return;
+    try {
+      await del.mutateAsync(item.path);
+      toast.success("Deleted");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't delete");
+    }
+  }
+
+  return (
+    <div className="group relative aspect-square overflow-hidden rounded-xl border border-hairline bg-surface-2">
+      <button
+        type="button"
+        onClick={onOpen}
+        className="block h-full w-full"
+      >
+        {url ? (
+          item.kind === "image" ? (
+            <img src={url} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <>
+              <video src={url} className="h-full w-full object-cover" muted playsInline preload="metadata" />
+              <div className="pointer-events-none absolute inset-0 grid place-items-center bg-black/30">
+                <Play className="h-8 w-8 text-white" />
+              </div>
+            </>
+          )
+        ) : (
+          <div className="h-full w-full animate-pulse bg-surface-2" />
+        )}
+      </button>
+      <button
+        type="button"
+        onClick={onDelete}
+        aria-label="Delete"
+        className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-black/70 text-white opacity-0 transition-opacity hover:bg-destructive group-hover:opacity-100"
+      >
+        <Trash2 className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+function MediaLightbox({ item, onClose }: { item: ConcertMediaItem; onClose: () => void }) {
+  const url = useSignedMediaUrl(item.path);
+  return (
+    <div
+      className="fixed inset-0 z-50 grid place-items-center bg-black/80 p-4"
+      onClick={onClose}
+    >
+      <button
+        type="button"
+        onClick={onClose}
+        className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/10 text-white hover:bg-white/20"
+        aria-label="Close"
+      >
+        <X className="h-5 w-5" />
+      </button>
+      <div className="max-h-full max-w-5xl" onClick={(e) => e.stopPropagation()}>
+        {url ? (
+          item.kind === "image" ? (
+            <img src={url} alt="" className="max-h-[85vh] max-w-full rounded-2xl object-contain" />
+          ) : (
+            <video src={url} controls autoPlay className="max-h-[85vh] max-w-full rounded-2xl" />
+          )
+        ) : null}
+      </div>
+    </div>
+  );
+}
