@@ -98,7 +98,7 @@ export function AppNav() {
                     onClick={() => setMenuOpen(false)}
                     className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm transition-colors hover:bg-surface-2"
                   >
-                    <User className="h-3.5 w-3.5" /> Edit profile
+                    <User className="h-3.5 w-3.5" /> View profile
                   </Link>
                   <button
                     onClick={signOut}
