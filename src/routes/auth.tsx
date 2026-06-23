@@ -132,6 +132,7 @@ function AuthPage() {
                 type="text"
                 required
                 autoComplete="name"
+                aria-label="Display name"
                 placeholder="Display name"
                 value={displayName}
                 onChange={(e) => setDisplayName(e.target.value)}
@@ -142,6 +143,7 @@ function AuthPage() {
               type="email"
               required
               autoComplete="email"
+              aria-label="Email address"
               placeholder="you@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
@@ -152,6 +154,7 @@ function AuthPage() {
               required
               minLength={6}
               autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+              aria-label="Password"
               placeholder="Password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
