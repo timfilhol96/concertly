@@ -135,9 +135,17 @@ function ShowDetail() {
       <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]">
         <article className="space-y-8">
           <div className="rounded-3xl border border-hairline bg-card p-6 md:p-8">
-            <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
-              <Music className="h-4 w-4 text-brand" /> Setlist
-            </h2>
+            <div className="flex items-center justify-between gap-3">
+              <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
+                <Music className="h-4 w-4 text-brand" /> Setlist
+              </h2>
+              {concert.setlist?.length ? (
+                <SpotifyPlaylistButton
+                  concertId={concert.id}
+                  defaultName={`${concert.artist} - ${concert.country || concert.city} - ${new Date(concert.date).getFullYear()}`}
+                />
+              ) : null}
+            </div>
             {concert.setlist?.length ? (
               <ol className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
                 {concert.setlist.map((song, i) => (
