@@ -131,9 +131,16 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
       else notFound.push(song);
     }
 
+    const grantedScopes = new Set((tok.scope ?? "").split(/\s+/).filter(Boolean));
+    const hasPlaylistScope =
+      grantedScopes.has("playlist-modify-private") || grantedScopes.has("playlist-modify-public");
+    if (!hasPlaylistScope) {
+      throw new Error("Spotify playlist permission is missing. Disconnect Spotify, connect again, and approve playlist access.");
+    }
+
     // Create playlist
     const description = `${concert.artist} · ${concert.venue}, ${concert.city} · ${concert.date}`;
-    const cpRes = await fetch(`https://api.spotify.com/v1/users/${me.id}/playlists`, {
+    const cpRes = await fetch("https://api.spotify.com/v1/me/playlists", {
       method: "POST",
       headers: {
         Authorization: `Bearer ${accessToken}`,
