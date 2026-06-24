@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Download, Share2 } from "lucide-react";
 import { useMemo } from "react";
+import { toast } from "sonner";
+
 import {
   genreBreakdown,
   getStats,
