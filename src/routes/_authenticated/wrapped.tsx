@@ -56,6 +56,9 @@ function showLengthMinutes(c: Concert) {
 function Wrapped() {
   const { data: profile } = useProfile();
   const { data: concerts = [] } = useConcerts();
+  const [gradientId, setGradientId] = useState<GradientId>("sunset");
+  const gradient = GRADIENTS.find((g) => g.id === gradientId) ?? GRADIENTS[0];
+
 
   const yearConcerts = useMemo(
     () => concerts.filter((c) => new Date(c.date).getFullYear() === YEAR),
