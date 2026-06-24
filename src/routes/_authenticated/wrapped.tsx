@@ -1,6 +1,8 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { Download, Share2 } from "lucide-react";
 import { useMemo } from "react";
+import { toast } from "sonner";
+
 import {
   genreBreakdown,
   getStats,
@@ -105,14 +107,73 @@ function Wrapped() {
           </h1>
         </div>
         <div className="hidden gap-2 md:flex">
-          <button className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold">
+          <button
+            onClick={async () => {
+              const text = `My ${YEAR} Concertly Wrapped: ${yearShows.length} shows · ${artistsThisYear.size} artists · ${venuesThisYear.size} venues · ${citiesThisYear.size} cities · ${hoursLive}h live.`;
+              const url = typeof window !== "undefined" ? window.location.href : "";
+              try {
+                if (typeof navigator !== "undefined" && navigator.share) {
+                  await navigator.share({ title: "Concertly Wrapped", text, url });
+                } else if (typeof navigator !== "undefined" && navigator.clipboard) {
+                  await navigator.clipboard.writeText(`${text} ${url}`.trim());
+                  toast.success("Copied your Wrapped to clipboard");
+                }
+              } catch {
+                /* user dismissed share */
+              }
+            }}
+            className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold transition hover:bg-muted"
+          >
             <Share2 className="h-3.5 w-3.5" /> Share
           </button>
-          <button className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold">
+          <button
+            onClick={() => {
+              const payload = {
+                year: YEAR,
+                user: profile?.displayName ?? null,
+                totals: {
+                  shows: yearShows.length,
+                  concerts: yearConcerts.length,
+                  artists: artistsThisYear.size,
+                  venues: venuesThisYear.size,
+                  cities: citiesThisYear.size,
+                  countries: countriesThisYear.size,
+                  hoursLive,
+                  ticketSpend: moneySpent,
+                  avgRating: Number(avgRating.toFixed(2)),
+                },
+                highlights: {
+                  topVenue: topVenue?.name ?? null,
+                  topCity: topCity?.name ?? null,
+
+                  topRated: topRated ? { artist: topRated.artist, date: topRated.date, rating: topRated.rating } : null,
+                  longestShowMinutes: longestMins,
+                  peakWeekday: WEEKDAYS[peakWeekdayIdx],
+                  peakMonth: MONTHS[peakMonthIdx],
+                  newArtists,
+                  discoveredGenres,
+                  topGenres: genres,
+                },
+                shows: yearConcerts,
+              };
+              const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement("a");
+              a.href = url;
+              a.download = `concertly-wrapped-${YEAR}.json`;
+              document.body.appendChild(a);
+              a.click();
+              document.body.removeChild(a);
+              URL.revokeObjectURL(url);
+              toast.success("Exported your Wrapped");
+            }}
+            className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold transition hover:bg-muted"
+          >
             <Download className="h-3.5 w-3.5" /> Export
           </button>
         </div>
       </div>
+
 
       {/* HEADLINE */}
       <section className="relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br from-brand via-pink to-teal p-8 text-brand-foreground md:p-12">
