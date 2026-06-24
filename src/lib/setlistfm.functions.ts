@@ -66,65 +66,72 @@ async function lookupGenre(mbid: string | undefined): Promise<string | null> {
   }
 }
 
-// Use Deezer's public search (no API key required) for artist images + genre.
-async function genreForArtistId(id: number): Promise<string | null> {
+// Use Spotify's Web API for artist images + genre (client-credentials flow).
+type SpotifyImage = { url?: string; width?: number; height?: number };
+type SpotifyArtist = {
+  id?: string;
+  name?: string;
+  images?: SpotifyImage[];
+  genres?: string[];
+  followers?: { total?: number };
+};
+
+function pickSpotifyImage(images: SpotifyImage[] | undefined): string | null {
+  if (!images || images.length === 0) return null;
+  // Spotify returns images sorted largest-first.
+  return images[0]?.url ?? null;
+}
+
+function pickSpotifyGenre(genres: string[] | undefined): string | null {
+  const g = genres?.[0];
+  return g ? titleCase(g) : null;
+}
+
+async function spotifyGet(path: string): Promise<unknown | null> {
   try {
-    const albRes = await fetch(
-      `https://api.deezer.com/artist/${id}/albums?limit=10`,
-      { headers: { Accept: "application/json" } },
-    );
-    if (!albRes.ok) return null;
-    const albJson = (await albRes.json()) as {
-      data?: Array<{ genre_id?: number }>;
-    };
-    const counts = new Map<number, number>();
-    for (const al of albJson.data ?? []) {
-      if (typeof al.genre_id === "number" && al.genre_id > 0) {
-        counts.set(al.genre_id, (counts.get(al.genre_id) ?? 0) + 1);
-      }
-    }
-    const top = [...counts.entries()].sort((x, y) => y[1] - x[1])[0]?.[0];
-    if (!top) return null;
-    const gRes = await fetch(`https://api.deezer.com/genre/${top}`, {
-      headers: { Accept: "application/json" },
+    const token = await getSpotifyAppToken();
+    const res = await fetch(`https://api.spotify.com/v1${path}`, {
+      headers: { Authorization: `Bearer ${token}`, Accept: "application/json" },
     });
-    if (!gRes.ok) return null;
-    const gJson = (await gRes.json()) as { name?: string };
-    return gJson.name ?? null;
+    if (!res.ok) return null;
+    return await res.json();
   } catch {
     return null;
   }
 }
 
-async function lookupDeezerArtist(
+async function getSpotifyArtistById(
+  id: string,
+): Promise<{ image: string | null; genre: string | null } | null> {
+  const json = (await spotifyGet(`/artists/${encodeURIComponent(id)}`)) as
+    | SpotifyArtist
+    | null;
+  if (!json) return null;
+  return {
+    image: pickSpotifyImage(json.images),
+    genre: pickSpotifyGenre(json.genres),
+  };
+}
+
+async function lookupSpotifyArtist(
   name: string,
 ): Promise<{ image: string | null; genre: string | null }> {
-  try {
-    const url = `https://api.deezer.com/search/artist?q=${encodeURIComponent(name)}&limit=1`;
-    const res = await fetch(url, { headers: { Accept: "application/json" } });
-    if (!res.ok) return { image: null, genre: null };
-    const json = (await res.json()) as {
-      data?: Array<{
-        id?: number;
-        picture_xl?: string;
-        picture_big?: string;
-        picture_medium?: string;
-      }>;
-    };
-    const a = json.data?.[0];
-    if (!a) return { image: null, genre: null };
-    const image = a.picture_xl ?? a.picture_big ?? a.picture_medium ?? null;
-    const genre = a.id ? await genreForArtistId(a.id) : null;
-    return { image, genre };
-  } catch {
-    return { image: null, genre: null };
-  }
+  const json = (await spotifyGet(
+    `/search?type=artist&limit=1&q=${encodeURIComponent(name)}`,
+  )) as { artists?: { items?: SpotifyArtist[] } } | null;
+  const a = json?.artists?.items?.[0];
+  if (!a) return { image: null, genre: null };
+  return {
+    image: pickSpotifyImage(a.images),
+    genre: pickSpotifyGenre(a.genres),
+  };
 }
 
 async function lookupArtistImage(name: string): Promise<string | null> {
-  const { image } = await lookupDeezerArtist(name);
+  const { image } = await lookupSpotifyArtist(name);
   return image;
 }
+
 
 async function lookupOpenerSetlist(
   artist: string,
