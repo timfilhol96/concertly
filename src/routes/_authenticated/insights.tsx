@@ -90,7 +90,10 @@ function Insights() {
   }
 
   function handleGenreClick(genre: string) {
-    nav({ to: "/shows", search: { genre } });
+    nav({
+      to: "/shows",
+      search: year === "all" ? { genre } : { genre, year: String(year) },
+    });
   }
 
   function handleYearClick(y: number) {
