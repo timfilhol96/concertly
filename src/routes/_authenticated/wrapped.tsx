@@ -143,8 +143,9 @@ function Wrapped() {
                   avgRating: Number(avgRating.toFixed(2)),
                 },
                 highlights: {
-                  topVenue: topVenue?.key ?? null,
-                  topCity: topCity?.key ?? null,
+                  topVenue: topVenue?.name ?? null,
+                  topCity: topCity?.name ?? null,
+
                   topRated: topRated ? { artist: topRated.artist, date: topRated.date, rating: topRated.rating } : null,
                   longestShowMinutes: longestMins,
                   peakWeekday: WEEKDAYS[peakWeekdayIdx],
