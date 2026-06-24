@@ -1,8 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Download, Share2 } from "lucide-react";
-import { useMemo } from "react";
+import { Check, Download, Instagram, Link as LinkIcon, MessageCircle, Palette, Share2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   genreBreakdown,
   getStats,
@@ -22,6 +30,24 @@ const YEAR = new Date().getFullYear();
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
+const GRADIENTS = [
+  { id: "sunset", label: "Sunset", cls: "from-brand via-pink to-teal", swatch: "linear-gradient(135deg, hsl(var(--brand)), hsl(var(--pink)), hsl(var(--teal)))" },
+  { id: "ocean", label: "Ocean", cls: "from-teal via-brand to-pink", swatch: "linear-gradient(135deg, hsl(var(--teal)), hsl(var(--brand)), hsl(var(--pink)))" },
+  { id: "ember", label: "Ember", cls: "from-pink via-brand to-pink", swatch: "linear-gradient(135deg, hsl(var(--pink)), hsl(var(--brand)), hsl(var(--pink)))" },
+  { id: "noir", label: "Noir", cls: "from-slate-900 via-slate-700 to-slate-900", swatch: "linear-gradient(135deg, #0f172a, #475569, #0f172a)" },
+  { id: "citrus", label: "Citrus", cls: "from-yellow-400 via-pink to-brand", swatch: "linear-gradient(135deg, #facc15, hsl(var(--pink)), hsl(var(--brand)))" },
+] as const;
+
+type GradientId = (typeof GRADIENTS)[number]["id"];
+
+function encodePayload(p: unknown): string {
+  const json = JSON.stringify(p);
+  const b64 = typeof btoa !== "undefined"
+    ? btoa(unescape(encodeURIComponent(json)))
+    : Buffer.from(json, "utf8").toString("base64");
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
+
 function showLengthMinutes(c: Concert) {
   const songs = c.setlist?.length ?? c.songsSeen ?? 0;
   return songs * 4; // ~4 min per song
@@ -30,6 +56,9 @@ function showLengthMinutes(c: Concert) {
 function Wrapped() {
   const { data: profile } = useProfile();
   const { data: concerts = [] } = useConcerts();
+  const [gradientId, setGradientId] = useState<GradientId>("sunset");
+  const gradient = GRADIENTS.find((g) => g.id === gradientId) ?? GRADIENTS[0];
+
 
   const yearConcerts = useMemo(
     () => concerts.filter((c) => new Date(c.date).getFullYear() === YEAR),
@@ -106,26 +135,101 @@ function Wrapped() {
             {YEAR} · {profile?.displayName ?? "You"}
           </h1>
         </div>
-        <div className="hidden gap-2 md:flex">
-          <button
-            onClick={async () => {
-              const text = `My ${YEAR} Concertly Wrapped: ${yearShows.length} shows · ${artistsThisYear.size} artists · ${venuesThisYear.size} venues · ${citiesThisYear.size} cities · ${hoursLive}h live.`;
-              const url = typeof window !== "undefined" ? window.location.href : "";
-              try {
-                if (typeof navigator !== "undefined" && navigator.share) {
-                  await navigator.share({ title: "Concertly Wrapped", text, url });
-                } else if (typeof navigator !== "undefined" && navigator.clipboard) {
-                  await navigator.clipboard.writeText(`${text} ${url}`.trim());
-                  toast.success("Copied your Wrapped to clipboard");
-                }
-              } catch {
-                /* user dismissed share */
-              }
-            }}
-            className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold transition hover:bg-muted"
-          >
-            <Share2 className="h-3.5 w-3.5" /> Share
-          </button>
+        <div className="hidden flex-wrap items-center gap-2 md:flex">
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold transition hover:bg-muted">
+              <Palette className="h-3.5 w-3.5" /> Theme
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-48">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Gradient
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {GRADIENTS.map((g) => (
+                <DropdownMenuItem
+                  key={g.id}
+                  onClick={() => setGradientId(g.id)}
+                  className="flex items-center gap-2"
+                >
+                  <span
+                    className="h-5 w-5 rounded-full border border-hairline"
+                    style={{ backgroundImage: g.swatch }}
+                  />
+                  <span className="flex-1">{g.label}</span>
+                  {gradientId === g.id && <Check className="h-3.5 w-3.5 text-brand" />}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
+          <DropdownMenu>
+            <DropdownMenuTrigger className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold transition hover:bg-muted">
+              <Share2 className="h-3.5 w-3.5" /> Share
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                Share your Wrapped
+              </DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              {(() => {
+                const sharePayload = {
+                  year: YEAR,
+                  user: profile?.displayName ?? undefined,
+                  shows: yearShows.length,
+                  artists: artistsThisYear.size,
+                  venues: venuesThisYear.size,
+                  cities: citiesThisYear.size,
+                  countries: countriesThisYear.size,
+                  hours: hoursLive,
+                  topVenue: topVenue?.name,
+                  topCity: topCity?.name,
+                  topGenres: genres.map((g) => g.name),
+                };
+                const encoded = encodePayload(sharePayload);
+                const origin = typeof window !== "undefined" ? window.location.origin : "";
+                const shareUrl = `${origin}/w?d=${encoded}&g=${gradientId}`;
+                const text = `My ${YEAR} Concertly Wrapped: ${yearShows.length} shows · ${artistsThisYear.size} artists · ${venuesThisYear.size} venues · ${citiesThisYear.size} cities · ${hoursLive}h live.`;
+                return (
+                  <>
+                    <DropdownMenuItem
+                      onClick={() => {
+                        const wa = `https://wa.me/?text=${encodeURIComponent(`${text} ${shareUrl}`)}`;
+                        window.open(wa, "_blank", "noopener,noreferrer");
+                      }}
+                    >
+                      <MessageCircle className="mr-2 h-4 w-4 text-emerald-500" /> WhatsApp
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        try {
+                          if (navigator.clipboard) await navigator.clipboard.writeText(`${text} ${shareUrl}`);
+                          toast.success("Copied — paste into your Instagram story or DM");
+                        } catch {
+                          toast.error("Couldn't copy. Try the link option.");
+                        }
+                        window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+                      }}
+                    >
+                      <Instagram className="mr-2 h-4 w-4 text-pink-500" /> Instagram
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={async () => {
+                        try {
+                          await navigator.clipboard.writeText(shareUrl);
+                          toast.success("Link copied to clipboard");
+                        } catch {
+                          toast.error("Couldn't copy link");
+                        }
+                      }}
+                    >
+                      <LinkIcon className="mr-2 h-4 w-4" /> Copy link
+                    </DropdownMenuItem>
+                  </>
+                );
+              })()}
+            </DropdownMenuContent>
+          </DropdownMenu>
+
           <button
             onClick={() => {
               const payload = {
@@ -145,7 +249,6 @@ function Wrapped() {
                 highlights: {
                   topVenue: topVenue?.name ?? null,
                   topCity: topCity?.name ?? null,
-
                   topRated: topRated ? { artist: topRated.artist, date: topRated.date, rating: topRated.rating } : null,
                   longestShowMinutes: longestMins,
                   peakWeekday: WEEKDAYS[peakWeekdayIdx],
@@ -175,8 +278,9 @@ function Wrapped() {
       </div>
 
 
+
       {/* HEADLINE */}
-      <section className="relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br from-brand via-pink to-teal p-8 text-brand-foreground md:p-12">
+      <section className={`relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br ${gradient.cls} p-8 text-brand-foreground md:p-12`}>
         <p className="text-xs font-bold uppercase tracking-widest opacity-80">Your year in numbers</p>
         <p className="mt-4 font-display text-7xl font-black leading-none md:text-9xl">{yearShows.length}</p>
         <p className="mt-3 font-display text-2xl font-extrabold md:text-3xl">

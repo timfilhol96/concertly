@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as WRouteImport } from './routes/w'
 import { Route as TrustRouteImport } from './routes/trust'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -25,6 +26,11 @@ import { Route as AuthenticatedShowIdRouteImport } from './routes/_authenticated
 import { Route as AuthenticatedFriendIdRouteImport } from './routes/_authenticated/friend.$id'
 import { Route as ApiPublicSpotifyCallbackRouteImport } from './routes/api/public/spotify/callback'
 
+const WRoute = WRouteImport.update({
+  id: '/w',
+  path: '/w',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TrustRoute = TrustRouteImport.update({
   id: '/trust',
   path: '/trust',
@@ -106,6 +112,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/trust': typeof TrustRoute
+  '/w': typeof WRoute
   '/add': typeof AuthenticatedAddRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/friends': typeof AuthenticatedFriendsRoute
@@ -122,6 +129,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/trust': typeof TrustRoute
+  '/w': typeof WRoute
   '/add': typeof AuthenticatedAddRoute
   '/dashboard': typeof AuthenticatedDashboardRoute
   '/friends': typeof AuthenticatedFriendsRoute
@@ -140,6 +148,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
   '/trust': typeof TrustRoute
+  '/w': typeof WRoute
   '/_authenticated/add': typeof AuthenticatedAddRoute
   '/_authenticated/dashboard': typeof AuthenticatedDashboardRoute
   '/_authenticated/friends': typeof AuthenticatedFriendsRoute
@@ -158,6 +167,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/trust'
+    | '/w'
     | '/add'
     | '/dashboard'
     | '/friends'
@@ -174,6 +184,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/trust'
+    | '/w'
     | '/add'
     | '/dashboard'
     | '/friends'
@@ -191,6 +202,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/sitemap.xml'
     | '/trust'
+    | '/w'
     | '/_authenticated/add'
     | '/_authenticated/dashboard'
     | '/_authenticated/friends'
@@ -209,11 +221,19 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
   TrustRoute: typeof TrustRoute
+  WRoute: typeof WRoute
   ApiPublicSpotifyCallbackRoute: typeof ApiPublicSpotifyCallbackRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/w': {
+      id: '/w'
+      path: '/w'
+      fullPath: '/w'
+      preLoaderRoute: typeof WRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trust': {
       id: '/trust'
       path: '/trust'
@@ -355,6 +375,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
   TrustRoute: TrustRoute,
+  WRoute: WRoute,
   ApiPublicSpotifyCallbackRoute: ApiPublicSpotifyCallbackRoute,
 }
 export const routeTree = rootRouteImport
