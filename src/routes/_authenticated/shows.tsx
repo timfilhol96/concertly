@@ -121,7 +121,7 @@ function Shows() {
   });
   const [prompt, setPrompt] = useState<Prompt | null>(null);
   const [fetching, setFetching] = useState<{ artist: string; step: string } | null>(null);
-  // Cache picked Deezer artist per artist-name (lowercase) so we don't re-ask within a batch.
+  // Cache picked Spotify artist per artist-name (lowercase) so we don't re-ask within a batch.
   const artistChoiceCache = useRef(new Map<string, ArtistSuggestion>());
 
   const [q, setQ] = useState("");
@@ -219,7 +219,7 @@ function Shows() {
     [],
   );
 
-  // Resolve a Deezer artist for a concert, asking if ambiguous / not found.
+  // Resolve a Spotify artist for a concert, asking if ambiguous / not found.
   // Returns null if user skipped, "cancel" if they cancelled the whole batch.
   async function resolveArtist(
     concert: Concert,
@@ -273,7 +273,7 @@ function Shows() {
     let coLogged = 0;
     try {
       // 1. Resolve artist on Deezer.
-      setFetching({ artist: c.artist, step: "Searching artist on Deezer…" });
+      setFetching({ artist: c.artist, step: "Searching artist on Spotify…" });
       const artistChoice = await resolveArtist(c);
       if (artistChoice === "cancel") return { status: "cancelled", coLogged };
 
@@ -325,7 +325,7 @@ function Shows() {
         return { status: "updated", coLogged };
       }
 
-      // Found a setlist. Prefer Deezer artist image/genre if the user picked one explicitly.
+      // Found a setlist. Prefer Spotify artist image/genre if the user picked one explicitly.
       let imageOverride: string | null = res.artistImageUrl;
       let genreOverride: string | null = res.genre;
       if (artistChoice && artistChoice.id != null) {
@@ -729,7 +729,7 @@ function ArtistPane({ prompt }: { prompt: ArtistPrompt }) {
     artistKind === "ambiguous"
       ? `Multiple artists named "${query}"`
       : suggestions.length === 0
-        ? `Couldn't find "${query}" on Deezer`
+        ? `Couldn't find "${query}" on Spotify`
         : `Pick the closest match for "${query}"`;
   const sub =
     artistKind === "ambiguous"
@@ -762,7 +762,7 @@ function ArtistPane({ prompt }: { prompt: ArtistPrompt }) {
                 <div className="min-w-0">
                   <div className="truncate text-sm font-semibold">{s.name}</div>
                   <div className="text-xs text-muted-foreground">
-                    {s.nbFan != null ? `${formatFans(s.nbFan)} fans` : "Deezer artist"}
+                    {s.nbFan != null ? `${formatFans(s.nbFan)} fans` : "Spotify artist"}
                   </div>
                 </div>
               </button>
