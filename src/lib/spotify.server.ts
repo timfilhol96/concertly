@@ -96,3 +96,32 @@ export async function refreshAccessToken(refreshToken: string) {
 }
 
 export const SPOTIFY_SCOPES = "playlist-modify-private playlist-modify-public";
+
+// Cached app-level access token via client-credentials flow.
+let appTokenCache: { token: string; expiresAt: number } | null = null;
+
+export async function getSpotifyAppToken(): Promise<string> {
+  if (appTokenCache && appTokenCache.expiresAt > Date.now() + 30_000) {
+    return appTokenCache.token;
+  }
+  const clientId = process.env.SPOTIFY_CLIENT_ID;
+  const clientSecret = process.env.SPOTIFY_CLIENT_SECRET;
+  if (!clientId || !clientSecret) throw new Error("Spotify not configured");
+  const basic = Buffer.from(`${clientId}:${clientSecret}`).toString("base64");
+  const res = await fetch("https://accounts.spotify.com/api/token", {
+    method: "POST",
+    headers: {
+      Authorization: `Basic ${basic}`,
+      "Content-Type": "application/x-www-form-urlencoded",
+    },
+    body: new URLSearchParams({ grant_type: "client_credentials" }),
+  });
+  if (!res.ok) throw new Error(`Spotify app token failed (${res.status})`);
+  const json = (await res.json()) as { access_token: string; expires_in: number };
+  appTokenCache = {
+    token: json.access_token,
+    expiresAt: Date.now() + json.expires_in * 1000,
+  };
+  return json.access_token;
+}
+
