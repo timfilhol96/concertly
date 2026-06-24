@@ -31,11 +31,11 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 const GRADIENTS = [
-  { id: "sunset", label: "Sunset", cls: "from-brand via-pink to-teal", swatch: "linear-gradient(135deg, hsl(var(--brand)), hsl(var(--pink)), hsl(var(--teal)))" },
-  { id: "ocean", label: "Ocean", cls: "from-teal via-brand to-pink", swatch: "linear-gradient(135deg, hsl(var(--teal)), hsl(var(--brand)), hsl(var(--pink)))" },
-  { id: "ember", label: "Ember", cls: "from-pink via-brand to-pink", swatch: "linear-gradient(135deg, hsl(var(--pink)), hsl(var(--brand)), hsl(var(--pink)))" },
-  { id: "noir", label: "Noir", cls: "from-slate-900 via-slate-700 to-slate-900", swatch: "linear-gradient(135deg, #0f172a, #475569, #0f172a)" },
-  { id: "citrus", label: "Citrus", cls: "from-yellow-400 via-pink to-brand", swatch: "linear-gradient(135deg, #facc15, hsl(var(--pink)), hsl(var(--brand)))" },
+  { id: "sunset", label: "Sunset", cls: "from-brand via-pink to-teal", text: "text-brand-foreground", swatch: "linear-gradient(135deg, hsl(var(--brand)), hsl(var(--pink)), hsl(var(--teal)))" },
+  { id: "ocean", label: "Ocean", cls: "from-teal via-brand to-pink", text: "text-brand-foreground", swatch: "linear-gradient(135deg, hsl(var(--teal)), hsl(var(--brand)), hsl(var(--pink)))" },
+  { id: "ember", label: "Ember", cls: "from-pink via-brand to-pink", text: "text-brand-foreground", swatch: "linear-gradient(135deg, hsl(var(--pink)), hsl(var(--brand)), hsl(var(--pink)))" },
+  { id: "noir", label: "Noir", cls: "from-slate-900 via-slate-700 to-slate-900", text: "text-white", swatch: "linear-gradient(135deg, #0f172a, #475569, #0f172a)" },
+  { id: "citrus", label: "Citrus", cls: "from-yellow-400 via-pink to-brand", text: "text-brand-foreground", swatch: "linear-gradient(135deg, #facc15, hsl(var(--pink)), hsl(var(--brand)))" },
 ] as const;
 
 type GradientId = (typeof GRADIENTS)[number]["id"];
@@ -181,9 +181,33 @@ function Wrapped() {
                   cities: citiesThisYear.size,
                   countries: countriesThisYear.size,
                   hours: hoursLive,
+                  ticketSpend: moneySpent,
                   topVenue: topVenue?.name,
+                  topVenueCount: topVenue?.count,
                   topCity: topCity?.name,
-                  topGenres: genres.map((g) => g.name),
+                  topCityCount: topCity?.count,
+                  topGenres: genres.map((g) => ({ name: g.name, count: g.count, pct: g.pct })),
+                  discoveredGenres,
+                  newArtists,
+                  longestShow: longestShow
+                    ? { artist: longestShow.artist, songs: longestShow.setlist?.length ?? longestShow.songsSeen ?? 0, minutes: longestMins }
+                    : undefined,
+                  firstShow: firstShow
+                    ? { artist: firstShow.artist, date: firstShow.date, venue: firstShow.venue, city: firstShow.city }
+                    : undefined,
+                  lastShow: lastShow
+                    ? { artist: lastShow.artist, date: lastShow.date, venue: lastShow.venue, city: lastShow.city }
+                    : undefined,
+                  avgRating: Number(avgRating.toFixed(2)),
+                  totalRated: yearConcerts.length,
+                  topRated: topRated
+                    ? { artist: topRated.artist, rating: topRated.rating, venue: topRated.venue, city: topRated.city }
+                    : undefined,
+                  peakWeekday: WEEKDAYS[peakWeekdayIdx],
+                  peakMonth: MONTHS[peakMonthIdx],
+                  peakMonthCount: monthCounts[peakMonthIdx],
+                  avgPerMonth: Number(avgPerMonth.toFixed(1)),
+                  monthsWithShows,
                 };
                 const encoded = encodePayload(sharePayload);
                 const origin = typeof window !== "undefined" ? window.location.origin : "";
@@ -280,7 +304,7 @@ function Wrapped() {
 
 
       {/* HEADLINE */}
-      <section className={`relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br ${gradient.cls} p-8 text-brand-foreground md:p-12`}>
+      <section className={`relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br ${gradient.cls} ${gradient.text} p-8 md:p-12`}>
         <p className="text-xs font-bold uppercase tracking-widest opacity-80">Your year in numbers</p>
         <p className="mt-4 font-display text-7xl font-black leading-none md:text-9xl">{yearShows.length}</p>
         <p className="mt-3 font-display text-2xl font-extrabold md:text-3xl">
