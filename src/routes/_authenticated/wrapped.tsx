@@ -280,7 +280,7 @@ function Wrapped() {
 
 
       {/* HEADLINE */}
-      <section className="relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br from-brand via-pink to-teal p-8 text-brand-foreground md:p-12">
+      <section className={`relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br ${gradient.cls} p-8 text-brand-foreground md:p-12`}>
         <p className="text-xs font-bold uppercase tracking-widest opacity-80">Your year in numbers</p>
         <p className="mt-4 font-display text-7xl font-black leading-none md:text-9xl">{yearShows.length}</p>
         <p className="mt-3 font-display text-2xl font-extrabold md:text-3xl">
