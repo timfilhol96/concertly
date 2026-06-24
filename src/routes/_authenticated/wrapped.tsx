@@ -181,9 +181,33 @@ function Wrapped() {
                   cities: citiesThisYear.size,
                   countries: countriesThisYear.size,
                   hours: hoursLive,
+                  ticketSpend: moneySpent,
                   topVenue: topVenue?.name,
+                  topVenueCount: topVenue?.count,
                   topCity: topCity?.name,
-                  topGenres: genres.map((g) => g.name),
+                  topCityCount: topCity?.count,
+                  topGenres: genres.map((g) => ({ name: g.name, count: g.count, pct: g.pct })),
+                  discoveredGenres,
+                  newArtists,
+                  longestShow: longestShow
+                    ? { artist: longestShow.artist, songs: longestShow.setlist?.length ?? longestShow.songsSeen ?? 0, minutes: longestMins }
+                    : undefined,
+                  firstShow: firstShow
+                    ? { artist: firstShow.artist, date: firstShow.date, venue: firstShow.venue, city: firstShow.city }
+                    : undefined,
+                  lastShow: lastShow
+                    ? { artist: lastShow.artist, date: lastShow.date, venue: lastShow.venue, city: lastShow.city }
+                    : undefined,
+                  avgRating: Number(avgRating.toFixed(2)),
+                  totalRated: yearConcerts.length,
+                  topRated: topRated
+                    ? { artist: topRated.artist, rating: topRated.rating, venue: topRated.venue, city: topRated.city }
+                    : undefined,
+                  peakWeekday: WEEKDAYS[peakWeekdayIdx],
+                  peakMonth: MONTHS[peakMonthIdx],
+                  peakMonthCount: monthCounts[peakMonthIdx],
+                  avgPerMonth: Number(avgPerMonth.toFixed(1)),
+                  monthsWithShows,
                 };
                 const encoded = encodePayload(sharePayload);
                 const origin = typeof window !== "undefined" ? window.location.origin : "";
