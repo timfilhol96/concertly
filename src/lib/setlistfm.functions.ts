@@ -252,10 +252,10 @@ export const lookupSetlist = createServerFn({ method: "POST" })
     // Only use the tour name attached to this specific show — no nearby fallback.
     const tour = headliner.tour?.name ?? null;
 
-    // In parallel: MusicBrainz genre (fallback), Deezer artist (image + genre), opener setlists.
-    const [mbGenre, deezer, openerSetlistsRaw] = await Promise.all([
+    // In parallel: MusicBrainz genre (fallback), Spotify artist (image + genre), opener setlists.
+    const [mbGenre, spotify, openerSetlistsRaw] = await Promise.all([
       lookupGenre(headliner.artist?.mbid),
-      lookupDeezerArtist(headliner.artist?.name ?? data.artist),
+      lookupSpotifyArtist(headliner.artist?.name ?? data.artist),
       Promise.all(
         openers.slice(0, 3).map(async (name) => ({
           artist: name,
@@ -263,9 +263,10 @@ export const lookupSetlist = createServerFn({ method: "POST" })
         })),
       ),
     ]);
-    const genre = deezer.genre ?? mbGenre;
-    const artistImageUrl = deezer.image;
-    const openerSetlists = openerSetlistsRaw.filter((o) => o.songs.length > 0);
+    const genre = spotify.genre ?? mbGenre;
+    const artistImageUrl = spotify.image;
+    const openerSetlists = openerSetlistsRaw.filter((o: { songs: string[] }) => o.songs.length > 0);
+
 
     return {
       found: true,
