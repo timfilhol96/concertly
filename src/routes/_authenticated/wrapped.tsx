@@ -1,8 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { Download, Share2 } from "lucide-react";
-import { useMemo } from "react";
+import { Check, Download, Instagram, Link as LinkIcon, MessageCircle, Palette, Share2 } from "lucide-react";
+import { useMemo, useState } from "react";
 import { toast } from "sonner";
 
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   genreBreakdown,
   getStats,
@@ -21,6 +29,24 @@ export const Route = createFileRoute("/_authenticated/wrapped")({
 const YEAR = new Date().getFullYear();
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+const GRADIENTS = [
+  { id: "sunset", label: "Sunset", cls: "from-brand via-pink to-teal", swatch: "linear-gradient(135deg, hsl(var(--brand)), hsl(var(--pink)), hsl(var(--teal)))" },
+  { id: "ocean", label: "Ocean", cls: "from-teal via-brand to-pink", swatch: "linear-gradient(135deg, hsl(var(--teal)), hsl(var(--brand)), hsl(var(--pink)))" },
+  { id: "ember", label: "Ember", cls: "from-pink via-brand to-pink", swatch: "linear-gradient(135deg, hsl(var(--pink)), hsl(var(--brand)), hsl(var(--pink)))" },
+  { id: "noir", label: "Noir", cls: "from-slate-900 via-slate-700 to-slate-900", swatch: "linear-gradient(135deg, #0f172a, #475569, #0f172a)" },
+  { id: "citrus", label: "Citrus", cls: "from-yellow-400 via-pink to-brand", swatch: "linear-gradient(135deg, #facc15, hsl(var(--pink)), hsl(var(--brand)))" },
+] as const;
+
+type GradientId = (typeof GRADIENTS)[number]["id"];
+
+function encodePayload(p: unknown): string {
+  const json = JSON.stringify(p);
+  const b64 = typeof btoa !== "undefined"
+    ? btoa(unescape(encodeURIComponent(json)))
+    : Buffer.from(json, "utf8").toString("base64");
+  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
+}
 
 function showLengthMinutes(c: Concert) {
   const songs = c.setlist?.length ?? c.songsSeen ?? 0;
