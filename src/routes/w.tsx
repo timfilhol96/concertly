@@ -34,8 +34,10 @@ function decode(d?: string): SharePayload | null {
 export const Route = createFileRoute("/w")({
   validateSearch: (s) => searchSchema.parse(s),
   loaderDeps: ({ search }) => search,
-  loader: ({ deps }: { deps: WrappedSearch }) =>
-    deps.id ? getPublicWrappedShare({ data: { id: deps.id } }) : null,
+  loader: ({ deps }) => {
+    const { id } = deps as WrappedSearch;
+    return id ? getPublicWrappedShare({ data: { id } }) : null;
+  },
   head: ({ match, loaderData }) => {
     const p = loaderData?.payload ?? decode((match.search as { d?: string }).d);
     const title = p
