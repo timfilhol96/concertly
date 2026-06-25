@@ -4,6 +4,8 @@ import { z } from "zod";
 import { getPublicWrappedShare } from "@/lib/wrapped-share.functions";
 import type { WrappedSharePayload as SharePayload } from "@/lib/wrapped-share-types";
 
+type WrappedSearch = z.infer<typeof searchSchema>;
+
 const searchSchema = z.object({
   d: z.string().optional(),
   g: z.string().optional(),
@@ -31,7 +33,9 @@ function decode(d?: string): SharePayload | null {
 
 export const Route = createFileRoute("/w")({
   validateSearch: (s) => searchSchema.parse(s),
-  loader: ({ search }) => (search.id ? getPublicWrappedShare({ data: { id: search.id } }) : null),
+  loaderDeps: ({ search }) => search,
+  loader: ({ deps }: { deps: WrappedSearch }) =>
+    deps.id ? getPublicWrappedShare({ data: { id: deps.id } }) : null,
   head: ({ match, loaderData }) => {
     const p = loaderData?.payload ?? decode((match.search as { d?: string }).d);
     const title = p
@@ -56,7 +60,7 @@ export const Route = createFileRoute("/w")({
 function SharedWrapped() {
   const { d, g } = Route.useSearch();
   const share = Route.useLoaderData();
-  const p = share?.payload ?? decode(d);
+  const p: SharePayload | null = share?.payload ?? decode(d);
   const gradient = GRADIENTS[share?.gradient ?? g ?? "sunset"] ?? GRADIENTS.sunset;
 
   if (!p) {
@@ -288,7 +292,7 @@ function Card({
   );
 }
 
-function Milestone({ label, show }: { label: string; show: ShowRef }) {
+function Milestone({ label, show }: { label: string; show: NonNullable<SharePayload["firstShow"]> }) {
   return (
     <div className="rounded-3xl border border-hairline bg-card p-8">
       <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
