@@ -1,10 +1,16 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { z } from "zod";
 
+import { getPublicWrappedShare } from "@/lib/wrapped-share.functions";
+import type { WrappedSharePayload as SharePayload } from "@/lib/wrapped-share-types";
+
 const searchSchema = z.object({
   d: z.string().optional(),
   g: z.string().optional(),
+  id: z.string().regex(/^[A-Za-z0-9_-]{8,32}$/).optional(),
 });
+
+type WrappedSearch = z.infer<typeof searchSchema>;
 
 const GRADIENTS: Record<string, { cls: string; text: string }> = {
   sunset: { cls: "from-brand via-pink to-teal", text: "text-brand-foreground" },
@@ -12,38 +18,6 @@ const GRADIENTS: Record<string, { cls: string; text: string }> = {
   ember: { cls: "from-pink via-brand to-pink", text: "text-brand-foreground" },
   noir: { cls: "from-slate-900 via-slate-700 to-slate-900", text: "text-white" },
   citrus: { cls: "from-yellow-400 via-pink to-brand", text: "text-brand-foreground" },
-};
-
-type ShowRef = { artist: string; date?: string; venue?: string; city?: string };
-
-type SharePayload = {
-  year: number;
-  user?: string;
-  shows: number;
-  artists: number;
-  venues: number;
-  cities: number;
-  countries: number;
-  hours: number;
-  ticketSpend?: number;
-  topVenue?: string;
-  topVenueCount?: number;
-  topCity?: string;
-  topCityCount?: number;
-  topGenres?: Array<{ name: string; count: number; pct: number }>;
-  discoveredGenres?: string[];
-  newArtists?: string[];
-  longestShow?: { artist: string; songs: number; minutes: number };
-  firstShow?: ShowRef;
-  lastShow?: ShowRef;
-  avgRating?: number;
-  totalRated?: number;
-  topRated?: { artist: string; rating: number; venue?: string; city?: string };
-  peakWeekday?: string;
-  peakMonth?: string;
-  peakMonthCount?: number;
-  avgPerMonth?: number;
-  monthsWithShows?: number;
 };
 
 function decode(d?: string): SharePayload | null {
@@ -59,8 +33,13 @@ function decode(d?: string): SharePayload | null {
 
 export const Route = createFileRoute("/w")({
   validateSearch: (s) => searchSchema.parse(s),
-  head: ({ match }) => {
-    const p = decode((match.search as { d?: string }).d);
+  loaderDeps: ({ search }) => search,
+  loader: ({ deps }) => {
+    const { id } = deps as WrappedSearch;
+    return id ? getPublicWrappedShare({ data: { id } }) : null;
+  },
+  head: ({ match, loaderData }) => {
+    const p = loaderData?.payload ?? decode((match.search as { d?: string }).d);
     const title = p
       ? `${p.user ?? "A fan"}'s ${p.year} Wrapped · ${p.shows} shows`
       : "Concertly Wrapped";
@@ -82,8 +61,9 @@ export const Route = createFileRoute("/w")({
 
 function SharedWrapped() {
   const { d, g } = Route.useSearch();
-  const p = decode(d);
-  const gradient = GRADIENTS[g ?? "sunset"] ?? GRADIENTS.sunset;
+  const share = Route.useLoaderData();
+  const p: SharePayload | null = share?.payload ?? decode(d);
+  const gradient = GRADIENTS[share?.gradient ?? g ?? "sunset"] ?? GRADIENTS.sunset;
 
   if (!p) {
     return (
@@ -314,7 +294,7 @@ function Card({
   );
 }
 
-function Milestone({ label, show }: { label: string; show: ShowRef }) {
+function Milestone({ label, show }: { label: string; show: NonNullable<SharePayload["firstShow"]> }) {
   return (
     <div className="rounded-3xl border border-hairline bg-card p-8">
       <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>

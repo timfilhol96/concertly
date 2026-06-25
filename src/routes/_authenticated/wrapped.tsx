@@ -20,6 +20,8 @@ import {
   useProfile,
   type Concert,
 } from "@/lib/concerts";
+import { createWrappedShare } from "@/lib/wrapped-share";
+import type { WrappedSharePayload } from "@/lib/wrapped-share-types";
 
 export const Route = createFileRoute("/_authenticated/wrapped")({
   head: () => ({ meta: [{ title: "Your Wrapped · Concertly" }] }),
@@ -39,14 +41,6 @@ const GRADIENTS = [
 ] as const;
 
 type GradientId = (typeof GRADIENTS)[number]["id"];
-
-function encodePayload(p: unknown): string {
-  const json = JSON.stringify(p);
-  const b64 = typeof btoa !== "undefined"
-    ? btoa(unescape(encodeURIComponent(json)))
-    : Buffer.from(json, "utf8").toString("base64");
-  return b64.replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "");
-}
 
 function showLengthMinutes(c: Concert) {
   const songs = c.setlist?.length ?? c.songsSeen ?? 0;
@@ -172,7 +166,7 @@ function Wrapped() {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               {(() => {
-                const sharePayload = {
+                const sharePayload: WrappedSharePayload = {
                   year: YEAR,
                   user: profile?.displayName ?? undefined,
                   shows: yearShows.length,
@@ -209,16 +203,29 @@ function Wrapped() {
                   avgPerMonth: Number(avgPerMonth.toFixed(1)),
                   monthsWithShows,
                 };
-                const encoded = encodePayload(sharePayload);
                 const origin = typeof window !== "undefined" ? window.location.origin : "";
-                const shareUrl = `${origin}/w?d=${encoded}&g=${gradientId}`;
                 const text = `My ${YEAR} Concertly Wrapped: ${yearShows.length} shows · ${artistsThisYear.size} artists · ${venuesThisYear.size} venues · ${citiesThisYear.size} cities · ${hoursLive}h live.`;
+                const getShareUrl = async () => {
+                  const id = await createWrappedShare(sharePayload, gradientId);
+                  return `${origin}/w?id=${id}`;
+                };
                 return (
                   <>
                     <DropdownMenuItem
-                      onClick={() => {
-                        const wa = `https://wa.me/?text=${encodeURIComponent(`${text}\n\n${shareUrl}`)}`;
-                        window.open(wa, "_blank", "noopener,noreferrer");
+                      onClick={async () => {
+                        const popup = window.open("", "_blank");
+                        try {
+                          const shareUrl = await getShareUrl();
+                          const wa = `https://wa.me/?text=${encodeURIComponent(`${text}\n\n${shareUrl}`)}`;
+                          if (popup) {
+                            popup.opener = null;
+                            popup.location.href = wa;
+                          }
+                          else window.location.href = wa;
+                        } catch {
+                          popup?.close();
+                          toast.error("Couldn't create share link");
+                        }
                       }}
                     >
                       <MessageCircle className="mr-2 h-4 w-4 text-emerald-500" /> WhatsApp
@@ -226,12 +233,13 @@ function Wrapped() {
                     <DropdownMenuItem
                       onClick={async () => {
                         try {
+                          const shareUrl = await getShareUrl();
                           if (navigator.clipboard) await navigator.clipboard.writeText(`${text} ${shareUrl}`);
                           toast.success("Copied — paste into your Instagram story or DM");
+                          window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
                         } catch {
                           toast.error("Couldn't copy. Try the link option.");
                         }
-                        window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
                       }}
                     >
                       <Instagram className="mr-2 h-4 w-4 text-pink-500" /> Instagram
@@ -239,6 +247,7 @@ function Wrapped() {
                     <DropdownMenuItem
                       onClick={async () => {
                         try {
+                          const shareUrl = await getShareUrl();
                           await navigator.clipboard.writeText(shareUrl);
                           toast.success("Link copied to clipboard");
                         } catch {
