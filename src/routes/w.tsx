@@ -4,13 +4,13 @@ import { z } from "zod";
 import { getPublicWrappedShare } from "@/lib/wrapped-share.functions";
 import type { WrappedSharePayload as SharePayload } from "@/lib/wrapped-share-types";
 
-type WrappedSearch = z.infer<typeof searchSchema>;
-
 const searchSchema = z.object({
   d: z.string().optional(),
   g: z.string().optional(),
   id: z.string().regex(/^[A-Za-z0-9_-]{8,32}$/).optional(),
 });
+
+type WrappedSearch = z.infer<typeof searchSchema>;
 
 const GRADIENTS: Record<string, { cls: string; text: string }> = {
   sunset: { cls: "from-brand via-pink to-teal", text: "text-brand-foreground" },
