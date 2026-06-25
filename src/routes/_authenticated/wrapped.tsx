@@ -217,7 +217,7 @@ function Wrapped() {
                   <>
                     <DropdownMenuItem
                       onClick={() => {
-                        const wa = `https://api.whatsapp.com/send?text=${encodeURIComponent(`${text}\n\n${shareUrl}`)}`;
+                        const wa = `https://wa.me/?text=${encodeURIComponent(`${text}\n\n${shareUrl}`)}`;
                         window.open(wa, "_blank", "noopener,noreferrer");
                       }}
                     >
