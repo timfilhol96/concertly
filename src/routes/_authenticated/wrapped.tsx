@@ -213,11 +213,14 @@ function Wrapped() {
                   <>
                     <DropdownMenuItem
                       onClick={async () => {
-                        const popup = window.open("about:blank", "_blank", "noopener,noreferrer");
+                        const popup = window.open("", "_blank");
                         try {
                           const shareUrl = await getShareUrl();
                           const wa = `https://wa.me/?text=${encodeURIComponent(`${text}\n\n${shareUrl}`)}`;
-                          if (popup) popup.location.href = wa;
+                          if (popup) {
+                            popup.opener = null;
+                            popup.location.href = wa;
+                          }
                           else window.location.href = wa;
                         } catch {
                           popup?.close();
