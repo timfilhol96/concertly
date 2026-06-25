@@ -186,9 +186,9 @@ function Wrapped() {
                   topVenueCount: topVenue?.count,
                   topCity: topCity?.name,
                   topCityCount: topCity?.count,
-                  topGenres: genres.map((g) => ({ name: g.name, count: g.count, pct: g.pct })),
-                  discoveredGenres,
-                  newArtists,
+                  topGenres: genres.slice(0, 5).map((g) => ({ name: g.name, count: g.count, pct: Math.round(g.pct) })),
+                  discoveredGenres: discoveredGenres?.slice(0, 6),
+                  newArtists: newArtists?.slice(0, 8),
                   longestShow: longestShow
                     ? { artist: longestShow.artist, songs: longestShow.setlist?.length ?? longestShow.songsSeen ?? 0, minutes: longestMins }
                     : undefined,
@@ -217,7 +217,7 @@ function Wrapped() {
                   <>
                     <DropdownMenuItem
                       onClick={() => {
-                        const wa = `https://api.whatsapp.com/send?text=${encodeURIComponent(`${text}\n\n${shareUrl}`)}`;
+                        const wa = `https://wa.me/?text=${encodeURIComponent(`${text}\n\n${shareUrl}`)}`;
                         window.open(wa, "_blank", "noopener,noreferrer");
                       }}
                     >
