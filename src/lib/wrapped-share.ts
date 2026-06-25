@@ -27,19 +27,3 @@ export async function createWrappedShare(payload: WrappedSharePayload, gradient:
 
   throw new Error("Couldn't create share link");
 }
-
-export async function getWrappedShare(id: string) {
-  const { data, error } = await supabase
-    .from("wrapped_shares")
-    .select("payload, gradient")
-    .eq("id", id)
-    .maybeSingle();
-
-  if (error) throw error;
-  return data
-    ? {
-        payload: data.payload as WrappedSharePayload,
-        gradient: data.gradient,
-      }
-    : null;
-}
