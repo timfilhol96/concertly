@@ -200,6 +200,13 @@ export type Database = {
     }
     Functions: {
       are_friends: { Args: { a: string; b: string }; Returns: boolean }
+      get_wrapped_share: {
+        Args: { share_id: string }
+        Returns: {
+          gradient: string
+          payload: Json
+        }[]
+      }
     }
     Enums: {
       friendship_status: "pending" | "accepted"
