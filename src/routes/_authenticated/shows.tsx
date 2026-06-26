@@ -774,37 +774,39 @@ function Shows() {
                     <span className="font-display text-lg font-extrabold">{c.rating.toFixed(1)}</span>
                   </div>
                 </td>
-                <td className="px-4 py-4 md:px-6" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-end gap-1">
-                    <button
-                      type="button"
-                      onClick={() => handleRefreshOne(c)}
-                      disabled={refresh.running}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground disabled:opacity-50"
-                      aria-label={`Refresh ${c.artist}`}
-                      title="Refresh info for this show"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                    </button>
-                    <Link
-                      to="/add"
-                      search={{ id: c.id }}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground"
-                      aria-label={`Edit ${c.artist}`}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(c.id, c.artist)}
-                      disabled={del.isPending}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-                      aria-label={`Delete ${c.artist}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
+                {!readOnly && (
+                  <td className="px-4 py-4 md:px-6" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleRefreshOne(c)}
+                        disabled={refresh.running}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground disabled:opacity-50"
+                        aria-label={`Refresh ${c.artist}`}
+                        title="Refresh info for this show"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </button>
+                      <Link
+                        to="/add"
+                        search={{ id: c.id }}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+                        aria-label={`Edit ${c.artist}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(c.id, c.artist)}
+                        disabled={del.isPending}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                        aria-label={`Delete ${c.artist}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
             {!isLoading && list.length === 0 && (
