@@ -13,6 +13,7 @@ import {
   useProfile,
 } from "@/lib/concerts";
 import { useFriendships } from "@/lib/friends";
+import { useConcertMedia, useSignedMediaUrl, type ConcertMediaItem } from "@/lib/concert-media";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
