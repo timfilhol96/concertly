@@ -726,7 +726,7 @@ function Shows() {
               <th className="hidden px-4 py-3 font-bold lg:table-cell">Tour</th>
               <th className="px-4 py-3 font-bold md:px-6">Date</th>
               <th className="px-4 py-3 text-right font-bold md:px-6">Rating</th>
-              <th className="px-4 py-3 text-right font-bold md:px-6">Actions</th>
+              {!readOnly && <th className="px-4 py-3 text-right font-bold md:px-6">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-hairline bg-card/40">
