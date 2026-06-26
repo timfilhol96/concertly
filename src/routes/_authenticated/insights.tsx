@@ -351,6 +351,32 @@ function Insights() {
             </ul>
           )}
         </ChartCard>
+
+        <ChartCard title="Top cities by shows" subtitle={scopeLabel}>
+          {topCities.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No cities logged yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {topCities.map((c, i) => {
+                const pct = (c.count / (topCities[0]?.count || 1)) * 100;
+                return (
+                  <li key={c.name}>
+                    <div className="mb-1 flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-3">
+                        <span className="w-6 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+                        <span>{c.name}</span>
+                      </span>
+                      <span className="font-mono text-xs text-muted-foreground">{c.count}</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-surface-2">
+                      <div className="h-full rounded-full bg-gradient-to-r from-teal to-brand" style={{ width: `${pct}%` }} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </ChartCard>
       </div>
     </main>
   );
