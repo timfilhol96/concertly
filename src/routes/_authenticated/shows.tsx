@@ -13,6 +13,12 @@ import {
   type Concert,
 } from "@/lib/concerts";
 import {
+  coAttendanceKey,
+  useFriendConcerts,
+  useFriendships,
+  useFriendsCoAttendance,
+} from "@/lib/friends";
+import {
   lookupCoPerformers,
   lookupDeezerArtistByIdFn,
   lookupSetlist,
@@ -21,7 +27,13 @@ import {
   type CoPerformer,
 } from "@/lib/setlistfm.functions";
 
-type Search = { month?: string; genre?: string; year?: string };
+type Search = {
+  month?: string;
+  genre?: string;
+  year?: string;
+  friendId?: string;
+  withFriends?: string[];
+};
 
 export const Route = createFileRoute("/_authenticated/shows")({
   head: () => ({ meta: [{ title: "My Shows · Concertly" }] }),
@@ -29,9 +41,15 @@ export const Route = createFileRoute("/_authenticated/shows")({
     month: typeof s.month === "string" && /^\d{4}-\d{2}$/.test(s.month) ? s.month : undefined,
     genre: typeof s.genre === "string" && s.genre.length > 0 ? s.genre : undefined,
     year: typeof s.year === "string" && /^\d{4}$/.test(s.year) ? s.year : undefined,
+    friendId:
+      typeof s.friendId === "string" && s.friendId.length > 0 ? s.friendId : undefined,
+    withFriends: Array.isArray(s.withFriends)
+      ? (s.withFriends.filter((x) => typeof x === "string" && x.length > 0) as string[])
+      : undefined,
   }),
   component: Shows,
 });
+
 
 // ---------- Wizard prompt types ----------
 
