@@ -602,11 +602,24 @@ function Shows() {
     else toast.success(msg);
   }
 
+  const acceptedFriends = friendData?.friends ?? [];
+  const friendProfiles = friendData?.profiles ?? {};
+  const pageTitle = friendProfile ? `${friendProfile.displayName.split(" ")[0]}'s Shows` : "My Shows";
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
+      {friendProfile && (
+        <Link
+          to="/friend/$id"
+          params={{ id: friendId! }}
+          className="mb-4 inline-block text-xs font-semibold text-muted-foreground hover:text-foreground"
+        >
+          ← Back to {friendProfile.displayName.split(" ")[0]}'s dashboard
+        </Link>
+      )}
       <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">My Shows</h1>
+          <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{pageTitle}</h1>
           <p className="mt-2 text-muted-foreground">
             {monthLabel
               ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} in ${monthLabel}`
@@ -614,15 +627,19 @@ function Shows() {
                 ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} in ${year}`
                 : genre
                   ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} tagged ${genre}`
-                  : `Every gig in your archive — ${concerts.length} total.`}
+                  : withFriendsSet.size > 0
+                    ? `Showing ${list.length} co-attended show${list.length === 1 ? "" : "s"}.`
+                    : friendProfile
+                      ? `Every gig in their archive — ${concerts.length} total.`
+                      : `Every gig in your archive — ${concerts.length} total.`}
           </p>
-          {(month || genre || year) && (
+          {(month || genre || year || withFriendsSet.size > 0) && (
             <button
               type="button"
-              onClick={() => nav({ to: "/shows", search: {} })}
+              onClick={() => nav({ to: "/shows", search: friendId ? { friendId } : {} })}
               className="mt-2 inline-flex items-center gap-1 rounded-full border border-hairline bg-surface px-3 py-1 text-xs font-semibold hover:bg-surface-2"
             >
-              <X className="h-3 w-3" /> Clear {month ? "month" : year ? "year" : "genre"} filter
+              <X className="h-3 w-3" /> Clear filters
             </button>
           )}
         </div>
@@ -644,20 +661,61 @@ function Shows() {
             <option value="date">Newest</option>
             <option value="rating">Top rated</option>
           </select>
-          <button
-            type="button"
-            onClick={handleRefreshAll}
-            disabled={refresh.running || concerts.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-2 text-xs font-semibold hover:bg-surface-2 disabled:opacity-50"
-            title="Re-fetch tour, setlist, genre & artist image for every show"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${refresh.running ? "animate-spin" : ""}`} />
-            {refresh.running
-              ? `Refreshing ${refresh.done}/${refresh.total}`
-              : "Refresh all info"}
-          </button>
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={handleRefreshAll}
+              disabled={refresh.running || concerts.length === 0}
+              className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-2 text-xs font-semibold hover:bg-surface-2 disabled:opacity-50"
+              title="Re-fetch tour, setlist, genre & artist image for every show"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${refresh.running ? "animate-spin" : ""}`} />
+              {refresh.running
+                ? `Refreshing ${refresh.done}/${refresh.total}`
+                : "Refresh all info"}
+            </button>
+          )}
         </div>
       </div>
+
+      {!readOnly && acceptedFriends.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-hairline bg-card p-3">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <Users className="h-3 w-3" /> Attended with
+          </span>
+          {acceptedFriends.map((f) => {
+            const p = friendProfiles[f.otherUserId];
+            if (!p) return null;
+            const active = withFriendsSet.has(p.userId);
+            return (
+              <button
+                key={p.userId}
+                type="button"
+                onClick={() => toggleFriendFilter(p.userId)}
+                className={
+                  "rounded-full px-3 py-1 text-xs font-semibold transition " +
+                  (active
+                    ? "bg-foreground text-background"
+                    : "border border-hairline bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-2")
+                }
+                title={`Filter shows ${p.displayName} also attended`}
+              >
+                @{p.username ?? p.displayName}
+              </button>
+            );
+          })}
+          {withFriendsSet.size > 0 && (
+            <button
+              type="button"
+              onClick={() => nav({ to: "/shows", search: { month, genre, year, friendId } })}
+              className="ml-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3" /> clear
+            </button>
+          )}
+        </div>
+      )}
+
 
       <div className="overflow-hidden rounded-2xl border border-hairline">
         <table className="w-full text-left">
