@@ -372,7 +372,7 @@ export function useFriendsCoAttendance() {
         const p = profiles[r.user_id as string];
         if (!p) continue;
         if (!byKey[key]) byKey[key] = [];
-        if (!byKey[key].some((x) => x.id === p.id)) byKey[key].push(p);
+        if (!byKey[key].some((x) => x.userId === p.userId)) byKey[key].push(p);
       }
       return { byKey, profiles };
     },
