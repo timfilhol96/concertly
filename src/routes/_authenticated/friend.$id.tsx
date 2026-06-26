@@ -115,12 +115,28 @@ function FriendDashboard() {
             </p>
           )}
         </div>
-        <Link
-          to="/friends"
-          className="rounded-full border border-hairline bg-card px-4 py-2 text-xs font-bold hover:border-brand"
-        >
-          Compare with you →
-        </Link>
+        <div className="flex flex-wrap items-center gap-2">
+          <Link
+            to="/shows"
+            search={{ friendId: id }}
+            className="rounded-full border border-hairline bg-card px-4 py-2 text-xs font-bold hover:border-brand"
+          >
+            Their shows →
+          </Link>
+          <Link
+            to="/insights"
+            search={{ friendId: id }}
+            className="rounded-full border border-hairline bg-card px-4 py-2 text-xs font-bold hover:border-brand"
+          >
+            Their insights →
+          </Link>
+          <Link
+            to="/friends"
+            className="rounded-full border border-hairline bg-card px-4 py-2 text-xs font-bold hover:border-brand"
+          >
+            Compare with you →
+          </Link>
+        </div>
       </div>
 
       {list.length === 0 ? (

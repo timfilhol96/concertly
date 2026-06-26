@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -23,9 +23,15 @@ import {
   useConcerts,
   type GenreBreakdownItem,
 } from "@/lib/concerts";
+import { useFriendConcerts, useFriendships } from "@/lib/friends";
+
+type Search = { friendId?: string };
 
 export const Route = createFileRoute("/_authenticated/insights")({
   head: () => ({ meta: [{ title: "Insights · Concertly" }] }),
+  validateSearch: (s: Record<string, unknown>): Search => ({
+    friendId: typeof s.friendId === "string" && s.friendId.length > 0 ? s.friendId : undefined,
+  }),
   component: Insights,
 });
 
@@ -42,13 +48,23 @@ const CURRENT_YEAR = new Date().getFullYear();
 type YearSel = number | "all";
 
 function Insights() {
-  const { data: concerts = [] } = useConcerts();
+  const { friendId } = Route.useSearch();
+  const { data: friendData } = useFriendships();
+  const friendProfile = friendId ? friendData?.profiles?.[friendId] : undefined;
+  const isFriend = friendId
+    ? friendData?.friends?.some((f) => f.otherUserId === friendId) ?? false
+    : true;
+  const ownConcertsQ = useConcerts();
+  const friendConcertsQ = useFriendConcerts(friendId && isFriend ? friendId : null);
+  const concerts = friendId ? friendConcertsQ.data ?? [] : ownConcertsQ.data ?? [];
+
   const nav = useNavigate();
   // Collapse rows that share date+venue (headliner + support acts) into a
   // single "show" — counts and streaks reflect shows attended, not artists seen.
   const shows = useMemo(() => uniqueShows(concerts), [concerts]);
   const years = availableYears(shows);
   const [year, setYear] = useState<YearSel>(years[0] ?? CURRENT_YEAR);
+
 
   // Filter to the selected year for all year-aware sections.
   const showsInYear = useMemo(
@@ -66,6 +82,7 @@ function Insights() {
   // Top artists is per-artist seen — keep using the full list so support acts count.
   const topArtists = rankBy(concertsInYear, "artist", 8);
   const topCountries = rankBy(showsInYear, "country", 6);
+  const topCities = rankBy(showsInYear, "city", 6);
   const streak = monthlyStreak(shows);
 
   const totalInRange = byMonth.reduce((s, m) => s + m.count, 0);
@@ -84,12 +101,13 @@ function Insights() {
   const scopeLabel = year === "all" ? "All time" : String(year);
 
   function handleMonthClick(monthIdx: number) {
-    if (year === "all") return;
+    if (year === "all" || friendId) return;
     const m = String(monthIdx + 1).padStart(2, "0");
     nav({ to: "/shows", search: { month: `${year}-${m}` } });
   }
 
   function handleGenreClick(genre: string) {
+    if (friendId) return;
     nav({
       to: "/shows",
       search: year === "all" ? { genre } : { genre, year: String(year) },
@@ -97,22 +115,49 @@ function Insights() {
   }
 
   function handleYearClick(y: number) {
+    if (friendId) return;
     nav({ to: "/shows", search: { year: String(y) } });
   }
 
+  if (friendId && (!isFriend || !friendProfile)) {
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-20 text-center">
+        <h1 className="font-display text-3xl font-extrabold">Not available</h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          You aren't friends with this user.
+        </p>
+        <Link to="/friends" className="mt-6 inline-block rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground">
+          Back to Friends
+        </Link>
+      </main>
+    );
+  }
+
+  const headerTitle = friendProfile ? `${friendProfile.displayName}'s Insights` : "Insights";
+  const headerSub = friendProfile
+    ? `A look at @${friendProfile.username ?? "friend"}'s live music year.`
+    : "The patterns behind your live music life — when you go out, who you can't get enough of, and what genres own your calendar.";
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
+      {friendProfile && (
+        <Link
+          to="/friend/$id"
+          params={{ id: friendId! }}
+          className="mb-4 inline-block text-xs font-semibold text-muted-foreground hover:text-foreground"
+        >
+          ← Back to {friendProfile.displayName.split(" ")[0]}'s dashboard
+        </Link>
+      )}
       <div className="mb-8 animate-reveal">
-        <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">Insights</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          The patterns behind your live music life — when you go out, who you can't get enough of,
-          and what genres own your calendar.
-        </p>
+        <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{headerTitle}</h1>
+        <p className="mt-2 max-w-2xl text-muted-foreground">{headerSub}</p>
         <p className="mt-3 text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">{totalShows}</span> show{totalShows === 1 ? "" : "s"} attended ·{" "}
           <span className="font-semibold text-foreground">{totalArtists}</span> artist{totalArtists === 1 ? "" : "s"} seen
         </p>
       </div>
+
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-hairline bg-card p-4">
         <div>
@@ -299,6 +344,32 @@ function Insights() {
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-surface-2">
                       <div className="h-full rounded-full bg-gradient-to-r from-pink to-brand" style={{ width: `${pct}%` }} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </ChartCard>
+
+        <ChartCard title="Top cities by shows" subtitle={scopeLabel}>
+          {topCities.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No cities logged yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {topCities.map((c, i) => {
+                const pct = (c.count / (topCities[0]?.count || 1)) * 100;
+                return (
+                  <li key={c.name}>
+                    <div className="mb-1 flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-3">
+                        <span className="w-6 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+                        <span>{c.name}</span>
+                      </span>
+                      <span className="font-mono text-xs text-muted-foreground">{c.count}</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-surface-2">
+                      <div className="h-full rounded-full bg-gradient-to-r from-teal to-brand" style={{ width: `${pct}%` }} />
                     </div>
                   </li>
                 );

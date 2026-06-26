@@ -294,6 +294,7 @@ type ConcertRow = {
   notes: string | null;
   ticket_price: number | null;
   songs_seen: number | null;
+  artist_image_url: string | null;
 };
 
 export function useFriendConcerts(friendUserId: string | null) {
@@ -305,7 +306,7 @@ export function useFriendConcerts(friendUserId: string | null) {
       const { data, error } = await supabase
         .from("concerts")
         .select(
-          "id, artist, tour, openers, date, venue, city, country, rating, genre, notes, ticket_price, songs_seen",
+          "id, artist, tour, openers, date, venue, city, country, rating, genre, notes, ticket_price, songs_seen, artist_image_url",
         )
         .eq("user_id", friendUserId)
         .order("date", { ascending: false });
@@ -325,9 +326,59 @@ export function useFriendConcerts(friendUserId: string | null) {
         ticketPrice: r.ticket_price == null ? null : Number(r.ticket_price),
         songsSeen: r.songs_seen,
         setlist: null,
-        artistImageUrl: null,
+        artistImageUrl: r.artist_image_url,
         openerSetlists: null,
       }));
     },
   });
+}
+
+// Aggregated co-attendance: which accepted friends attended which physical
+// shows (matched by date + venue + city, case-insensitive). Returns a map
+// keyed by `${date}|${venueLower}|${cityLower}` → array of friend profiles.
+export function useFriendsCoAttendance() {
+  return useQuery({
+    queryKey: ["friends-coattendance"],
+    queryFn: async (): Promise<{
+      byKey: Record<string, FriendProfile[]>;
+      profiles: Record<string, FriendProfile>;
+    }> => {
+      const { data: userRes } = await supabase.auth.getUser();
+      const me = userRes.user?.id;
+      if (!me) return { byKey: {}, profiles: {} };
+      const { data: friendRows } = await supabase
+        .from("friendships")
+        .select("requester_id, addressee_id, status")
+        .eq("status", "accepted");
+      const friendIds = (friendRows ?? [])
+        .map((r) => (r.requester_id === me ? r.addressee_id : r.requester_id))
+        .filter((id): id is string => !!id);
+      if (friendIds.length === 0) return { byKey: {}, profiles: {} };
+      const { data: rows } = await supabase
+        .from("concerts")
+        .select("user_id, date, venue, city")
+        .in("user_id", friendIds);
+      const { data: profRows } = await supabase
+        .from("profiles")
+        .select("id, username, display_name, avatar_url")
+        .in("id", friendIds);
+      const profiles: Record<string, FriendProfile> = {};
+      for (const p of (profRows ?? []) as ProfileRow[]) {
+        profiles[p.id] = rowToFriendProfile(p);
+      }
+      const byKey: Record<string, FriendProfile[]> = {};
+      for (const r of rows ?? []) {
+        const key = `${r.date}|${(r.venue ?? "").trim().toLowerCase()}|${(r.city ?? "").trim().toLowerCase()}`;
+        const p = profiles[r.user_id as string];
+        if (!p) continue;
+        if (!byKey[key]) byKey[key] = [];
+        if (!byKey[key].some((x) => x.userId === p.userId)) byKey[key].push(p);
+      }
+      return { byKey, profiles };
+    },
+  });
+}
+
+export function coAttendanceKey(date: string, venue: string, city: string): string {
+  return `${date}|${(venue ?? "").trim().toLowerCase()}|${(city ?? "").trim().toLowerCase()}`;
 }

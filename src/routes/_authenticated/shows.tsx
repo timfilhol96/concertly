@@ -13,6 +13,12 @@ import {
   type Concert,
 } from "@/lib/concerts";
 import {
+  coAttendanceKey,
+  useFriendConcerts,
+  useFriendships,
+  useFriendsCoAttendance,
+} from "@/lib/friends";
+import {
   lookupCoPerformers,
   lookupDeezerArtistByIdFn,
   lookupSetlist,
@@ -21,7 +27,13 @@ import {
   type CoPerformer,
 } from "@/lib/setlistfm.functions";
 
-type Search = { month?: string; genre?: string; year?: string };
+type Search = {
+  month?: string;
+  genre?: string;
+  year?: string;
+  friendId?: string;
+  withFriends?: string[];
+};
 
 export const Route = createFileRoute("/_authenticated/shows")({
   head: () => ({ meta: [{ title: "My Shows · Concertly" }] }),
@@ -29,9 +41,15 @@ export const Route = createFileRoute("/_authenticated/shows")({
     month: typeof s.month === "string" && /^\d{4}-\d{2}$/.test(s.month) ? s.month : undefined,
     genre: typeof s.genre === "string" && s.genre.length > 0 ? s.genre : undefined,
     year: typeof s.year === "string" && /^\d{4}$/.test(s.year) ? s.year : undefined,
+    friendId:
+      typeof s.friendId === "string" && s.friendId.length > 0 ? s.friendId : undefined,
+    withFriends: Array.isArray(s.withFriends)
+      ? (s.withFriends.filter((x) => typeof x === "string" && x.length > 0) as string[])
+      : undefined,
   }),
   component: Shows,
 });
+
 
 // ---------- Wizard prompt types ----------
 
@@ -69,8 +87,18 @@ type Prompt = ArtistPrompt | CoPerformerPrompt | NotFoundPrompt;
 
 function Shows() {
   const nav = useNavigate();
-  const { month, genre, year } = Route.useSearch();
-  const { data: concerts = [], isLoading } = useConcerts();
+  const { month, genre, year, friendId, withFriends } = Route.useSearch();
+  const { data: friendData } = useFriendships();
+  const friendProfile = friendId ? friendData?.profiles?.[friendId] : undefined;
+  const isFriend = friendId
+    ? friendData?.friends?.some((f) => f.otherUserId === friendId) ?? false
+    : true;
+  const readOnly = !!friendId;
+  const ownConcertsQ = useConcerts();
+  const friendConcertsQ = useFriendConcerts(friendId && isFriend ? friendId : null);
+  const concerts = friendId ? friendConcertsQ.data ?? [] : ownConcertsQ.data ?? [];
+  const isLoading = friendId ? friendConcertsQ.isLoading : ownConcertsQ.isLoading;
+  const { data: coAttendance } = useFriendsCoAttendance();
   const del = useDeleteConcert();
   const update = useUpdateConcert();
   const add = useAddConcert();
@@ -126,6 +154,10 @@ function Shows() {
 
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"date" | "rating">("date");
+  const withFriendsSet = useMemo<Set<string>>(
+    () => new Set((withFriends ?? []) as string[]),
+    [withFriends],
+  );
   const list = useMemo(() => {
     let filtered = concerts.filter((c) =>
       [c.artist, c.venue, c.city, c.tour ?? ""].join(" ").toLowerCase().includes(q.toLowerCase()),
@@ -136,14 +168,40 @@ function Shows() {
       const g = genre.toLowerCase();
       filtered = filtered.filter((c) => (c.genre ?? "Unknown").toLowerCase() === g);
     }
+    if (withFriendsSet.size > 0 && coAttendance) {
+      filtered = filtered.filter((c) => {
+        const attendees = coAttendance.byKey[coAttendanceKey(c.date, c.venue, c.city)] ?? [];
+        const ids = new Set(attendees.map((a) => a.userId));
+        for (const fid of withFriendsSet) if (!ids.has(fid)) return false;
+        return true;
+      });
+    }
     return filtered.sort((a, b) =>
       sort === "date" ? (a.date < b.date ? 1 : -1) : b.rating - a.rating,
     );
-  }, [q, sort, concerts, month, genre, year]);
+  }, [q, sort, concerts, month, genre, year, withFriendsSet, coAttendance]);
 
   const monthLabel = month
     ? new Date(`${month}-01T00:00:00`).toLocaleString("en", { month: "long", year: "numeric" })
     : null;
+
+  function toggleFriendFilter(fid: string) {
+    const next = new Set(withFriendsSet);
+    if (next.has(fid)) next.delete(fid);
+    else next.add(fid);
+    nav({
+      to: "/shows",
+      search: {
+        month,
+        genre,
+        year,
+        friendId,
+        withFriends: next.size > 0 ? [...next] : undefined,
+      },
+    });
+  }
+
+
 
   async function handleDelete(id: string, artist: string) {
     if (!confirm(`Delete "${artist}" from your archive?`)) return;
@@ -544,11 +602,24 @@ function Shows() {
     else toast.success(msg);
   }
 
+  const acceptedFriends = friendData?.friends ?? [];
+  const friendProfiles = friendData?.profiles ?? {};
+  const pageTitle = friendProfile ? `${friendProfile.displayName.split(" ")[0]}'s Shows` : "My Shows";
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
+      {friendProfile && (
+        <Link
+          to="/friend/$id"
+          params={{ id: friendId! }}
+          className="mb-4 inline-block text-xs font-semibold text-muted-foreground hover:text-foreground"
+        >
+          ← Back to {friendProfile.displayName.split(" ")[0]}'s dashboard
+        </Link>
+      )}
       <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">My Shows</h1>
+          <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{pageTitle}</h1>
           <p className="mt-2 text-muted-foreground">
             {monthLabel
               ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} in ${monthLabel}`
@@ -556,15 +627,19 @@ function Shows() {
                 ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} in ${year}`
                 : genre
                   ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} tagged ${genre}`
-                  : `Every gig in your archive — ${concerts.length} total.`}
+                  : withFriendsSet.size > 0
+                    ? `Showing ${list.length} co-attended show${list.length === 1 ? "" : "s"}.`
+                    : friendProfile
+                      ? `Every gig in their archive — ${concerts.length} total.`
+                      : `Every gig in your archive — ${concerts.length} total.`}
           </p>
-          {(month || genre || year) && (
+          {(month || genre || year || withFriendsSet.size > 0) && (
             <button
               type="button"
-              onClick={() => nav({ to: "/shows", search: {} })}
+              onClick={() => nav({ to: "/shows", search: friendId ? { friendId } : {} })}
               className="mt-2 inline-flex items-center gap-1 rounded-full border border-hairline bg-surface px-3 py-1 text-xs font-semibold hover:bg-surface-2"
             >
-              <X className="h-3 w-3" /> Clear {month ? "month" : year ? "year" : "genre"} filter
+              <X className="h-3 w-3" /> Clear filters
             </button>
           )}
         </div>
@@ -586,20 +661,61 @@ function Shows() {
             <option value="date">Newest</option>
             <option value="rating">Top rated</option>
           </select>
-          <button
-            type="button"
-            onClick={handleRefreshAll}
-            disabled={refresh.running || concerts.length === 0}
-            className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-2 text-xs font-semibold hover:bg-surface-2 disabled:opacity-50"
-            title="Re-fetch tour, setlist, genre & artist image for every show"
-          >
-            <RefreshCw className={`h-3.5 w-3.5 ${refresh.running ? "animate-spin" : ""}`} />
-            {refresh.running
-              ? `Refreshing ${refresh.done}/${refresh.total}`
-              : "Refresh all info"}
-          </button>
+          {!readOnly && (
+            <button
+              type="button"
+              onClick={handleRefreshAll}
+              disabled={refresh.running || concerts.length === 0}
+              className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-2 text-xs font-semibold hover:bg-surface-2 disabled:opacity-50"
+              title="Re-fetch tour, setlist, genre & artist image for every show"
+            >
+              <RefreshCw className={`h-3.5 w-3.5 ${refresh.running ? "animate-spin" : ""}`} />
+              {refresh.running
+                ? `Refreshing ${refresh.done}/${refresh.total}`
+                : "Refresh all info"}
+            </button>
+          )}
         </div>
       </div>
+
+      {!readOnly && acceptedFriends.length > 0 && (
+        <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-hairline bg-card p-3">
+          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <Users className="h-3 w-3" /> Attended with
+          </span>
+          {acceptedFriends.map((f) => {
+            const p = friendProfiles[f.otherUserId];
+            if (!p) return null;
+            const active = withFriendsSet.has(p.userId);
+            return (
+              <button
+                key={p.userId}
+                type="button"
+                onClick={() => toggleFriendFilter(p.userId)}
+                className={
+                  "rounded-full px-3 py-1 text-xs font-semibold transition " +
+                  (active
+                    ? "bg-foreground text-background"
+                    : "border border-hairline bg-surface text-muted-foreground hover:text-foreground hover:bg-surface-2")
+                }
+                title={`Filter shows ${p.displayName} also attended`}
+              >
+                @{p.username ?? p.displayName}
+              </button>
+            );
+          })}
+          {withFriendsSet.size > 0 && (
+            <button
+              type="button"
+              onClick={() => nav({ to: "/shows", search: { month, genre, year, friendId } })}
+              className="ml-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+            >
+              <X className="h-3 w-3" /> clear
+            </button>
+          )}
+        </div>
+      )}
+
 
       <div className="overflow-hidden rounded-2xl border border-hairline">
         <table className="w-full text-left">
@@ -610,7 +726,7 @@ function Shows() {
               <th className="hidden px-4 py-3 font-bold lg:table-cell">Tour</th>
               <th className="px-4 py-3 font-bold md:px-6">Date</th>
               <th className="px-4 py-3 text-right font-bold md:px-6">Rating</th>
-              <th className="px-4 py-3 text-right font-bold md:px-6">Actions</th>
+              {!readOnly && <th className="px-4 py-3 text-right font-bold md:px-6">Actions</th>}
             </tr>
           </thead>
           <tbody className="divide-y divide-hairline bg-card/40">
@@ -628,6 +744,17 @@ function Shows() {
                     <div>
                       <div className="font-semibold">{c.artist}</div>
                       <div className="text-xs text-muted-foreground md:hidden">{c.venue} · {c.city}</div>
+                      {!readOnly && coAttendance && (() => {
+                        const attendees =
+                          coAttendance.byKey[coAttendanceKey(c.date, c.venue, c.city)] ?? [];
+                        if (attendees.length === 0) return null;
+                        return (
+                          <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-teal">
+                            <Users className="h-3 w-3" />
+                            with {attendees.map((a) => `@${a.username ?? a.displayName}`).join(", ")}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </td>
@@ -647,37 +774,39 @@ function Shows() {
                     <span className="font-display text-lg font-extrabold">{c.rating.toFixed(1)}</span>
                   </div>
                 </td>
-                <td className="px-4 py-4 md:px-6" onClick={(e) => e.stopPropagation()}>
-                  <div className="flex items-center justify-end gap-1">
-                    <button
-                      type="button"
-                      onClick={() => handleRefreshOne(c)}
-                      disabled={refresh.running}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground disabled:opacity-50"
-                      aria-label={`Refresh ${c.artist}`}
-                      title="Refresh info for this show"
-                    >
-                      <RefreshCw className="h-4 w-4" />
-                    </button>
-                    <Link
-                      to="/add"
-                      search={{ id: c.id }}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground"
-                      aria-label={`Edit ${c.artist}`}
-                    >
-                      <Pencil className="h-4 w-4" />
-                    </Link>
-                    <button
-                      type="button"
-                      onClick={() => handleDelete(c.id, c.artist)}
-                      disabled={del.isPending}
-                      className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-                      aria-label={`Delete ${c.artist}`}
-                    >
-                      <Trash2 className="h-4 w-4" />
-                    </button>
-                  </div>
-                </td>
+                {!readOnly && (
+                  <td className="px-4 py-4 md:px-6" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center justify-end gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleRefreshOne(c)}
+                        disabled={refresh.running}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground disabled:opacity-50"
+                        aria-label={`Refresh ${c.artist}`}
+                        title="Refresh info for this show"
+                      >
+                        <RefreshCw className="h-4 w-4" />
+                      </button>
+                      <Link
+                        to="/add"
+                        search={{ id: c.id }}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+                        aria-label={`Edit ${c.artist}`}
+                      >
+                        <Pencil className="h-4 w-4" />
+                      </Link>
+                      <button
+                        type="button"
+                        onClick={() => handleDelete(c.id, c.artist)}
+                        disabled={del.isPending}
+                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                        aria-label={`Delete ${c.artist}`}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </button>
+                    </div>
+                  </td>
+                )}
               </tr>
             ))}
             {!isLoading && list.length === 0 && (
