@@ -87,8 +87,18 @@ type Prompt = ArtistPrompt | CoPerformerPrompt | NotFoundPrompt;
 
 function Shows() {
   const nav = useNavigate();
-  const { month, genre, year } = Route.useSearch();
-  const { data: concerts = [], isLoading } = useConcerts();
+  const { month, genre, year, friendId, withFriends } = Route.useSearch();
+  const { data: friendData } = useFriendships();
+  const friendProfile = friendId ? friendData?.profiles?.[friendId] : undefined;
+  const isFriend = friendId
+    ? friendData?.friends?.some((f) => f.otherUserId === friendId) ?? false
+    : true;
+  const readOnly = !!friendId;
+  const ownConcertsQ = useConcerts();
+  const friendConcertsQ = useFriendConcerts(friendId && isFriend ? friendId : null);
+  const concerts = friendId ? friendConcertsQ.data ?? [] : ownConcertsQ.data ?? [];
+  const isLoading = friendId ? friendConcertsQ.isLoading : ownConcertsQ.isLoading;
+  const { data: coAttendance } = useFriendsCoAttendance();
   const del = useDeleteConcert();
   const update = useUpdateConcert();
   const add = useAddConcert();
@@ -144,6 +154,10 @@ function Shows() {
 
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"date" | "rating">("date");
+  const withFriendsSet = useMemo(
+    () => new Set((withFriends ?? []).filter(Boolean)),
+    [withFriends],
+  );
   const list = useMemo(() => {
     let filtered = concerts.filter((c) =>
       [c.artist, c.venue, c.city, c.tour ?? ""].join(" ").toLowerCase().includes(q.toLowerCase()),
@@ -154,14 +168,36 @@ function Shows() {
       const g = genre.toLowerCase();
       filtered = filtered.filter((c) => (c.genre ?? "Unknown").toLowerCase() === g);
     }
+    if (withFriendsSet.size > 0 && coAttendance) {
+      filtered = filtered.filter((c) => {
+        const attendees = coAttendance.byKey[coAttendanceKey(c.date, c.venue, c.city)] ?? [];
+        const ids = new Set(attendees.map((a) => a.userId));
+        for (const fid of withFriendsSet) if (!ids.has(fid)) return false;
+        return true;
+      });
+    }
     return filtered.sort((a, b) =>
       sort === "date" ? (a.date < b.date ? 1 : -1) : b.rating - a.rating,
     );
-  }, [q, sort, concerts, month, genre, year]);
+  }, [q, sort, concerts, month, genre, year, withFriendsSet, coAttendance]);
 
   const monthLabel = month
     ? new Date(`${month}-01T00:00:00`).toLocaleString("en", { month: "long", year: "numeric" })
     : null;
+
+  function toggleFriendFilter(fid: string) {
+    const next = new Set(withFriendsSet);
+    if (next.has(fid)) next.delete(fid);
+    else next.add(fid);
+    nav({
+      to: "/shows",
+      search: (prev) => ({
+        ...prev,
+        withFriends: next.size > 0 ? [...next] : undefined,
+      }),
+    });
+  }
+
 
   async function handleDelete(id: string, artist: string) {
     if (!confirm(`Delete "${artist}" from your archive?`)) return;
