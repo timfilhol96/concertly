@@ -155,7 +155,7 @@ function Shows() {
   const [q, setQ] = useState("");
   const [sort, setSort] = useState<"date" | "rating">("date");
   const withFriendsSet = useMemo<Set<string>>(
-    () => new Set((withFriends ?? []).filter((x): x is string => typeof x === "string" && x.length > 0)),
+    () => new Set((withFriends ?? []) as string[]),
     [withFriends],
   );
   const list = useMemo(() => {
