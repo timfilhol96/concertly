@@ -1,4 +1,4 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import {
   Bar,
@@ -23,9 +23,15 @@ import {
   useConcerts,
   type GenreBreakdownItem,
 } from "@/lib/concerts";
+import { useFriendConcerts, useFriendships } from "@/lib/friends";
+
+type Search = { friendId?: string };
 
 export const Route = createFileRoute("/_authenticated/insights")({
   head: () => ({ meta: [{ title: "Insights · Concertly" }] }),
+  validateSearch: (s: Record<string, unknown>): Search => ({
+    friendId: typeof s.friendId === "string" && s.friendId.length > 0 ? s.friendId : undefined,
+  }),
   component: Insights,
 });
 
@@ -42,13 +48,23 @@ const CURRENT_YEAR = new Date().getFullYear();
 type YearSel = number | "all";
 
 function Insights() {
-  const { data: concerts = [] } = useConcerts();
+  const { friendId } = Route.useSearch();
+  const { data: friendData } = useFriendships();
+  const friendProfile = friendId ? friendData?.profiles?.[friendId] : undefined;
+  const isFriend = friendId
+    ? friendData?.friends?.some((f) => f.otherUserId === friendId) ?? false
+    : true;
+  const ownConcertsQ = useConcerts();
+  const friendConcertsQ = useFriendConcerts(friendId && isFriend ? friendId : null);
+  const concerts = friendId ? friendConcertsQ.data ?? [] : ownConcertsQ.data ?? [];
+
   const nav = useNavigate();
   // Collapse rows that share date+venue (headliner + support acts) into a
   // single "show" — counts and streaks reflect shows attended, not artists seen.
   const shows = useMemo(() => uniqueShows(concerts), [concerts]);
   const years = availableYears(shows);
   const [year, setYear] = useState<YearSel>(years[0] ?? CURRENT_YEAR);
+
 
   // Filter to the selected year for all year-aware sections.
   const showsInYear = useMemo(
