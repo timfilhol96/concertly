@@ -191,12 +191,16 @@ function Shows() {
     else next.add(fid);
     nav({
       to: "/shows",
-      search: (prev) => ({
-        ...prev,
+      search: {
+        month,
+        genre,
+        year,
+        friendId,
         withFriends: next.size > 0 ? [...next] : undefined,
-      }),
+      },
     });
   }
+
 
 
   async function handleDelete(id: string, artist: string) {
