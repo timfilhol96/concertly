@@ -744,6 +744,17 @@ function Shows() {
                     <div>
                       <div className="font-semibold">{c.artist}</div>
                       <div className="text-xs text-muted-foreground md:hidden">{c.venue} · {c.city}</div>
+                      {!readOnly && coAttendance && (() => {
+                        const attendees =
+                          coAttendance.byKey[coAttendanceKey(c.date, c.venue, c.city)] ?? [];
+                        if (attendees.length === 0) return null;
+                        return (
+                          <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-teal">
+                            <Users className="h-3 w-3" />
+                            with {attendees.map((a) => `@${a.username ?? a.displayName}`).join(", ")}
+                          </div>
+                        );
+                      })()}
                     </div>
                   </div>
                 </td>
