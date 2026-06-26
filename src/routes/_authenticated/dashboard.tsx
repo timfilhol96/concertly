@@ -322,16 +322,22 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 export function ConcertCard({
-  artist, tour, date, venue, city, rating, notes, imageUrl,
+  artist, tour, date, venue, city, rating, notes, imageUrl, concertId,
 }: {
-  artist: string; tour?: string; date: string; venue: string; city: string; rating: number; notes?: string; imageUrl?: string;
+  artist: string; tour?: string; date: string; venue: string; city: string; rating: number; notes?: string; imageUrl?: string; concertId?: string;
 }) {
   const d = new Date(date);
+  const { data: media } = useConcertMedia(concertId);
+  const firstImage = media?.find((m) => m.kind === "image");
+  const thumbUrl = useSignedMediaUrl(firstImage?.path);
+  const dateLabel = d.toLocaleDateString("en", { day: "2-digit", month: "short", year: "numeric" });
   return (
     <article className="group rounded-2xl border border-hairline bg-card/60 p-5 transition-colors hover:border-brand/30">
       <div className="flex flex-col gap-5 md:flex-row">
         <div className="grid w-full flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-surface-2 to-teal/20 md:h-32 md:w-32">
-          {imageUrl ? (
+          {thumbUrl ? (
+            <img src={thumbUrl} alt={`${artist} memory`} className="h-full w-full object-cover" />
+          ) : imageUrl ? (
             <img src={imageUrl} alt={artist} className="h-full w-full object-cover" />
           ) : (
             <div className="py-6 text-center md:py-0">
@@ -350,6 +356,9 @@ export function ConcertCard({
                 {tour && <span className="text-muted-foreground"> · {tour}</span>}
               </h4>
               <p className="mt-1 text-sm text-muted-foreground">{venue} · {city}</p>
+              <p className="mt-1 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
+                {dateLabel}
+              </p>
             </div>
             <div className="flex flex-shrink-0 items-center gap-1 rounded-full border border-hairline bg-surface-2 px-3 py-1.5">
               <Star className="h-3.5 w-3.5 fill-teal text-teal" />
@@ -357,8 +366,35 @@ export function ConcertCard({
             </div>
           </div>
           {notes && <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{notes}</p>}
+          {media && media.length > 1 && (
+            <div className="mt-3 flex gap-1.5">
+              {media.slice(1, 5).map((m) => (
+                <MediaThumb key={m.path} path={m.path} kind={m.kind} />
+              ))}
+              {media.length > 5 && (
+                <span className="grid h-12 w-12 place-items-center rounded-md bg-surface-2 text-[10px] font-bold text-muted-foreground">
+                  +{media.length - 5}
+                </span>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </article>
   );
 }
+
+function MediaThumb({ path, kind }: { path: string; kind: "image" | "video" }) {
+  const url = useSignedMediaUrl(path);
+  if (!url) return <div className="h-12 w-12 animate-pulse rounded-md bg-surface-2" />;
+  if (kind === "video") {
+    return (
+      <div className="relative h-12 w-12 overflow-hidden rounded-md bg-black">
+        <video src={url} className="h-full w-full object-cover" muted />
+        <span className="absolute inset-0 grid place-items-center text-white text-xs">▶</span>
+      </div>
+    );
+  }
+  return <img src={url} alt="" className="h-12 w-12 rounded-md object-cover" />;
+}
+
