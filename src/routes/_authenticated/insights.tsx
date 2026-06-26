@@ -101,12 +101,13 @@ function Insights() {
   const scopeLabel = year === "all" ? "All time" : String(year);
 
   function handleMonthClick(monthIdx: number) {
-    if (year === "all") return;
+    if (year === "all" || friendId) return;
     const m = String(monthIdx + 1).padStart(2, "0");
     nav({ to: "/shows", search: { month: `${year}-${m}` } });
   }
 
   function handleGenreClick(genre: string) {
+    if (friendId) return;
     nav({
       to: "/shows",
       search: year === "all" ? { genre } : { genre, year: String(year) },
@@ -114,22 +115,49 @@ function Insights() {
   }
 
   function handleYearClick(y: number) {
+    if (friendId) return;
     nav({ to: "/shows", search: { year: String(y) } });
   }
 
+  if (friendId && (!isFriend || !friendProfile)) {
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-20 text-center">
+        <h1 className="font-display text-3xl font-extrabold">Not available</h1>
+        <p className="mt-3 text-sm text-muted-foreground">
+          You aren't friends with this user.
+        </p>
+        <Link to="/friends" className="mt-6 inline-block rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground">
+          Back to Friends
+        </Link>
+      </main>
+    );
+  }
+
+  const headerTitle = friendProfile ? `${friendProfile.displayName}'s Insights` : "Insights";
+  const headerSub = friendProfile
+    ? `A look at @${friendProfile.username ?? "friend"}'s live music year.`
+    : "The patterns behind your live music life — when you go out, who you can't get enough of, and what genres own your calendar.";
+
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
+      {friendProfile && (
+        <Link
+          to="/friend/$id"
+          params={{ id: friendId! }}
+          className="mb-4 inline-block text-xs font-semibold text-muted-foreground hover:text-foreground"
+        >
+          ← Back to {friendProfile.displayName.split(" ")[0]}'s dashboard
+        </Link>
+      )}
       <div className="mb-8 animate-reveal">
-        <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">Insights</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          The patterns behind your live music life — when you go out, who you can't get enough of,
-          and what genres own your calendar.
-        </p>
+        <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{headerTitle}</h1>
+        <p className="mt-2 max-w-2xl text-muted-foreground">{headerSub}</p>
         <p className="mt-3 text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">{totalShows}</span> show{totalShows === 1 ? "" : "s"} attended ·{" "}
           <span className="font-semibold text-foreground">{totalArtists}</span> artist{totalArtists === 1 ? "" : "s"} seen
         </p>
       </div>
+
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-hairline bg-card p-4">
         <div>
