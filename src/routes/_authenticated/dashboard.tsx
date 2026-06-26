@@ -183,6 +183,7 @@ function Dashboard() {
                 rating={c.rating}
                 notes={c.notes ?? undefined}
                 imageUrl={c.artistImageUrl ?? undefined}
+                concertId={c.id}
               />
             </Link>
           ))}
