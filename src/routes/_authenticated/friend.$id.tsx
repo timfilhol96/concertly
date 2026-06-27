@@ -208,7 +208,7 @@ function FriendDashboard() {
             <div className="space-y-5 lg:col-span-3">
               <h3 className="font-display text-xl font-extrabold">Recent Memories</h3>
               {recent.map((c) => (
-                <ConcertSummary
+                <ConcertCard
                   key={c.id}
                   artist={c.artist}
                   tour={c.tour ?? undefined}
@@ -217,6 +217,8 @@ function FriendDashboard() {
                   city={c.city}
                   rating={c.rating}
                   notes={c.notes ?? undefined}
+                  imageUrl={c.artistImageUrl ?? undefined}
+                  concertId={c.id}
                 />
               ))}
             </div>
