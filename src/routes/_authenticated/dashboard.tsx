@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { ArrowUpRight, Star, TrendingUp, Users } from "lucide-react";
+import { ArrowUpRight, Clock, Star, TrendingUp, Users } from "lucide-react";
 import {
   genreBreakdown,
   getConcertAge,
@@ -74,8 +74,9 @@ function Dashboard() {
             <span className="font-semibold text-foreground">{yearCities} cities</span> in {YEAR}.
           </p>
         </div>
-        <div className="grid grid-cols-2 gap-3 animate-reveal">
+        <div className="grid grid-cols-3 gap-3 animate-reveal">
           <Stat label="Concert Age" value={`${getConcertAge(concerts)} yrs`} accent="brand" />
+          <Stat label="Hours live" value={`${stats.hoursLive}h`} accent="pink" />
           <Stat label="Avg Rating" value={stats.avgRating.toFixed(1)} accent="teal" />
         </div>
       </div>
@@ -291,11 +292,14 @@ function EmptyState({ name }: { name: string }) {
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: string; accent: "brand" | "teal" }) {
+function Stat({ label, value, accent }: { label: string; value: string; accent: "brand" | "teal" | "pink" }) {
+  const color = accent === "brand" ? "text-brand" : accent === "teal" ? "text-teal" : "text-pink";
   return (
     <div className="rounded-2xl border border-hairline bg-surface/60 p-4">
-      <p className="mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className={"font-display text-2xl font-extrabold " + (accent === "brand" ? "text-brand" : "text-teal")}>{value}</p>
+      <p className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        {accent === "pink" && <Clock className="h-3 w-3" />} {label}
+      </p>
+      <p className={"font-display text-2xl font-extrabold " + color}>{value}</p>
     </div>
   );
 }
