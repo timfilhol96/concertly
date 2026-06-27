@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Star, TrendingUp } from "lucide-react";
+import { ArrowLeft, TrendingUp } from "lucide-react";
 import {
   genreBreakdown,
   getStats,
@@ -10,6 +10,7 @@ import {
   uniqueShows,
 } from "@/lib/concerts";
 import { useFriendConcerts, useFriendships } from "@/lib/friends";
+import { ConcertCard } from "@/routes/_authenticated/dashboard";
 
 export const Route = createFileRoute("/_authenticated/friend/$id")({
   head: () => ({ meta: [{ title: "Friend · Concertly" }] }),
