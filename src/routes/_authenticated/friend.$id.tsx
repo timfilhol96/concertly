@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useRouter } from "@tanstack/react-router";
-import { ArrowLeft, Star, TrendingUp } from "lucide-react";
+import { ArrowLeft, TrendingUp } from "lucide-react";
 import {
   genreBreakdown,
   getStats,
@@ -10,6 +10,7 @@ import {
   uniqueShows,
 } from "@/lib/concerts";
 import { useFriendConcerts, useFriendships } from "@/lib/friends";
+import { ConcertCard } from "@/routes/_authenticated/dashboard";
 
 export const Route = createFileRoute("/_authenticated/friend/$id")({
   head: () => ({ meta: [{ title: "Friend · Concertly" }] }),
@@ -207,7 +208,7 @@ function FriendDashboard() {
             <div className="space-y-5 lg:col-span-3">
               <h3 className="font-display text-xl font-extrabold">Recent Memories</h3>
               {recent.map((c) => (
-                <ConcertSummary
+                <ConcertCard
                   key={c.id}
                   artist={c.artist}
                   tour={c.tour ?? undefined}
@@ -216,6 +217,8 @@ function FriendDashboard() {
                   city={c.city}
                   rating={c.rating}
                   notes={c.notes ?? undefined}
+                  imageUrl={c.artistImageUrl ?? undefined}
+                  concertId={c.id}
                 />
               ))}
             </div>
@@ -310,43 +313,5 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
       <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">{title}</h3>
       {children}
     </div>
-  );
-}
-
-function ConcertSummary({
-  artist, tour, date, venue, city, rating, notes,
-}: {
-  artist: string; tour?: string; date: string; venue: string; city: string; rating: number; notes?: string;
-}) {
-  const d = new Date(date);
-  return (
-    <article className="rounded-2xl border border-hairline bg-card/60 p-5">
-      <div className="flex flex-col gap-5 md:flex-row">
-        <div className="grid w-full flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-teal/30 via-surface-2 to-brand/20 md:h-32 md:w-32">
-          <div className="py-6 text-center md:py-0">
-            <p className="font-display text-3xl font-black leading-none">{d.getDate()}</p>
-            <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-              {d.toLocaleString("en", { month: "short" })} {d.getFullYear()}
-            </p>
-          </div>
-        </div>
-        <div className="flex-grow">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <h4 className="font-display text-2xl font-extrabold leading-tight">
-                {artist}
-                {tour && <span className="text-muted-foreground"> · {tour}</span>}
-              </h4>
-              <p className="mt-1 text-sm text-muted-foreground">{venue} · {city}</p>
-            </div>
-            <div className="flex flex-shrink-0 items-center gap-1 rounded-full border border-hairline bg-surface-2 px-3 py-1.5">
-              <Star className="h-3.5 w-3.5 fill-teal text-teal" />
-              <span className="text-xs font-bold">{rating.toFixed(1)}</span>
-            </div>
-          </div>
-          {notes && <p className="mt-3 line-clamp-2 text-sm text-muted-foreground">{notes}</p>}
-        </div>
-      </div>
-    </article>
   );
 }
