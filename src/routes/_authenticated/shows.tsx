@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Crown, Pencil, RefreshCw, Search, Star, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 import {
   useAddConcert,
   useConcerts,
@@ -733,8 +734,8 @@ function Shows() {
             {list.map((c) => (
               <tr
                 key={c.id}
-                onClick={() => nav({ to: "/show/$id", params: { id: c.id } })}
-                className="cursor-pointer transition-colors hover:bg-surface-2/60"
+                onClick={readOnly ? undefined : () => nav({ to: "/show/$id", params: { id: c.id } })}
+                className={cn("transition-colors", readOnly ? "cursor-default" : "cursor-pointer hover:bg-surface-2/60")}
               >
                 <td className="px-4 py-4 md:px-6">
                   <div className="flex items-center gap-3">

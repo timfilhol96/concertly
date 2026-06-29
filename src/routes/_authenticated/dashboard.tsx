@@ -1,4 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 import { ArrowUpRight, Clock, Star, TrendingUp, Users } from "lucide-react";
 import {
   genreBreakdown,
@@ -328,9 +329,9 @@ function Panel({ title, children }: { title: string; children: React.ReactNode }
 }
 
 export function ConcertCard({
-  artist, tour, date, venue, city, rating, notes, imageUrl, concertId,
+  artist, tour, date, venue, city, rating, notes, imageUrl, concertId, isReadOnly,
 }: {
-  artist: string; tour?: string; date: string; venue: string; city: string; rating: number; notes?: string; imageUrl?: string; concertId?: string;
+  artist: string; tour?: string; date: string; venue: string; city: string; rating: number; notes?: string; imageUrl?: string; concertId?: string; isReadOnly?: boolean;
 }) {
   const d = new Date(date);
   const { data: media } = useConcertMedia(concertId);
@@ -338,7 +339,7 @@ export function ConcertCard({
   const thumbUrl = useSignedMediaUrl(firstImage?.path);
   const dateLabel = d.toLocaleDateString("en", { day: "2-digit", month: "short", year: "numeric" });
   return (
-    <article className="group rounded-2xl border border-hairline bg-card/60 p-5 transition-colors hover:border-brand/30">
+    <article className={cn("group rounded-2xl border border-hairline bg-card/60 p-5", !isReadOnly && "transition-colors hover:border-brand/30")}>
       <div className="flex flex-col gap-5 md:flex-row">
         <div className="grid w-full flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-surface-2 to-teal/20 md:h-32 md:w-32">
           {thumbUrl ? (

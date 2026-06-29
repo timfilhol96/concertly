@@ -186,9 +186,16 @@ function FriendDashboard() {
                 <h2 className="font-display text-2xl font-extrabold">Their #1 Artist</h2>
                 {topArtists[0] ? (
                   <div className="mt-6 flex items-center gap-4">
-                    <div className="grid h-16 w-16 flex-shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-teal to-pink font-display text-2xl font-black text-brand-foreground">
-                      {topArtists[0].name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
-                    </div>
+                    {(() => {
+                      const c = list.find((c) => c.artist === topArtists[0].name && c.artistImageUrl);
+                      return c?.artistImageUrl ? (
+                        <img src={c.artistImageUrl} alt={topArtists[0].name} className="h-16 w-16 flex-shrink-0 rounded-2xl object-cover" />
+                      ) : (
+                        <div className="grid h-16 w-16 flex-shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-teal to-pink font-display text-2xl font-black text-brand-foreground">
+                          {topArtists[0].name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                        </div>
+                      );
+                    })()}
                     <div>
                       <h3 className="text-xl font-bold leading-tight">{topArtists[0].name}</h3>
                       <p className="text-sm text-muted-foreground">{topArtists[0].count} shows attended</p>
@@ -208,7 +215,7 @@ function FriendDashboard() {
             <div className="space-y-5 lg:col-span-3">
               <h3 className="font-display text-xl font-extrabold">Recent Memories</h3>
               {recent.map((c) => (
-                <ConcertCard
+              <ConcertCard
                   key={c.id}
                   artist={c.artist}
                   tour={c.tour ?? undefined}
@@ -219,6 +226,7 @@ function FriendDashboard() {
                   notes={c.notes ?? undefined}
                   imageUrl={c.artistImageUrl ?? undefined}
                   concertId={c.id}
+                  isReadOnly
                 />
               ))}
             </div>
