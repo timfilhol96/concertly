@@ -1,4 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { cn } from "@/lib/utils";
 import { ArrowUpRight, Clock, Star, TrendingUp, Users } from "lucide-react";
 import {
   genreBreakdown,
