@@ -112,28 +112,34 @@ function AuthPage() {
             CONCERTLY
           </Link>
           <h1 className="font-display text-3xl font-extrabold tracking-tight md:text-4xl">
-            {mode === "sign-in" ? "Welcome back." : "Start your archive."}
+            {mode === "sign-in" ? "Welcome back." : mode === "sign-up" ? "Start your archive." : "Reset password."}
           </h1>
           <p className="mt-2 text-sm text-muted-foreground">
             {mode === "sign-in"
               ? "Sign in to pick up where you left off."
-              : "Create an account and log your first show in seconds."}
+              : mode === "sign-up"
+                ? "Create an account and log your first show in seconds."
+                : "Enter your account email to receive a reset link."}
           </p>
 
-          <button
-            type="button"
-            onClick={signInWithGoogle}
-            disabled={loading}
-            className="mt-8 flex w-full items-center justify-center gap-3 rounded-full border border-hairline bg-surface px-4 py-3 text-sm font-semibold transition-colors hover:bg-surface-2 disabled:opacity-60"
-          >
-            <GoogleIcon /> Continue with Google
-          </button>
+          {mode !== "forgot-password" && (
+            <>
+              <button
+                type="button"
+                onClick={signInWithGoogle}
+                disabled={loading}
+                className="mt-8 flex w-full items-center justify-center gap-3 rounded-full border border-hairline bg-surface px-4 py-3 text-sm font-semibold transition-colors hover:bg-surface-2 disabled:opacity-60"
+              >
+                <GoogleIcon /> Continue with Google
+              </button>
 
-          <div className="my-6 flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            <span className="h-px flex-1 bg-hairline" /> or email <span className="h-px flex-1 bg-hairline" />
-          </div>
+              <div className="my-6 flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                <span className="h-px flex-1 bg-hairline" /> or email <span className="h-px flex-1 bg-hairline" />
+              </div>
+            </>
+          )}
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className={mode === "forgot-password" ? "mt-8 space-y-3" : "space-y-3"}>
             {mode === "sign-up" && (
               <input
                 type="text"
@@ -156,34 +162,47 @@ function AuthPage() {
               onChange={(e) => setEmail(e.target.value)}
               className={inputCls}
             />
-            <input
-              type="password"
-              required
-              minLength={6}
-              autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
-              aria-label="Password"
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className={inputCls}
-            />
+            {mode !== "forgot-password" && (
+              <input
+                type="password"
+                required
+                minLength={6}
+                autoComplete={mode === "sign-in" ? "current-password" : "new-password"}
+                aria-label="Password"
+                placeholder="Password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                className={inputCls}
+              />
+            )}
+            {mode === "sign-in" && (
+              <div className="flex justify-end pt-1">
+                <button
+                  type="button"
+                  onClick={() => setMode("forgot-password")}
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Forgot password?
+                </button>
+              </div>
+            )}
             <button
               type="submit"
               disabled={loading}
               className="mt-2 w-full rounded-full bg-brand py-3 text-sm font-bold text-brand-foreground transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
             >
-              {loading ? "Just a sec…" : mode === "sign-in" ? "Sign in" : "Create account"}
+              {loading ? "Just a sec…" : mode === "sign-in" ? "Sign in" : mode === "sign-up" ? "Create account" : "Send reset link"}
             </button>
           </form>
 
           <p className="mt-6 text-center text-sm text-muted-foreground">
-            {mode === "sign-in" ? "New to Concertly?" : "Already have an account?"}{" "}
+            {mode === "sign-in" ? "New to Concertly?" : mode === "sign-up" ? "Already have an account?" : "Remember your password?"}{" "}
             <button
               type="button"
-              onClick={() => setMode(mode === "sign-in" ? "sign-up" : "sign-in")}
+              onClick={() => setMode(mode === "sign-up" ? "sign-in" : mode === "forgot-password" ? "sign-in" : "sign-up")}
               className="font-semibold text-brand hover:underline"
             >
-              {mode === "sign-in" ? "Create an account" : "Sign in"}
+              {mode === "sign-up" ? "Sign in" : mode === "forgot-password" ? "Back to sign in" : "Create an account"}
             </button>
           </p>
         </div>
