@@ -11,6 +11,7 @@
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as WRouteImport } from './routes/w'
 import { Route as TrustRouteImport } from './routes/trust'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as AuthRouteImport } from './routes/auth'
@@ -35,6 +36,11 @@ const WRoute = WRouteImport.update({
 const TrustRoute = TrustRouteImport.update({
   id: '/trust',
   path: '/trust',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
@@ -118,6 +124,7 @@ export interface FileRoutesByFullPath {
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/trust': typeof TrustRoute
   '/w': typeof WRoute
   '/add': typeof AuthenticatedAddRoute
@@ -136,6 +143,7 @@ export interface FileRoutesByTo {
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/trust': typeof TrustRoute
   '/w': typeof WRoute
   '/add': typeof AuthenticatedAddRoute
@@ -156,6 +164,7 @@ export interface FileRoutesById {
   '/auth': typeof AuthRoute
   '/privacy': typeof PrivacyRoute
   '/sitemap.xml': typeof SitemapDotxmlRoute
+  '/terms': typeof TermsRoute
   '/trust': typeof TrustRoute
   '/w': typeof WRoute
   '/_authenticated/add': typeof AuthenticatedAddRoute
@@ -176,6 +185,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacy'
     | '/sitemap.xml'
+    | '/terms'
     | '/trust'
     | '/w'
     | '/add'
@@ -194,6 +204,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacy'
     | '/sitemap.xml'
+    | '/terms'
     | '/trust'
     | '/w'
     | '/add'
@@ -213,6 +224,7 @@ export interface FileRouteTypes {
     | '/auth'
     | '/privacy'
     | '/sitemap.xml'
+    | '/terms'
     | '/trust'
     | '/w'
     | '/_authenticated/add'
@@ -233,6 +245,7 @@ export interface RootRouteChildren {
   AuthRoute: typeof AuthRoute
   PrivacyRoute: typeof PrivacyRoute
   SitemapDotxmlRoute: typeof SitemapDotxmlRoute
+  TermsRoute: typeof TermsRoute
   TrustRoute: typeof TrustRoute
   WRoute: typeof WRoute
   ApiPublicSpotifyCallbackRoute: typeof ApiPublicSpotifyCallbackRoute
@@ -252,6 +265,13 @@ declare module '@tanstack/react-router' {
       path: '/trust'
       fullPath: '/trust'
       preLoaderRoute: typeof TrustRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/sitemap.xml': {
@@ -395,6 +415,7 @@ const rootRouteChildren: RootRouteChildren = {
   AuthRoute: AuthRoute,
   PrivacyRoute: PrivacyRoute,
   SitemapDotxmlRoute: SitemapDotxmlRoute,
+  TermsRoute: TermsRoute,
   TrustRoute: TrustRoute,
   WRoute: WRoute,
   ApiPublicSpotifyCallbackRoute: ApiPublicSpotifyCallbackRoute,
