@@ -164,6 +164,9 @@ function Wrapped() {
               <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
                 Share your Wrapped
               </DropdownMenuLabel>
+              <div className="px-2 pb-2 text-[10px] leading-snug text-muted-foreground">
+                Heads up: share links are <span className="font-semibold text-foreground">public</span> — anyone with the URL can view this recap without signing in.
+              </div>
               <DropdownMenuSeparator />
               {(() => {
                 const sharePayload: WrappedSharePayload = {
