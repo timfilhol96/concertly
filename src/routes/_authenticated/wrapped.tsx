@@ -33,11 +33,11 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 const GRADIENTS = [
-  { id: "sunset", label: "Sunset", cls: "from-brand via-pink to-teal", text: "text-brand-foreground", swatch: "linear-gradient(135deg, hsl(var(--brand)), hsl(var(--pink)), hsl(var(--teal)))" },
-  { id: "ocean", label: "Ocean", cls: "from-teal via-brand to-pink", text: "text-brand-foreground", swatch: "linear-gradient(135deg, hsl(var(--teal)), hsl(var(--brand)), hsl(var(--pink)))" },
-  { id: "ember", label: "Ember", cls: "from-pink via-brand to-pink", text: "text-brand-foreground", swatch: "linear-gradient(135deg, hsl(var(--pink)), hsl(var(--brand)), hsl(var(--pink)))" },
+  { id: "sunset", label: "Sunset", cls: "from-brand via-pink to-teal", text: "text-brand-foreground", swatch: "linear-gradient(135deg, var(--brand), var(--pink), var(--teal))" },
+  { id: "ocean", label: "Ocean", cls: "from-teal via-brand to-pink", text: "text-brand-foreground", swatch: "linear-gradient(135deg, var(--teal), var(--brand), var(--pink))" },
+  { id: "ember", label: "Ember", cls: "from-pink via-brand to-pink", text: "text-brand-foreground", swatch: "linear-gradient(135deg, var(--pink), var(--brand), var(--pink))" },
   { id: "noir", label: "Noir", cls: "from-slate-900 via-slate-700 to-slate-900", text: "text-white", swatch: "linear-gradient(135deg, #0f172a, #475569, #0f172a)" },
-  { id: "citrus", label: "Citrus", cls: "from-yellow-400 via-pink to-brand", text: "text-brand-foreground", swatch: "linear-gradient(135deg, #facc15, hsl(var(--pink)), hsl(var(--brand)))" },
+  { id: "citrus", label: "Citrus", cls: "from-yellow-400 via-pink to-brand", text: "text-brand-foreground", swatch: "linear-gradient(135deg, #facc15, var(--pink), var(--brand))" },
 ] as const;
 
 type GradientId = (typeof GRADIENTS)[number]["id"];
