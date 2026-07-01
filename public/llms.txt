@@ -9,3 +9,5 @@ Concertly is a web app for concertgoers who want a personal archive of every sho
 - [Home](/): Product overview, key features, and call-to-action to sign up.
 - [Sign in](/auth): Create an account or sign in to start logging concerts.
 - [Trust & Privacy](/trust): How Concertly handles accounts, concert data, and sharing with friends.
+- [Privacy Policy](/privacy): What data Concertly stores, how it's used, and your choices.
+- [Terms of Service](/terms): The terms that govern use of Concertly.
