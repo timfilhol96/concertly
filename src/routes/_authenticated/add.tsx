@@ -20,6 +20,9 @@ import {
   type CoPerformer,
 } from "@/lib/setlistfm.functions";
 import { Crown, Users } from "lucide-react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+
+
 
 type Search = { id?: string };
 
