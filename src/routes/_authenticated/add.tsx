@@ -34,9 +34,14 @@ export const Route = createFileRoute("/_authenticated/add")({
 function AddShow() {
   const nav = useNavigate();
   const { id } = Route.useSearch();
-  const { data: concerts } = useConcerts();
+  const { data: concerts, isLoading: concertsLoading } = useConcerts();
   const existing = id ? concerts?.find((c) => c.id === id) : undefined;
-  const isEdit = Boolean(existing);
+  const isEdit = Boolean(id);
+  // While editing, we might be waiting on useConcerts() to resolve on a hard
+  // refresh / deep link. Show a loading state so the user doesn't see a blank
+  // form (and can't accidentally overwrite the record with empty values).
+  const editLoading = isEdit && !existing && concertsLoading;
+  const editNotFound = isEdit && !existing && !concertsLoading;
 
   const add = useAddConcert();
   const update = useUpdateConcert();
@@ -47,21 +52,18 @@ function AddShow() {
   const fetchArtistById = useServerFn(lookupSpotifyArtistByIdFn);
   const fetchArtistSuggestions = useServerFn(searchArtists);
 
-  const [rating, setRating] = useState(existing?.rating ?? 8);
-  const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
-  const [songsSeen, setSongsSeen] = useState<number | null>(existing?.songsSeen ?? null);
-  const [setlist, setSetlist] = useState<string[] | null>(existing?.setlist ?? null);
-  const [artistImageUrl, setArtistImageUrl] = useState<string | null>(
-    existing?.artistImageUrl ?? null,
-  );
-  const [openerSetlists, setOpenerSetlists] = useState<OpenerSetlist[] | null>(
-    existing?.openerSetlists ?? null,
-  );
+  const [rating, setRating] = useState(8);
+  const [openers, setOpeners] = useState<string[] | null>(null);
+  const [songsSeen, setSongsSeen] = useState<number | null>(null);
+  const [setlist, setSetlist] = useState<string[] | null>(null);
+  const [artistImageUrl, setArtistImageUrl] = useState<string | null>(null);
+  const [openerSetlists, setOpenerSetlists] = useState<OpenerSetlist[] | null>(null);
   const [looking, setLooking] = useState(false);
   const [coPerformers, setCoPerformers] = useState<CoPerformer[] | null>(null);
   const [selectedCo, setSelectedCo] = useState<Set<string>>(new Set());
-  const [headliner, setHeadliner] = useState<string>(existing?.artist ?? "");
+  const [headliner, setHeadliner] = useState<string>("");
   const [loggingCo, setLoggingCo] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [picker, setPicker] = useState<{
     title: string;
     description: string;
@@ -69,20 +71,53 @@ function AddShow() {
     resolve: (a: ArtistSuggestion | null) => void;
   } | null>(null);
   const [form, setForm] = useState({
-    artist: existing?.artist ?? "",
-    tour: existing?.tour ?? "",
-    date: existing?.date ?? new Date().toISOString().slice(0, 10),
-    venue: existing?.venue ?? "",
-    city: existing?.city ?? "",
-    country: existing?.country ?? "",
-    genre: existing?.genre ?? "",
-    notes: existing?.notes ?? "",
-    ticketPrice: existing?.ticketPrice != null ? String(existing.ticketPrice) : "",
+    artist: "",
+    tour: "",
+    date: new Date().toISOString().slice(0, 10),
+    venue: "",
+    city: "",
+    country: "",
+    genre: "",
+    notes: "",
+    ticketPrice: "",
   });
+  // Track whether the user has typed anything so we don't clobber their input
+  // when `existing` arrives late from the query.
+  const [dirty, setDirty] = useState(false);
+  const hydratedIdRef = useRef<string | null>(null);
+
+  // When the edit row arrives (async), hydrate the form once — unless the user
+  // has already started typing.
+  useEffect(() => {
+    if (!existing) return;
+    if (hydratedIdRef.current === existing.id) return;
+    if (dirty) return;
+    hydratedIdRef.current = existing.id;
+    setRating(existing.rating);
+    setOpeners(existing.openers);
+    setSongsSeen(existing.songsSeen);
+    setSetlist(existing.setlist);
+    setArtistImageUrl(existing.artistImageUrl);
+    setOpenerSetlists(existing.openerSetlists);
+    setHeadliner(existing.artist);
+    setForm({
+      artist: existing.artist,
+      tour: existing.tour ?? "",
+      date: existing.date,
+      venue: existing.venue,
+      city: existing.city,
+      country: existing.country ?? "",
+      genre: existing.genre ?? "",
+      notes: existing.notes ?? "",
+      ticketPrice: existing.ticketPrice != null ? String(existing.ticketPrice) : "",
+    });
+  }, [existing, dirty]);
 
   function set<K extends keyof typeof form>(k: K, v: string) {
+    setDirty(true);
     setForm((f) => ({ ...f, [k]: v }));
   }
+
 
   function pickArtist(
     title: string,
