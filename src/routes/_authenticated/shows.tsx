@@ -681,7 +681,7 @@ function Shows() {
           {!readOnly && (
             <button
               type="button"
-              onClick={handleRefreshAll}
+              onClick={requestRefreshAll}
               disabled={refresh.running || concerts.length === 0}
               className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-2 text-xs font-semibold hover:bg-surface-2 disabled:opacity-50"
               title="Re-fetch tour, setlist, genre & artist image for every show"
