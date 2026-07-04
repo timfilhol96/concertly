@@ -815,7 +815,7 @@ function Shows() {
                       </Link>
                       <button
                         type="button"
-                        onClick={() => handleDelete(c.id, c.artist)}
+                        onClick={() => setDeleteTarget({ id: c.id, artist: c.artist })}
                         disabled={del.isPending}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
                         aria-label={`Delete ${c.artist}`}
