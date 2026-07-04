@@ -215,15 +215,21 @@ function Shows() {
 
 
 
-  async function handleDelete(id: string, artist: string) {
-    if (!confirm(`Delete "${artist}" from your archive?`)) return;
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; artist: string } | null>(null);
+  const [confirmRefreshAll, setConfirmRefreshAll] = useState(false);
+
+  async function performDelete() {
+    if (!deleteTarget) return;
+    const target = deleteTarget;
+    setDeleteTarget(null);
     try {
-      await del.mutateAsync(id);
+      await del.mutateAsync(target.id);
       toast.success("Show deleted");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't delete");
     }
   }
+
 
   // ---------- Wizard helpers ----------
 
