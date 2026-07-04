@@ -6,6 +6,8 @@ import { Crown, Pencil, RefreshCw, Search, Star, Trash2, Users, X } from "lucide
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+
 import {
   useAddConcert,
   useConcerts,
