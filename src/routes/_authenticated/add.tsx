@@ -391,8 +391,42 @@ function AddShow() {
 
   const pending = add.isPending || update.isPending;
 
+  if (editLoading) {
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-10 md:py-14">
+        <div className="animate-pulse space-y-6">
+          <div className="h-12 w-64 rounded-xl bg-surface-2" />
+          <div className="space-y-4 rounded-3xl border border-hairline bg-card p-6 md:p-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-14 rounded-xl bg-surface-2" />
+            ))}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (editNotFound) {
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-20 text-center">
+        <h1 className="font-display text-3xl font-extrabold">Show not found</h1>
+        <p className="mt-3 text-muted-foreground">
+          This show either doesn't exist or belongs to someone else.
+        </p>
+        <button
+          type="button"
+          onClick={() => nav({ to: "/shows" })}
+          className="mt-6 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground"
+        >
+          Back to your shows
+        </button>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-10 md:py-14">
+
       <div className="mb-8 animate-reveal">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
           {isEdit ? "Edit entry" : "New entry"}
