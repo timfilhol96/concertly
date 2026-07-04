@@ -571,21 +571,19 @@ function Shows() {
     else toast.error(`Couldn't refresh ${c.artist}`);
   }
 
-  async function handleRefreshAll() {
+  function requestRefreshAll() {
     if (refresh.running) return;
-    const targets = concerts;
-    if (targets.length === 0) {
+    if (concerts.length === 0) {
       toast.info("No shows to refresh");
       return;
     }
-    if (
-      !confirm(
-        `Fetch fresh info for all ${targets.length} show${
-          targets.length === 1 ? "" : "s"
-        }? You'll be asked to confirm when something's ambiguous. Existing rating, notes, and ticket price are always kept.`,
-      )
-    )
-      return;
+    setConfirmRefreshAll(true);
+  }
+
+  async function runRefreshAll() {
+    setConfirmRefreshAll(false);
+    const targets = concerts;
+    if (targets.length === 0) return;
     artistChoiceCache.current.clear();
     setRefresh({ running: true, done: 0, total: targets.length });
     let updated = 0;
@@ -619,6 +617,7 @@ function Shows() {
     if (cancelled) toast.info(msg);
     else toast.success(msg);
   }
+
 
   const acceptedFriends = friendData?.friends ?? [];
   const friendProfiles = friendData?.profiles ?? {};
