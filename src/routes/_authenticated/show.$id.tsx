@@ -178,8 +178,8 @@ function ShowDetail() {
                 <Users className="h-4 w-4 text-pink" /> Opener setlists
               </h2>
               <div className="mt-6 space-y-5">
-                {concert.openerSetlists.map((o) => (
-                  <div key={o.artist}>
+                {concert.openerSetlists.map((o, oi) => (
+                  <div key={"opener-" + oi}>
                     <h3 className="text-sm font-bold">{o.artist} <span className="text-muted-foreground">· {o.songs.length} songs</span></h3>
                     <ol className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
                       {o.songs.map((song, i) => (
