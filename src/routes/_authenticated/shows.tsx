@@ -6,6 +6,8 @@ import { Crown, Pencil, RefreshCw, Search, Star, Trash2, Users, X } from "lucide
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+
 import {
   useAddConcert,
   useConcerts,
@@ -21,7 +23,7 @@ import {
 } from "@/lib/friends";
 import {
   lookupCoPerformers,
-  lookupDeezerArtistByIdFn,
+  lookupSpotifyArtistByIdFn,
   lookupSetlist,
   searchArtists,
   type ArtistSuggestion,
@@ -105,7 +107,7 @@ function Shows() {
   const add = useAddConcert();
   const fetchSetlist = useServerFn(lookupSetlist);
   const fetchSearchArtists = useServerFn(searchArtists);
-  const fetchDeezerById = useServerFn(lookupDeezerArtistByIdFn);
+  const fetchSpotifyArtistById = useServerFn(lookupSpotifyArtistByIdFn);
   const fetchCoPerformers = useServerFn(lookupCoPerformers);
   const qc = useQueryClient();
 
@@ -113,9 +115,16 @@ function Shows() {
   // physical show (same date + venue), so logging the price on one performer
   // fills it in for the openers / support acts on the next refresh.
   async function syncTicketPriceAcrossShow(date: string, venue: string) {
+    // IMPORTANT: RLS also exposes friends' concerts, so we must scope both the
+    // read and any writes to the current user by user_id — otherwise a shared
+    // date+venue could pull a friend's row into the update batch.
+    const { data: userRes } = await supabase.auth.getUser();
+    const userId = userRes.user?.id;
+    if (!userId) return;
     const { data } = await supabase
       .from("concerts")
       .select("id, notes, ticket_price")
+      .eq("user_id", userId)
       .eq("date", date)
       .eq("venue", venue);
     if (!data || data.length < 2) return;
@@ -136,11 +145,13 @@ function Shows() {
       const { error } = await supabase
         .from("concerts")
         .update({ ticket_price: price })
-        .eq("id", r.id);
+        .eq("id", r.id)
+        .eq("user_id", userId);
       if (!error) changed = true;
     }
     if (changed) qc.invalidateQueries({ queryKey: ["concerts"] });
   }
+
 
 
   const [refresh, setRefresh] = useState<{ running: boolean; done: number; total: number }>({
@@ -204,15 +215,21 @@ function Shows() {
 
 
 
-  async function handleDelete(id: string, artist: string) {
-    if (!confirm(`Delete "${artist}" from your archive?`)) return;
+  const [deleteTarget, setDeleteTarget] = useState<{ id: string; artist: string } | null>(null);
+  const [confirmRefreshAll, setConfirmRefreshAll] = useState(false);
+
+  async function performDelete() {
+    if (!deleteTarget) return;
+    const target = deleteTarget;
+    setDeleteTarget(null);
     try {
-      await del.mutateAsync(id);
+      await del.mutateAsync(target.id);
       toast.success("Show deleted");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't delete");
     }
   }
+
 
   // ---------- Wizard helpers ----------
 
@@ -331,7 +348,7 @@ function Shows() {
   async function refreshOne(c: Concert): Promise<RefreshOutcome> {
     let coLogged = 0;
     try {
-      // 1. Resolve artist on Deezer.
+      // 1. Resolve artist on Spotify.
       setFetching({ artist: c.artist, step: "Searching artist on Spotify…" });
       const artistChoice = await resolveArtist(c);
       if (artistChoice === "cancel") return { status: "cancelled", coLogged };
@@ -341,12 +358,12 @@ function Shows() {
       const res = await fetchSetlist({ data: { artist: c.artist, date: c.date } });
 
       if (!res.found) {
-        // Fallback: still apply Deezer image + genre if the user picked something.
+        // Fallback: still apply Spotify image + genre if the user picked something.
         setFetching({ artist: c.artist, step: "Fetching artist image & genre…" });
         let fallback: { image: string | null; genre: string | null } | null = null;
         if (artistChoice && artistChoice.id != null) {
           try {
-            fallback = await fetchDeezerById({ data: { id: artistChoice.id } });
+            fallback = await fetchSpotifyArtistById({ data: { id: artistChoice.id } });
           } catch {
             fallback = { image: artistChoice.image, genre: null };
           }
@@ -390,7 +407,7 @@ function Shows() {
       if (artistChoice && artistChoice.id != null) {
         try {
           setFetching({ artist: c.artist, step: "Fetching artist image & genre…" });
-          const d = await fetchDeezerById({ data: { id: artistChoice.id } });
+          const d = await fetchSpotifyArtistById({ data: { id: artistChoice.id } });
           imageOverride = d.image ?? imageOverride;
           genreOverride = d.genre ?? genreOverride;
         } catch {
@@ -497,7 +514,7 @@ function Shows() {
               (s) => s.name.toLowerCase() === extra.performer.artist.toLowerCase(),
             ) ?? sug[0];
             if (hit?.id != null) {
-              const d = await fetchDeezerById({ data: { id: hit.id } });
+              const d = await fetchSpotifyArtistById({ data: { id: hit.id } });
               image = d.image;
               genre = d.genre;
             } else if (hit) {
@@ -554,21 +571,19 @@ function Shows() {
     else toast.error(`Couldn't refresh ${c.artist}`);
   }
 
-  async function handleRefreshAll() {
+  function requestRefreshAll() {
     if (refresh.running) return;
-    const targets = concerts;
-    if (targets.length === 0) {
+    if (concerts.length === 0) {
       toast.info("No shows to refresh");
       return;
     }
-    if (
-      !confirm(
-        `Fetch fresh info for all ${targets.length} show${
-          targets.length === 1 ? "" : "s"
-        }? You'll be asked to confirm when something's ambiguous. Existing rating, notes, and ticket price are always kept.`,
-      )
-    )
-      return;
+    setConfirmRefreshAll(true);
+  }
+
+  async function runRefreshAll() {
+    setConfirmRefreshAll(false);
+    const targets = concerts;
+    if (targets.length === 0) return;
     artistChoiceCache.current.clear();
     setRefresh({ running: true, done: 0, total: targets.length });
     let updated = 0;
@@ -602,6 +617,7 @@ function Shows() {
     if (cancelled) toast.info(msg);
     else toast.success(msg);
   }
+
 
   const acceptedFriends = friendData?.friends ?? [];
   const friendProfiles = friendData?.profiles ?? {};
@@ -665,7 +681,7 @@ function Shows() {
           {!readOnly && (
             <button
               type="button"
-              onClick={handleRefreshAll}
+              onClick={requestRefreshAll}
               disabled={refresh.running || concerts.length === 0}
               className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-2 text-xs font-semibold hover:bg-surface-2 disabled:opacity-50"
               title="Re-fetch tour, setlist, genre & artist image for every show"
@@ -798,7 +814,7 @@ function Shows() {
                       </Link>
                       <button
                         type="button"
-                        onClick={() => handleDelete(c.id, c.artist)}
+                        onClick={() => setDeleteTarget({ id: c.id, artist: c.artist })}
                         disabled={del.isPending}
                         className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
                         aria-label={`Delete ${c.artist}`}
@@ -823,7 +839,26 @@ function Shows() {
       {!prompt && fetching && refresh.running && (
         <FetchingOverlay artist={fetching.artist} step={fetching.step} progress={refresh} />
       )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={deleteTarget ? `Delete "${deleteTarget.artist}"?` : "Delete show?"}
+        description="This removes the show from your archive. It cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        loading={del.isPending}
+        onConfirm={performDelete}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+      />
+      <ConfirmDialog
+        open={confirmRefreshAll}
+        title={`Refresh all ${concerts.length} show${concerts.length === 1 ? "" : "s"}?`}
+        description="You'll be asked to confirm when something's ambiguous. Your existing rating, notes, and ticket price are always kept."
+        confirmLabel="Refresh all"
+        onConfirm={runRefreshAll}
+        onOpenChange={setConfirmRefreshAll}
+      />
     </main>
+
   );
 }
 
@@ -970,7 +1005,7 @@ function CoPerformerPane({ prompt }: { prompt: CoPerformerPrompt }) {
           const isSel = selected.has(cp.artist);
           const isHead = headliner.toLowerCase() === cp.artist.toLowerCase();
           return (
-            <li key={cp.artist} className="flex items-center gap-3 rounded-xl border border-hairline bg-surface p-3">
+            <li key={`${cp.artist}-${cp.venue}`} className="flex items-center gap-3 rounded-xl border border-hairline bg-surface p-3">
               <input
                 type="checkbox"
                 checked={isSel}

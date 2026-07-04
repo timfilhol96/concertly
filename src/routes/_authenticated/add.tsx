@@ -13,13 +13,16 @@ import {
 import {
   lookupArtistImageFn,
   lookupCoPerformers,
-  lookupDeezerArtistByIdFn,
+  lookupSpotifyArtistByIdFn,
   lookupSetlist,
   searchArtists,
   type ArtistSuggestion,
   type CoPerformer,
 } from "@/lib/setlistfm.functions";
 import { Crown, Users } from "lucide-react";
+import { ConfirmDialog } from "@/components/confirm-dialog";
+
+
 
 type Search = { id?: string };
 
@@ -34,9 +37,14 @@ export const Route = createFileRoute("/_authenticated/add")({
 function AddShow() {
   const nav = useNavigate();
   const { id } = Route.useSearch();
-  const { data: concerts } = useConcerts();
+  const { data: concerts, isLoading: concertsLoading } = useConcerts();
   const existing = id ? concerts?.find((c) => c.id === id) : undefined;
-  const isEdit = Boolean(existing);
+  const isEdit = Boolean(id);
+  // While editing, we might be waiting on useConcerts() to resolve on a hard
+  // refresh / deep link. Show a loading state so the user doesn't see a blank
+  // form (and can't accidentally overwrite the record with empty values).
+  const editLoading = isEdit && !existing && concertsLoading;
+  const editNotFound = isEdit && !existing && !concertsLoading;
 
   const add = useAddConcert();
   const update = useUpdateConcert();
@@ -44,24 +52,21 @@ function AddShow() {
   const fetchSetlist = useServerFn(lookupSetlist);
   const fetchCoPerformers = useServerFn(lookupCoPerformers);
   const fetchArtistImage = useServerFn(lookupArtistImageFn);
-  const fetchArtistById = useServerFn(lookupDeezerArtistByIdFn);
+  const fetchArtistById = useServerFn(lookupSpotifyArtistByIdFn);
   const fetchArtistSuggestions = useServerFn(searchArtists);
 
-  const [rating, setRating] = useState(existing?.rating ?? 8);
-  const [openers, setOpeners] = useState<string[] | null>(existing?.openers ?? null);
-  const [songsSeen, setSongsSeen] = useState<number | null>(existing?.songsSeen ?? null);
-  const [setlist, setSetlist] = useState<string[] | null>(existing?.setlist ?? null);
-  const [artistImageUrl, setArtistImageUrl] = useState<string | null>(
-    existing?.artistImageUrl ?? null,
-  );
-  const [openerSetlists, setOpenerSetlists] = useState<OpenerSetlist[] | null>(
-    existing?.openerSetlists ?? null,
-  );
+  const [rating, setRating] = useState(8);
+  const [openers, setOpeners] = useState<string[] | null>(null);
+  const [songsSeen, setSongsSeen] = useState<number | null>(null);
+  const [setlist, setSetlist] = useState<string[] | null>(null);
+  const [artistImageUrl, setArtistImageUrl] = useState<string | null>(null);
+  const [openerSetlists, setOpenerSetlists] = useState<OpenerSetlist[] | null>(null);
   const [looking, setLooking] = useState(false);
   const [coPerformers, setCoPerformers] = useState<CoPerformer[] | null>(null);
   const [selectedCo, setSelectedCo] = useState<Set<string>>(new Set());
-  const [headliner, setHeadliner] = useState<string>(existing?.artist ?? "");
+  const [headliner, setHeadliner] = useState<string>("");
   const [loggingCo, setLoggingCo] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [picker, setPicker] = useState<{
     title: string;
     description: string;
@@ -69,20 +74,53 @@ function AddShow() {
     resolve: (a: ArtistSuggestion | null) => void;
   } | null>(null);
   const [form, setForm] = useState({
-    artist: existing?.artist ?? "",
-    tour: existing?.tour ?? "",
-    date: existing?.date ?? new Date().toISOString().slice(0, 10),
-    venue: existing?.venue ?? "",
-    city: existing?.city ?? "",
-    country: existing?.country ?? "",
-    genre: existing?.genre ?? "",
-    notes: existing?.notes ?? "",
-    ticketPrice: existing?.ticketPrice != null ? String(existing.ticketPrice) : "",
+    artist: "",
+    tour: "",
+    date: new Date().toISOString().slice(0, 10),
+    venue: "",
+    city: "",
+    country: "",
+    genre: "",
+    notes: "",
+    ticketPrice: "",
   });
+  // Track whether the user has typed anything so we don't clobber their input
+  // when `existing` arrives late from the query.
+  const [dirty, setDirty] = useState(false);
+  const hydratedIdRef = useRef<string | null>(null);
+
+  // When the edit row arrives (async), hydrate the form once — unless the user
+  // has already started typing.
+  useEffect(() => {
+    if (!existing) return;
+    if (hydratedIdRef.current === existing.id) return;
+    if (dirty) return;
+    hydratedIdRef.current = existing.id;
+    setRating(existing.rating);
+    setOpeners(existing.openers);
+    setSongsSeen(existing.songsSeen);
+    setSetlist(existing.setlist);
+    setArtistImageUrl(existing.artistImageUrl);
+    setOpenerSetlists(existing.openerSetlists);
+    setHeadliner(existing.artist);
+    setForm({
+      artist: existing.artist,
+      tour: existing.tour ?? "",
+      date: existing.date,
+      venue: existing.venue,
+      city: existing.city,
+      country: existing.country ?? "",
+      genre: existing.genre ?? "",
+      notes: existing.notes ?? "",
+      ticketPrice: existing.ticketPrice != null ? String(existing.ticketPrice) : "",
+    });
+  }, [existing, dirty]);
 
   function set<K extends keyof typeof form>(k: K, v: string) {
+    setDirty(true);
     setForm((f) => ({ ...f, [k]: v }));
   }
+
 
   function pickArtist(
     title: string,
@@ -110,7 +148,7 @@ function AddShow() {
       ]);
 
       // Artist disambiguation: ask the user to pick when there isn't a single
-      // clean match in Deezer.
+      // clean match in Spotify.
       const lc = name.toLowerCase();
       const exact = suggestions.filter((s) => s.name.toLowerCase() === lc);
       let chosenArtist: ArtistSuggestion | null = null;
@@ -132,7 +170,7 @@ function AddShow() {
 
       if (!r.found) {
         // Concert isn't on setlist.fm — still grab the artist's image + genre
-        // from Deezer so the entry isn't bare.
+        // from Spotify so the entry isn't bare.
         let image: string | null = null;
         let genre: string | null = null;
         if (chosenArtist?.id) {
@@ -160,7 +198,7 @@ function AddShow() {
       }
 
       // Concert found — prefer setlist.fm data, but if the user picked a
-      // different Deezer artist, use their image + genre instead.
+      // different Spotify artist, use their image + genre instead.
       let artistImage = r.artistImageUrl;
       let artistGenre = r.genre;
       if (
@@ -263,9 +301,9 @@ function AddShow() {
     }
   }
 
-  async function onDelete() {
+  async function performDelete() {
     if (!existing) return;
-    if (!confirm(`Delete "${existing.artist}" from your archive?`)) return;
+    setConfirmDelete(false);
     try {
       await del.mutateAsync(existing.id);
       toast.success("Show deleted");
@@ -274,6 +312,7 @@ function AddShow() {
       toast.error(err instanceof Error ? err.message : "Couldn't delete");
     }
   }
+
 
   async function onLogSelectedCoPerformers() {
     if (!coPerformers || selectedCo.size === 0) return;
@@ -352,8 +391,42 @@ function AddShow() {
 
   const pending = add.isPending || update.isPending;
 
+  if (editLoading) {
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-10 md:py-14">
+        <div className="animate-pulse space-y-6">
+          <div className="h-12 w-64 rounded-xl bg-surface-2" />
+          <div className="space-y-4 rounded-3xl border border-hairline bg-card p-6 md:p-8">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="h-14 rounded-xl bg-surface-2" />
+            ))}
+          </div>
+        </div>
+      </main>
+    );
+  }
+
+  if (editNotFound) {
+    return (
+      <main className="mx-auto max-w-3xl px-6 py-20 text-center">
+        <h1 className="font-display text-3xl font-extrabold">Show not found</h1>
+        <p className="mt-3 text-muted-foreground">
+          This show either doesn't exist or belongs to someone else.
+        </p>
+        <button
+          type="button"
+          onClick={() => nav({ to: "/shows" })}
+          className="mt-6 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground"
+        >
+          Back to your shows
+        </button>
+      </main>
+    );
+  }
+
   return (
     <main className="mx-auto max-w-3xl px-6 py-10 md:py-14">
+
       <div className="mb-8 animate-reveal">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
           {isEdit ? "Edit entry" : "New entry"}
@@ -426,7 +499,7 @@ function AddShow() {
             {openerSetlists?.length ? (
               <div className="mt-5 space-y-3">
                 {openerSetlists.map((o) => (
-                  <details key={o.artist} className="rounded-xl border border-hairline bg-card/40 p-3">
+                  <details key={`${o.artist}-${o.songs.length}`} className="rounded-xl border border-hairline bg-card/40 p-3">
                     <summary className="cursor-pointer text-xs font-semibold">
                       {o.artist} · {o.songs.length} songs
                     </summary>
@@ -491,7 +564,7 @@ function AddShow() {
                 const isHeadliner = headliner.toLowerCase() === c.artist.toLowerCase();
                 return (
                   <div
-                    key={c.artist}
+                    key={`${c.artist}-${c.venue}`}
                     className={`flex items-center gap-3 rounded-xl border bg-card/60 p-3 ${isHeadliner ? "border-brand/60" : "border-hairline"}`}
                   >
                     <input
@@ -590,7 +663,7 @@ function AddShow() {
             {isEdit && (
               <button
                 type="button"
-                onClick={onDelete}
+                onClick={() => setConfirmDelete(true)}
                 disabled={del.isPending}
                 className="inline-flex items-center gap-2 rounded-full border border-hairline px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-60"
               >
@@ -623,7 +696,18 @@ function AddShow() {
           }}
         />
       )}
+      <ConfirmDialog
+        open={confirmDelete}
+        title={existing ? `Delete "${existing.artist}"?` : "Delete show?"}
+        description="This removes the show from your archive. It cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        loading={del.isPending}
+        onConfirm={performDelete}
+        onOpenChange={setConfirmDelete}
+      />
     </main>
+
   );
 }
 
@@ -732,7 +816,8 @@ function ArtistAutocomplete({
       {showList && (
         <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-hairline bg-card shadow-xl">
           {suggestions.map((s, i) => (
-            <li key={s.name}>
+            <li key={`${s.name}-${s.id ?? i}`}>
+
               <button
                 type="button"
                 onMouseDown={(e) => {

@@ -47,8 +47,8 @@ function Dashboard() {
   if (concerts.length === 0) return <EmptyState name={profile?.displayName ?? "you"} />;
 
   const shows = uniqueShows(concerts);
-  const stats = getStats(concerts);
   const showStats = getStats(shows);
+
   const topArtists = rankBy(concerts, "artist", 6);
   const topVenues = rankBy(shows, "venue", 5);
   const topCities = rankBy(shows, "city", 4);
@@ -76,17 +76,19 @@ function Dashboard() {
           </p>
         </div>
         <div className="grid grid-cols-3 gap-3 animate-reveal">
-          <Stat label="Concert Age" value={`${getConcertAge(concerts)} yrs`} accent="brand" />
-          <Stat label="Hours live" value={`${stats.hoursLive}h`} accent="pink" />
-          <Stat label="Avg Rating" value={stats.avgRating.toFixed(1)} accent="teal" />
+          <Stat label="Concert Age" value={`${getConcertAge(shows)} yrs`} accent="brand" />
+          <Stat label="Hours live" value={`${showStats.hoursLive}h`} accent="pink" />
+          <Stat label="Avg Rating" value={showStats.avgRating.toFixed(1)} accent="teal" />
         </div>
       </div>
 
+
       <div className="mb-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:grid-cols-5">
         <BigStat label={`Shows in ${YEAR}`} value={yearShows} sub={`${showStats.total} all-time`} />
-        <BigStat label="Unique artists" value={stats.uniqueArtists} sub="across all shows" />
-        <BigStat label="Cities visited" value={stats.uniqueCities} sub={`${stats.uniqueCountries} countries`} />
+        <BigStat label="Unique artists" value={showStats.uniqueArtists} sub="across all shows" />
+        <BigStat label="Cities visited" value={showStats.uniqueCities} sub={`${showStats.uniqueCountries} countries`} />
         <BigStat label="Monthly streak" value={streak.current} sub={`longest ${streak.longest}`} />
+
         <Link to="/friends" className="bg-card p-6 transition-colors hover:bg-surface-2 md:p-8">
           <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             <Users className="h-3 w-3" /> Friends
@@ -160,9 +162,23 @@ function Dashboard() {
               <p className="mt-6 text-sm text-muted-foreground">Log a show to find out.</p>
             )}
           </div>
-          <div className="mt-8 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-            <div className="h-full rounded-full bg-gradient-to-r from-brand to-pink" style={{ width: "85%" }} />
-          </div>
+          {topArtists[0] && showStats.total > 0 && (() => {
+            const share = Math.min(100, Math.round((topArtists[0].count / showStats.total) * 100));
+            return (
+              <div className="mt-8">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-brand to-pink transition-all"
+                    style={{ width: `${share}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {share}% of your logged shows
+                </p>
+              </div>
+            );
+          })()}
+
         </div>
       </div>
 
