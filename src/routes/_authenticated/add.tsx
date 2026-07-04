@@ -696,7 +696,18 @@ function AddShow() {
           }}
         />
       )}
+      <ConfirmDialog
+        open={confirmDelete}
+        title={existing ? `Delete "${existing.artist}"?` : "Delete show?"}
+        description="This removes the show from your archive. It cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        loading={del.isPending}
+        onConfirm={performDelete}
+        onOpenChange={setConfirmDelete}
+      />
     </main>
+
   );
 }
 
