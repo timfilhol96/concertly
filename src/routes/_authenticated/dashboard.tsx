@@ -85,9 +85,10 @@ function Dashboard() {
 
       <div className="mb-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:grid-cols-5">
         <BigStat label={`Shows in ${YEAR}`} value={yearShows} sub={`${showStats.total} all-time`} />
-        <BigStat label="Unique artists" value={stats.uniqueArtists} sub="across all shows" />
-        <BigStat label="Cities visited" value={stats.uniqueCities} sub={`${stats.uniqueCountries} countries`} />
+        <BigStat label="Unique artists" value={showStats.uniqueArtists} sub="across all shows" />
+        <BigStat label="Cities visited" value={showStats.uniqueCities} sub={`${showStats.uniqueCountries} countries`} />
         <BigStat label="Monthly streak" value={streak.current} sub={`longest ${streak.longest}`} />
+
         <Link to="/friends" className="bg-card p-6 transition-colors hover:bg-surface-2 md:p-8">
           <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             <Users className="h-3 w-3" /> Friends
