@@ -298,6 +298,7 @@ export type ArtistSuggestion = {
 };
 
 export const searchArtists = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ArtistSearchInput.parse(input))
   .handler(async ({ data }): Promise<ArtistSuggestion[]> => {
     const json = (await spotifyGet(
@@ -324,7 +325,11 @@ export const searchArtists = createServerFn({ method: "POST" })
 
 const ArtistByIdInput = z.object({ id: z.string().min(1).max(64) });
 
-export const lookupDeezerArtistByIdFn = createServerFn({ method: "POST" })
+// Formerly `lookupDeezerArtistByIdFn` — we moved from Deezer to Spotify; the
+// export is now `lookupSpotifyArtistByIdFn`. A deprecated alias is kept below
+// for any lingering callers, but new code should import the Spotify name.
+export const lookupSpotifyArtistByIdFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ArtistByIdInput.parse(input))
   .handler(
     async ({
@@ -334,6 +339,11 @@ export const lookupDeezerArtistByIdFn = createServerFn({ method: "POST" })
       return result ?? { image: null, genre: null };
     },
   );
+
+/** @deprecated renamed to `lookupSpotifyArtistByIdFn`. */
+export const lookupDeezerArtistByIdFn = lookupSpotifyArtistByIdFn;
+
+
 
 
 const CoPerformersInput = z.object({
