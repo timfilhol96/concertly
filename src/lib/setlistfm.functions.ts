@@ -427,8 +427,10 @@ export const lookupCoPerformers = createServerFn({ method: "POST" })
 const ArtistImageInput = z.object({ artist: z.string().min(1).max(200) });
 
 export const lookupArtistImageFn = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator((input: unknown) => ArtistImageInput.parse(input))
   .handler(async ({ data }): Promise<{ url: string | null }> => {
     const url = await lookupArtistImage(data.artist);
     return { url };
   });
+
