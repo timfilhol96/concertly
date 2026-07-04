@@ -2,6 +2,12 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+// All spotify_tokens reads/writes go through the service-role client because
+// the table has no RLS policies and no grants to `authenticated` — the raw
+// access/refresh tokens must never be reachable from a client session. These
+// server fns still require `requireSupabaseAuth` so we scope every query to
+// the authenticated caller by `context.userId`.
+
 export const getSpotifyAuthUrl = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator((d: { redirectOrigin: string }) =>
@@ -31,7 +37,8 @@ export const getSpotifyAuthUrl = createServerFn({ method: "POST" })
 export const getSpotifyStatus = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { data } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data } = await supabaseAdmin
       .from("spotify_tokens")
       .select("spotify_user_id, display_name")
       .eq("user_id", context.userId)
@@ -46,7 +53,8 @@ export const getSpotifyStatus = createServerFn({ method: "GET" })
 export const disconnectSpotify = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
-    const { error } = await context.supabase
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { error } = await supabaseAdmin
       .from("spotify_tokens")
       .delete()
       .eq("user_id", context.userId);
@@ -61,7 +69,10 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
   )
   .handler(async ({ data, context }) => {
     const { refreshAccessToken } = await import("./spotify.server");
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
+    // The concert fetch still uses the *user-scoped* client so RLS enforces
+    // that the caller can actually see this concert (their own or a friend's).
     const { data: concert, error: cErr } = await context.supabase
       .from("concerts")
       .select("id, artist, venue, city, country, date, setlist, user_id")
@@ -72,8 +83,8 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
     const songs: string[] = (concert.setlist as string[] | null) ?? [];
     if (songs.length === 0) throw new Error("This show has no setlist yet.");
 
-    // Load tokens
-    const { data: tok, error: tErr } = await context.supabase
+    // Load tokens through admin (RLS on spotify_tokens denies all client access).
+    const { data: tok, error: tErr } = await supabaseAdmin
       .from("spotify_tokens")
       .select("access_token, refresh_token, expires_at, scope")
       .eq("user_id", context.userId)
@@ -87,7 +98,7 @@ export const createSpotifyPlaylist = createServerFn({ method: "POST" })
       const refreshed = await refreshAccessToken(tok.refresh_token);
       accessToken = refreshed.access_token;
       const newExpires = new Date(Date.now() + (refreshed.expires_in ?? 3600) * 1000).toISOString();
-      await context.supabase
+      await supabaseAdmin
         .from("spotify_tokens")
         .update({
           access_token: accessToken,
