@@ -13,7 +13,7 @@ import {
 import {
   lookupArtistImageFn,
   lookupCoPerformers,
-  lookupDeezerArtistByIdFn,
+  lookupSpotifyArtistByIdFn,
   lookupSetlist,
   searchArtists,
   type ArtistSuggestion,
@@ -44,7 +44,7 @@ function AddShow() {
   const fetchSetlist = useServerFn(lookupSetlist);
   const fetchCoPerformers = useServerFn(lookupCoPerformers);
   const fetchArtistImage = useServerFn(lookupArtistImageFn);
-  const fetchArtistById = useServerFn(lookupDeezerArtistByIdFn);
+  const fetchArtistById = useServerFn(lookupSpotifyArtistByIdFn);
   const fetchArtistSuggestions = useServerFn(searchArtists);
 
   const [rating, setRating] = useState(existing?.rating ?? 8);
@@ -110,7 +110,7 @@ function AddShow() {
       ]);
 
       // Artist disambiguation: ask the user to pick when there isn't a single
-      // clean match in Deezer.
+      // clean match in Spotify.
       const lc = name.toLowerCase();
       const exact = suggestions.filter((s) => s.name.toLowerCase() === lc);
       let chosenArtist: ArtistSuggestion | null = null;
@@ -132,7 +132,7 @@ function AddShow() {
 
       if (!r.found) {
         // Concert isn't on setlist.fm — still grab the artist's image + genre
-        // from Deezer so the entry isn't bare.
+        // from Spotify so the entry isn't bare.
         let image: string | null = null;
         let genre: string | null = null;
         if (chosenArtist?.id) {
@@ -160,7 +160,7 @@ function AddShow() {
       }
 
       // Concert found — prefer setlist.fm data, but if the user picked a
-      // different Deezer artist, use their image + genre instead.
+      // different Spotify artist, use their image + genre instead.
       let artistImage = r.artistImageUrl;
       let artistGenre = r.genre;
       if (

@@ -21,7 +21,7 @@ import {
 } from "@/lib/friends";
 import {
   lookupCoPerformers,
-  lookupDeezerArtistByIdFn,
+  lookupSpotifyArtistByIdFn,
   lookupSetlist,
   searchArtists,
   type ArtistSuggestion,
@@ -105,7 +105,7 @@ function Shows() {
   const add = useAddConcert();
   const fetchSetlist = useServerFn(lookupSetlist);
   const fetchSearchArtists = useServerFn(searchArtists);
-  const fetchDeezerById = useServerFn(lookupDeezerArtistByIdFn);
+  const fetchSpotifyArtistById = useServerFn(lookupSpotifyArtistByIdFn);
   const fetchCoPerformers = useServerFn(lookupCoPerformers);
   const qc = useQueryClient();
 
@@ -340,7 +340,7 @@ function Shows() {
   async function refreshOne(c: Concert): Promise<RefreshOutcome> {
     let coLogged = 0;
     try {
-      // 1. Resolve artist on Deezer.
+      // 1. Resolve artist on Spotify.
       setFetching({ artist: c.artist, step: "Searching artist on Spotify…" });
       const artistChoice = await resolveArtist(c);
       if (artistChoice === "cancel") return { status: "cancelled", coLogged };
@@ -350,12 +350,12 @@ function Shows() {
       const res = await fetchSetlist({ data: { artist: c.artist, date: c.date } });
 
       if (!res.found) {
-        // Fallback: still apply Deezer image + genre if the user picked something.
+        // Fallback: still apply Spotify image + genre if the user picked something.
         setFetching({ artist: c.artist, step: "Fetching artist image & genre…" });
         let fallback: { image: string | null; genre: string | null } | null = null;
         if (artistChoice && artistChoice.id != null) {
           try {
-            fallback = await fetchDeezerById({ data: { id: artistChoice.id } });
+            fallback = await fetchSpotifyArtistById({ data: { id: artistChoice.id } });
           } catch {
             fallback = { image: artistChoice.image, genre: null };
           }
@@ -399,7 +399,7 @@ function Shows() {
       if (artistChoice && artistChoice.id != null) {
         try {
           setFetching({ artist: c.artist, step: "Fetching artist image & genre…" });
-          const d = await fetchDeezerById({ data: { id: artistChoice.id } });
+          const d = await fetchSpotifyArtistById({ data: { id: artistChoice.id } });
           imageOverride = d.image ?? imageOverride;
           genreOverride = d.genre ?? genreOverride;
         } catch {
@@ -506,7 +506,7 @@ function Shows() {
               (s) => s.name.toLowerCase() === extra.performer.artist.toLowerCase(),
             ) ?? sug[0];
             if (hit?.id != null) {
-              const d = await fetchDeezerById({ data: { id: hit.id } });
+              const d = await fetchSpotifyArtistById({ data: { id: hit.id } });
               image = d.image;
               genre = d.genre;
             } else if (hit) {
