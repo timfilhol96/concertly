@@ -76,11 +76,12 @@ function Dashboard() {
           </p>
         </div>
         <div className="grid grid-cols-3 gap-3 animate-reveal">
-          <Stat label="Concert Age" value={`${getConcertAge(concerts)} yrs`} accent="brand" />
-          <Stat label="Hours live" value={`${stats.hoursLive}h`} accent="pink" />
-          <Stat label="Avg Rating" value={stats.avgRating.toFixed(1)} accent="teal" />
+          <Stat label="Concert Age" value={`${getConcertAge(shows)} yrs`} accent="brand" />
+          <Stat label="Hours live" value={`${showStats.hoursLive}h`} accent="pink" />
+          <Stat label="Avg Rating" value={showStats.avgRating.toFixed(1)} accent="teal" />
         </div>
       </div>
+
 
       <div className="mb-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:grid-cols-5">
         <BigStat label={`Shows in ${YEAR}`} value={yearShows} sub={`${showStats.total} all-time`} />
