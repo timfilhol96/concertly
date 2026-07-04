@@ -732,7 +732,8 @@ function ArtistAutocomplete({
       {showList && (
         <ul className="absolute z-20 mt-1 max-h-72 w-full overflow-auto rounded-xl border border-hairline bg-card shadow-xl">
           {suggestions.map((s, i) => (
-            <li key={s.name}>
+            <li key={`${s.name}-${s.id ?? i}`}>
+
               <button
                 type="button"
                 onMouseDown={(e) => {
