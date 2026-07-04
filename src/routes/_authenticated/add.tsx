@@ -301,9 +301,9 @@ function AddShow() {
     }
   }
 
-  async function onDelete() {
+  async function performDelete() {
     if (!existing) return;
-    if (!confirm(`Delete "${existing.artist}" from your archive?`)) return;
+    setConfirmDelete(false);
     try {
       await del.mutateAsync(existing.id);
       toast.success("Show deleted");
@@ -312,6 +312,7 @@ function AddShow() {
       toast.error(err instanceof Error ? err.message : "Couldn't delete");
     }
   }
+
 
   async function onLogSelectedCoPerformers() {
     if (!coPerformers || selectedCo.size === 0) return;
