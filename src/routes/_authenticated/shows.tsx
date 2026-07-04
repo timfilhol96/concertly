@@ -113,9 +113,16 @@ function Shows() {
   // physical show (same date + venue), so logging the price on one performer
   // fills it in for the openers / support acts on the next refresh.
   async function syncTicketPriceAcrossShow(date: string, venue: string) {
+    // IMPORTANT: RLS also exposes friends' concerts, so we must scope both the
+    // read and any writes to the current user by user_id — otherwise a shared
+    // date+venue could pull a friend's row into the update batch.
+    const { data: userRes } = await supabase.auth.getUser();
+    const userId = userRes.user?.id;
+    if (!userId) return;
     const { data } = await supabase
       .from("concerts")
       .select("id, notes, ticket_price")
+      .eq("user_id", userId)
       .eq("date", date)
       .eq("venue", venue);
     if (!data || data.length < 2) return;
@@ -136,11 +143,13 @@ function Shows() {
       const { error } = await supabase
         .from("concerts")
         .update({ ticket_price: price })
-        .eq("id", r.id);
+        .eq("id", r.id)
+        .eq("user_id", userId);
       if (!error) changed = true;
     }
     if (changed) qc.invalidateQueries({ queryKey: ["concerts"] });
   }
+
 
 
   const [refresh, setRefresh] = useState<{ running: boolean; done: number; total: number }>({
