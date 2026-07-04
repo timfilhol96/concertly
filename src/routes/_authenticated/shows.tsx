@@ -839,7 +839,26 @@ function Shows() {
       {!prompt && fetching && refresh.running && (
         <FetchingOverlay artist={fetching.artist} step={fetching.step} progress={refresh} />
       )}
+      <ConfirmDialog
+        open={!!deleteTarget}
+        title={deleteTarget ? `Delete "${deleteTarget.artist}"?` : "Delete show?"}
+        description="This removes the show from your archive. It cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        loading={del.isPending}
+        onConfirm={performDelete}
+        onOpenChange={(o) => !o && setDeleteTarget(null)}
+      />
+      <ConfirmDialog
+        open={confirmRefreshAll}
+        title={`Refresh all ${concerts.length} show${concerts.length === 1 ? "" : "s"}?`}
+        description="You'll be asked to confirm when something's ambiguous. Your existing rating, notes, and ticket price are always kept."
+        confirmLabel="Refresh all"
+        onConfirm={runRefreshAll}
+        onOpenChange={setConfirmRefreshAll}
+      />
     </main>
+
   );
 }
 
