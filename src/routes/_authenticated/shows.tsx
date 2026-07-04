@@ -979,7 +979,7 @@ function CoPerformerPane({ prompt }: { prompt: CoPerformerPrompt }) {
           const isSel = selected.has(cp.artist);
           const isHead = headliner.toLowerCase() === cp.artist.toLowerCase();
           return (
-            <li key={cp.artist} className="flex items-center gap-3 rounded-xl border border-hairline bg-surface p-3">
+            <li key={`${cp.artist}-${cp.venue}`} className="flex items-center gap-3 rounded-xl border border-hairline bg-surface p-3">
               <input
                 type="checkbox"
                 checked={isSel}

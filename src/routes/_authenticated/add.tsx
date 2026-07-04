@@ -426,7 +426,7 @@ function AddShow() {
             {openerSetlists?.length ? (
               <div className="mt-5 space-y-3">
                 {openerSetlists.map((o) => (
-                  <details key={o.artist} className="rounded-xl border border-hairline bg-card/40 p-3">
+                  <details key={`${o.artist}-${o.songs.length}`} className="rounded-xl border border-hairline bg-card/40 p-3">
                     <summary className="cursor-pointer text-xs font-semibold">
                       {o.artist} · {o.songs.length} songs
                     </summary>
@@ -491,7 +491,7 @@ function AddShow() {
                 const isHeadliner = headliner.toLowerCase() === c.artist.toLowerCase();
                 return (
                   <div
-                    key={c.artist}
+                    key={`${c.artist}-${c.venue}`}
                     className={`flex items-center gap-3 rounded-xl border bg-card/60 p-3 ${isHeadliner ? "border-brand/60" : "border-hairline"}`}
                   >
                     <input
