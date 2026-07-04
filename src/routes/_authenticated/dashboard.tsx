@@ -47,8 +47,8 @@ function Dashboard() {
   if (concerts.length === 0) return <EmptyState name={profile?.displayName ?? "you"} />;
 
   const shows = uniqueShows(concerts);
-  const stats = getStats(concerts);
   const showStats = getStats(shows);
+
   const topArtists = rankBy(concerts, "artist", 6);
   const topVenues = rankBy(shows, "venue", 5);
   const topCities = rankBy(shows, "city", 4);
