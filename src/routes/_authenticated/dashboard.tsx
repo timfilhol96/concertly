@@ -162,9 +162,23 @@ function Dashboard() {
               <p className="mt-6 text-sm text-muted-foreground">Log a show to find out.</p>
             )}
           </div>
-          <div className="mt-8 h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-            <div className="h-full rounded-full bg-gradient-to-r from-brand to-pink" style={{ width: "85%" }} />
-          </div>
+          {topArtists[0] && showStats.total > 0 && (() => {
+            const share = Math.min(100, Math.round((topArtists[0].count / showStats.total) * 100));
+            return (
+              <div className="mt-8">
+                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                  <div
+                    className="h-full rounded-full bg-gradient-to-r from-brand to-pink transition-all"
+                    style={{ width: `${share}%` }}
+                  />
+                </div>
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  {share}% of your logged shows
+                </p>
+              </div>
+            );
+          })()}
+
         </div>
       </div>
 
