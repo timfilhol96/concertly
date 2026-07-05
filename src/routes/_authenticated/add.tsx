@@ -73,6 +73,7 @@ function AddShow() {
     options: ArtistSuggestion[];
     resolve: (a: ArtistSuggestion | null) => void;
   } | null>(null);
+  const [status, setStatus] = useState<"attended" | "upcoming" | "wishlist">("attended");
   const [form, setForm] = useState({
     artist: "",
     tour: "",
