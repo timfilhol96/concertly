@@ -8,6 +8,7 @@ import { useAvatarUrl, useProfile } from "@/lib/concerts";
 const NAV = [
   { to: "/dashboard", label: "Dashboard" },
   { to: "/shows", label: "My Shows" },
+  { to: "/map", label: "Map" },
   { to: "/insights", label: "Insights" },
   { to: "/friends", label: "Friends" },
   { to: "/wrapped", label: "Wrapped" },
