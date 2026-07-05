@@ -170,8 +170,19 @@ function Shows() {
     () => new Set((withFriends ?? []) as string[]),
     [withFriends],
   );
+  const attendedConcerts = useMemo(
+    () => concerts.filter((c) => (c.status ?? "attended") === "attended"),
+    [concerts],
+  );
+  const upcomingConcerts = useMemo(
+    () =>
+      concerts
+        .filter((c) => c.status === "upcoming" || c.status === "wishlist")
+        .sort((a, b) => (a.date < b.date ? -1 : 1)),
+    [concerts],
+  );
   const list = useMemo(() => {
-    let filtered = concerts.filter((c) =>
+    let filtered = attendedConcerts.filter((c) =>
       [c.artist, c.venue, c.city, c.tour ?? ""].join(" ").toLowerCase().includes(q.toLowerCase()),
     );
     if (month) filtered = filtered.filter((c) => c.date.startsWith(month));
@@ -191,7 +202,7 @@ function Shows() {
     return filtered.sort((a, b) =>
       sort === "date" ? (a.date < b.date ? 1 : -1) : b.rating - a.rating,
     );
-  }, [q, sort, concerts, month, genre, year, withFriendsSet, coAttendance]);
+  }, [q, sort, attendedConcerts, month, genre, year, withFriendsSet, coAttendance]);
 
   const monthLabel = month
     ? new Date(`${month}-01T00:00:00`).toLocaleString("en", { month: "long", year: "numeric" })
