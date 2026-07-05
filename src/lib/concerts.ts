@@ -6,6 +6,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type OpenerSetlist = { artist: string; songs: string[] };
 
+export type ConcertStatus = "attended" | "upcoming" | "wishlist";
+
 export type Concert = {
   id: string;
   artist: string;
@@ -23,6 +25,9 @@ export type Concert = {
   setlist: string[] | null;
   artistImageUrl: string | null;
   openerSetlists: OpenerSetlist[] | null;
+  status: ConcertStatus;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 type Row = {
