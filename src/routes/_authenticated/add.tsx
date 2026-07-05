@@ -104,6 +104,7 @@ function AddShow() {
     setArtistImageUrl(existing.artistImageUrl);
     setOpenerSetlists(existing.openerSetlists);
     setHeadliner(existing.artist);
+    setStatus(existing.status ?? "attended");
     setForm({
       artist: existing.artist,
       tour: existing.tour ?? "",
