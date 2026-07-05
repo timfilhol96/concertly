@@ -21,6 +21,7 @@ import {
 } from "@/lib/setlistfm.functions";
 import { Crown, Users } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { cn } from "@/lib/utils";
 
 
 
@@ -73,6 +74,7 @@ function AddShow() {
     options: ArtistSuggestion[];
     resolve: (a: ArtistSuggestion | null) => void;
   } | null>(null);
+  const [status, setStatus] = useState<"attended" | "upcoming" | "wishlist">("attended");
   const [form, setForm] = useState({
     artist: "",
     tour: "",
@@ -103,6 +105,7 @@ function AddShow() {
     setArtistImageUrl(existing.artistImageUrl);
     setOpenerSetlists(existing.openerSetlists);
     setHeadliner(existing.artist);
+    setStatus(existing.status ?? "attended");
     setForm({
       artist: existing.artist,
       tour: existing.tour ?? "",
@@ -286,6 +289,7 @@ function AddShow() {
       setlist,
       artistImageUrl,
       openerSetlists,
+      status,
     };
     try {
       if (isEdit && existing) {
@@ -440,6 +444,39 @@ function AddShow() {
       </div>
 
       <form onSubmit={onSubmit} className="space-y-6 rounded-3xl border border-hairline bg-card p-6 md:p-8">
+        <div>
+          <label className="mb-2 block text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            Status
+          </label>
+          <div className="inline-flex rounded-full border border-hairline bg-surface p-1 text-xs font-semibold">
+            {(["attended", "upcoming", "wishlist"] as const).map((s) => (
+              <button
+                key={s}
+                type="button"
+                onClick={() => {
+                  setDirty(true);
+                  setStatus(s);
+                }}
+                className={cn(
+                  "rounded-full px-4 py-1.5 capitalize transition-colors",
+                  status === s
+                    ? "bg-brand text-brand-foreground"
+                    : "text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {s === "attended" ? "Attended" : s === "upcoming" ? "Upcoming" : "Wishlist"}
+              </button>
+            ))}
+          </div>
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            {status === "attended"
+              ? "A show you've been to. Counts in stats."
+              : status === "upcoming"
+                ? "A show you've got tickets for. Not counted in stats until you mark it attended."
+                : "A show you'd like to see. Not counted in stats."}
+          </p>
+        </div>
+
         <Field icon={Music} label="Artist / Headliner">
           <ArtistAutocomplete
             value={form.artist}
