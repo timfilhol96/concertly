@@ -288,6 +288,7 @@ function AddShow() {
       setlist,
       artistImageUrl,
       openerSetlists,
+      status,
     };
     try {
       if (isEdit && existing) {
