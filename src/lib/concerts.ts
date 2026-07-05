@@ -287,6 +287,7 @@ export function uniqueShows(list: Concert[]): Concert[] {
 }
 
 export function getStats(list: Concert[]) {
+  list = attendedOnly(list);
   const total = list.length;
   const uniqueArtists = new Set(list.map((c) => c.artist)).size;
   const uniqueCities = new Set(list.map((c) => c.city)).size;
@@ -302,6 +303,7 @@ export function rankBy(
   key: "artist" | "venue" | "city" | "country",
   limit = 5,
 ): RankedItem[] {
+  list = attendedOnly(list);
   const counts = new Map<string, number>();
   for (const c of list) {
     const v = String(c[key] ?? "");
@@ -322,6 +324,7 @@ export type GenreBreakdownItem = {
 };
 
 export function genreBreakdown(list: Concert[]): GenreBreakdownItem[] {
+  list = attendedOnly(list);
   const counts = new Map<string, number>();
   const artistSets = new Map<string, Set<string>>();
   for (const c of list) {
@@ -342,6 +345,7 @@ export function genreBreakdown(list: Concert[]): GenreBreakdownItem[] {
 }
 
 export function showsByMonth(list: Concert[], year: number | "all") {
+  list = attendedOnly(list);
   const arr = Array.from({ length: 12 }, (_, i) => ({
     month: i,
     label: new Date(2024, i, 1).toLocaleString("en", { month: "short" }),
@@ -355,6 +359,7 @@ export function showsByMonth(list: Concert[], year: number | "all") {
 }
 
 export function showsByYear(list: Concert[]) {
+  list = attendedOnly(list);
   const counts = new Map<number, number>();
   for (const c of list) {
     const y = new Date(c.date).getFullYear();
@@ -367,6 +372,7 @@ export function showsByYear(list: Concert[]) {
 
 // Monthly heatmap: 12 buckets for the given year (or all-time max month count).
 export function monthlyHeatmap(list: Concert[], year: number) {
+  list = attendedOnly(list);
   const months = Array.from({ length: 12 }, (_, i) => ({
     month: i,
     label: new Date(2024, i, 1).toLocaleString("en", { month: "short" }),
@@ -381,6 +387,7 @@ export function monthlyHeatmap(list: Concert[], year: number) {
 }
 
 export function getConcertAge(list: Concert[]): number {
+  list = attendedOnly(list);
   if (!list.length) return 0;
   const earliest = list.reduce((min, c) => (c.date < min ? c.date : min), list[0].date);
   const years = (Date.now() - new Date(earliest).getTime()) / (365.25 * 24 * 3600 * 1000);
@@ -388,10 +395,12 @@ export function getConcertAge(list: Concert[]): number {
 }
 
 export function recentConcerts(list: Concert[], n = 5) {
+  list = attendedOnly(list);
   return [...list].sort((a, b) => (a.date < b.date ? 1 : -1)).slice(0, n);
 }
 
 export function availableYears(list: Concert[]): number[] {
+  list = attendedOnly(list);
   const set = new Set<number>();
   for (const c of list) set.add(new Date(c.date).getFullYear());
   return [...set].sort((a, b) => b - a);
