@@ -328,6 +328,9 @@ export function useFriendConcerts(friendUserId: string | null) {
         setlist: null,
         artistImageUrl: r.artist_image_url,
         openerSetlists: null,
+        status: "attended" as const,
+        latitude: null,
+        longitude: null,
       }));
     },
   });
