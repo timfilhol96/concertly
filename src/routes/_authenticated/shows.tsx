@@ -744,6 +744,39 @@ function Shows() {
         </div>
       )}
 
+      {!readOnly && upcomingConcerts.length > 0 && (
+        <UpcomingSection
+          items={upcomingConcerts}
+          onMarkAttended={async (c) => {
+            try {
+              await update.mutateAsync({
+                id: c.id,
+                artist: c.artist,
+                tour: c.tour,
+                openers: c.openers,
+                date: c.date,
+                venue: c.venue,
+                city: c.city,
+                country: c.country,
+                rating: c.rating,
+                genre: c.genre,
+                notes: c.notes,
+                ticketPrice: c.ticketPrice,
+                songsSeen: c.songsSeen,
+                setlist: c.setlist,
+                artistImageUrl: c.artistImageUrl,
+                openerSetlists: c.openerSetlists,
+                status: "attended",
+                latitude: c.latitude,
+                longitude: c.longitude,
+              });
+              toast.success(`Marked "${c.artist}" as attended`);
+            } catch (err) {
+              toast.error(err instanceof Error ? err.message : "Couldn't update");
+            }
+          }}
+        />
+      )}
 
       <div className="overflow-hidden rounded-2xl border border-hairline">
         <table className="w-full text-left">
