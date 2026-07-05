@@ -593,7 +593,7 @@ function Shows() {
 
   async function runRefreshAll() {
     setConfirmRefreshAll(false);
-    const targets = concerts;
+    const targets = attendedConcerts;
     if (targets.length === 0) return;
     artistChoiceCache.current.clear();
     setRefresh({ running: true, done: 0, total: targets.length });
