@@ -24,12 +24,15 @@ export type Database = {
           date: string
           genre: string | null
           id: string
+          latitude: number | null
+          longitude: number | null
           notes: string | null
           opener_setlists: Json | null
           openers: string[] | null
           rating: number
           setlist: string[] | null
           songs_seen: number | null
+          status: Database["public"]["Enums"]["concert_status"]
           ticket_price: number | null
           tour: string | null
           user_id: string
@@ -44,12 +47,15 @@ export type Database = {
           date: string
           genre?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           notes?: string | null
           opener_setlists?: Json | null
           openers?: string[] | null
           rating?: number
           setlist?: string[] | null
           songs_seen?: number | null
+          status?: Database["public"]["Enums"]["concert_status"]
           ticket_price?: number | null
           tour?: string | null
           user_id: string
@@ -64,12 +70,15 @@ export type Database = {
           date?: string
           genre?: string | null
           id?: string
+          latitude?: number | null
+          longitude?: number | null
           notes?: string | null
           opener_setlists?: Json | null
           openers?: string[] | null
           rating?: number
           setlist?: string[] | null
           songs_seen?: number | null
+          status?: Database["public"]["Enums"]["concert_status"]
           ticket_price?: number | null
           tour?: string | null
           user_id?: string
@@ -202,6 +211,7 @@ export type Database = {
       are_friends: { Args: { a: string; b: string }; Returns: boolean }
     }
     Enums: {
+      concert_status: "attended" | "upcoming" | "wishlist"
       friendship_status: "pending" | "accepted"
     }
     CompositeTypes: {
@@ -330,6 +340,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      concert_status: ["attended", "upcoming", "wishlist"],
       friendship_status: ["pending", "accepted"],
     },
   },
