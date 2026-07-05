@@ -1198,3 +1198,109 @@ function FetchingOverlay({
     </div>
   );
 }
+
+function UpcomingSection({
+  items,
+  onMarkAttended,
+}: {
+  items: Concert[];
+  onMarkAttended: (c: Concert) => void | Promise<void>;
+}) {
+  const upcoming = items.filter((c) => c.status === "upcoming");
+  const wishlist = items.filter((c) => c.status === "wishlist");
+  return (
+    <div className="mb-6 space-y-4">
+      {upcoming.length > 0 && (
+        <UpcomingList
+          title="Upcoming"
+          hint="Shows you've got tickets for. Not counted in stats until you mark them attended."
+          items={upcoming}
+          onMarkAttended={onMarkAttended}
+          accentClass="border-brand/40 bg-brand/5"
+        />
+      )}
+      {wishlist.length > 0 && (
+        <UpcomingList
+          title="Wishlist"
+          hint="Shows you'd like to see one day."
+          items={wishlist}
+          onMarkAttended={onMarkAttended}
+          accentClass="border-hairline bg-card"
+        />
+      )}
+    </div>
+  );
+}
+
+function UpcomingList({
+  title,
+  hint,
+  items,
+  onMarkAttended,
+  accentClass,
+}: {
+  title: string;
+  hint: string;
+  items: Concert[];
+  onMarkAttended: (c: Concert) => void | Promise<void>;
+  accentClass: string;
+}) {
+  return (
+    <div className={cn("rounded-2xl border p-4 md:p-5", accentClass)}>
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <div>
+          <h2 className="font-display text-lg font-extrabold">
+            {title} <span className="text-muted-foreground">· {items.length}</span>
+          </h2>
+          <p className="text-xs text-muted-foreground">{hint}</p>
+        </div>
+      </div>
+      <ul className="divide-y divide-hairline">
+        {items.map((c) => (
+          <li key={c.id} className="flex items-center gap-3 py-3">
+            {c.artistImageUrl ? (
+              <img
+                src={c.artistImageUrl}
+                alt=""
+                className="h-9 w-9 flex-shrink-0 rounded-full object-cover"
+              />
+            ) : (
+              <div className="h-9 w-9 flex-shrink-0 rounded-full bg-surface-2" />
+            )}
+            <div className="min-w-0 flex-1">
+              <div className="truncate text-sm font-semibold">{c.artist}</div>
+              <div className="truncate text-xs text-muted-foreground">
+                {c.venue}
+                {c.city ? ` · ${c.city}` : ""}
+                {" · "}
+                {new Date(c.date).toLocaleDateString("en", {
+                  day: "2-digit",
+                  month: "short",
+                  year: "numeric",
+                })}
+              </div>
+            </div>
+            <div className="flex items-center gap-1">
+              <button
+                type="button"
+                onClick={() => onMarkAttended(c)}
+                className="rounded-full bg-brand px-3 py-1.5 text-xs font-bold text-brand-foreground hover:opacity-90"
+                title="Mark as attended"
+              >
+                Mark attended
+              </button>
+              <Link
+                to="/add"
+                search={{ id: c.id }}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+                aria-label={`Edit ${c.artist}`}
+              >
+                <Pencil className="h-4 w-4" />
+              </Link>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
