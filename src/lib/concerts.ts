@@ -269,6 +269,7 @@ export type RankedItem = { name: string; count: number };
 // a single "show". The headliner row (one whose notes don't start with
 // "support act for") is preferred; otherwise the first row wins.
 export function uniqueShows(list: Concert[]): Concert[] {
+  list = attendedOnly(list);
   const groups = new Map<string, Concert[]>();
   for (const c of list) {
     const key = `${c.date}|${(c.venue ?? "").trim().toLowerCase()}|${(c.city ?? "").trim().toLowerCase()}`;
