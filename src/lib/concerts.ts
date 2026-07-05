@@ -47,6 +47,9 @@ type Row = {
   setlist: string[] | null;
   artist_image_url: string | null;
   opener_setlists: unknown;
+  status?: ConcertStatus | null;
+  latitude?: number | null;
+  longitude?: number | null;
 };
 
 function fromRow(r: Row): Concert {
@@ -73,6 +76,9 @@ function fromRow(r: Row): Concert {
     setlist: r.setlist,
     artistImageUrl: r.artist_image_url,
     openerSetlists,
+    status: (r.status as ConcertStatus | null | undefined) ?? "attended",
+    latitude: r.latitude == null ? null : Number(r.latitude),
+    longitude: r.longitude == null ? null : Number(r.longitude),
   };
 }
 
@@ -91,6 +97,12 @@ export function useConcerts() {
       return (data as Row[]).map(fromRow);
     },
   });
+}
+
+// Attended shows only — use for stats/dashboards/insights/wrapped so
+// wishlist and upcoming entries never pollute counts.
+export function attendedOnly(list: Concert[]): Concert[] {
+  return list.filter((c) => (c.status ?? "attended") === "attended");
 }
 
 export function useProfile() {
@@ -146,7 +158,12 @@ export function useAvatarUrl(avatarPath: string | null | undefined) {
   return url;
 }
 
-export type NewConcert = Omit<Concert, "id">;
+// Existing call sites treat status/lat/lng as optional; default status = attended.
+export type NewConcert = Omit<Concert, "id" | "status" | "latitude" | "longitude"> & {
+  status?: ConcertStatus;
+  latitude?: number | null;
+  longitude?: number | null;
+};
 
 type InsertPayload = {
   user_id: string;
@@ -165,6 +182,9 @@ type InsertPayload = {
   setlist: string[] | null;
   artist_image_url: string | null;
   opener_setlists: OpenerSetlist[] | null;
+  status: ConcertStatus;
+  latitude: number | null;
+  longitude: number | null;
 };
 
 function toInsert(c: NewConcert, userId: string): InsertPayload {
@@ -185,6 +205,9 @@ function toInsert(c: NewConcert, userId: string): InsertPayload {
     setlist: c.setlist,
     artist_image_url: c.artistImageUrl,
     opener_setlists: c.openerSetlists,
+    status: c.status ?? "attended",
+    latitude: c.latitude ?? null,
+    longitude: c.longitude ?? null,
   };
 }
 
