@@ -185,6 +185,34 @@ function Dashboard() {
         </div>
       </div>
 
+      {onThisDayShows.length > 0 && (
+        <div className="mb-10 rounded-3xl border border-hairline bg-card p-6 md:p-8">
+          <div className="mb-4 flex items-center gap-2">
+            <CalendarClock className="h-4 w-4 text-brand" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">On this day</p>
+          </div>
+          <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
+            {onThisDayShows.slice(0, 6).map((c) => {
+              const yearsAgo = new Date().getFullYear() - new Date(c.date).getFullYear();
+              return (
+                <Link
+                  key={c.id}
+                  to="/show/$id"
+                  params={{ id: c.id }}
+                  className="rounded-2xl border border-hairline bg-surface p-4 transition-colors hover:border-brand/40"
+                >
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-brand">
+                    {yearsAgo} year{yearsAgo === 1 ? "" : "s"} ago
+                  </p>
+                  <h4 className="mt-1 truncate font-display text-lg font-extrabold">{c.artist}</h4>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{c.venue} · {c.city}</p>
+                </Link>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <div className="space-y-5 lg:col-span-3">
           <div className="flex items-end justify-between">
