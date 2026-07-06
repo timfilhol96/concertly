@@ -271,9 +271,47 @@ function AddShow() {
     }
   }
 
+  type SavePayload = Parameters<typeof add.mutateAsync>[0];
+  const [duplicateWarn, setDuplicateWarn] = useState<{
+    payload: SavePayload;
+    reason: string;
+  } | null>(null);
+
+  function findDuplicate(p: { date: string; venue: string; artist: string }): string | null {
+    if (!concerts || isEdit) return null;
+    const v = p.venue.toLowerCase();
+    const a = p.artist.toLowerCase();
+    const sameDateVenue = concerts.find(
+      (c) => c.date === p.date && (c.venue ?? "").toLowerCase() === v,
+    );
+    if (sameDateVenue)
+      return `You already logged a show at ${sameDateVenue.venue} on ${p.date} (${sameDateVenue.artist}).`;
+    const sameDateArtist = concerts.find(
+      (c) => c.date === p.date && (c.artist ?? "").toLowerCase() === a,
+    );
+    if (sameDateArtist)
+      return `You already logged ${sameDateArtist.artist} on ${p.date} at ${sameDateArtist.venue}.`;
+    return null;
+  }
+
+  async function saveConcert(payload: SavePayload) {
+    try {
+      if (isEdit && existing) {
+        await update.mutateAsync({ id: existing.id, ...payload });
+        toast.success("Show updated");
+      } else {
+        await add.mutateAsync(payload);
+        toast.success("Show logged! 🎉", { description: "Your archive just got bigger." });
+      }
+      nav({ to: "/shows" });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Couldn't save the show");
+    }
+  }
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    const payload = {
+    const payload: SavePayload = {
       artist: form.artist.trim(),
       tour: form.tour.trim() || null,
       openers,
@@ -291,18 +329,16 @@ function AddShow() {
       openerSetlists,
       status,
     };
-    try {
-      if (isEdit && existing) {
-        await update.mutateAsync({ id: existing.id, ...payload });
-        toast.success("Show updated");
-      } else {
-        await add.mutateAsync(payload);
-        toast.success("Show logged! 🎉", { description: "Your archive just got bigger." });
-      }
-      nav({ to: "/shows" });
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Couldn't save the show");
+    const dupReason = findDuplicate({
+      date: payload.date,
+      venue: payload.venue,
+      artist: payload.artist,
+    });
+    if (dupReason) {
+      setDuplicateWarn({ payload, reason: dupReason });
+      return;
     }
+    await saveConcert(payload);
   }
 
   async function performDelete() {
@@ -742,6 +778,23 @@ function AddShow() {
         loading={del.isPending}
         onConfirm={performDelete}
         onOpenChange={setConfirmDelete}
+      />
+      <ConfirmDialog
+        open={!!duplicateWarn}
+        title="Looks like a duplicate"
+        description={
+          (duplicateWarn?.reason ?? "") + " Add this show anyway?"
+        }
+        confirmLabel="Add anyway"
+        loading={add.isPending}
+        onConfirm={async () => {
+          const p = duplicateWarn?.payload;
+          setDuplicateWarn(null);
+          if (p) await saveConcert(p);
+        }}
+        onOpenChange={(o) => {
+          if (!o) setDuplicateWarn(null);
+        }}
       />
     </main>
 

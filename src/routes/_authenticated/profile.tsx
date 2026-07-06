@@ -1,10 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Camera, Loader2, Music2, Upload } from "lucide-react";
+import { Camera, Database, Download, Loader2, Music2, Upload } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useAvatarUrl, useProfile } from "@/lib/concerts";
+import { useAvatarUrl, useAddConcert, useConcerts, useProfile } from "@/lib/concerts";
+import { concertsToCsv, csvToConcerts, downloadCsv } from "@/lib/csv";
 import { useUpdateUsername, USERNAME_RE } from "@/lib/friends";
 import {
   disconnectSpotify,
@@ -209,7 +210,99 @@ function Profile() {
       </section>
 
       <SpotifySection />
+      <DataSection />
     </main>
+  );
+}
+
+function DataSection() {
+  const { data: concerts } = useConcerts();
+  const add = useAddConcert();
+  const fileInput = useRef<HTMLInputElement>(null);
+  const [importing, setImporting] = useState(false);
+
+  function onExport() {
+    if (!concerts || concerts.length === 0) {
+      toast.error("Nothing to export yet");
+      return;
+    }
+    const stamp = new Date().toISOString().slice(0, 10);
+    downloadCsv(`concertly-${stamp}.csv`, concertsToCsv(concerts));
+    toast.success(`Exported ${concerts.length} row${concerts.length === 1 ? "" : "s"}`);
+  }
+
+  async function onImportFile(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setImporting(true);
+    try {
+      const text = await file.text();
+      const { imported, errors } = csvToConcerts(text);
+      if (imported.length === 0) {
+        toast.error(errors[0] ?? "Nothing to import");
+        return;
+      }
+      let ok = 0;
+      for (const row of imported) {
+        try {
+          await add.mutateAsync(row);
+          ok++;
+        } catch {
+          errors.push(`Row for ${row.artist} on ${row.date} failed to save`);
+        }
+      }
+      toast.success(`Imported ${ok} show${ok === 1 ? "" : "s"}`, {
+        description: errors.length ? `${errors.length} skipped` : undefined,
+      });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Import failed");
+    } finally {
+      setImporting(false);
+      if (fileInput.current) fileInput.current.value = "";
+    }
+  }
+
+  return (
+    <section className="mt-8 rounded-3xl border border-hairline bg-card p-6 md:p-8">
+      <div className="flex items-start gap-3">
+        <div className="grid h-11 w-11 place-items-center rounded-full bg-brand/15 text-brand">
+          <Database className="h-5 w-5" />
+        </div>
+        <div className="flex-1">
+          <h2 className="font-display text-xl font-extrabold">Your data</h2>
+          <p className="text-sm text-muted-foreground">
+            Export your archive as CSV, or import from a previous export.
+          </p>
+        </div>
+      </div>
+      <div className="mt-5 flex flex-wrap gap-3">
+        <button
+          type="button"
+          onClick={onExport}
+          className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold hover:bg-surface-2"
+        >
+          <Download className="h-3.5 w-3.5" /> Export CSV
+        </button>
+        <button
+          type="button"
+          onClick={() => fileInput.current?.click()}
+          disabled={importing}
+          className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold hover:bg-surface-2 disabled:opacity-60"
+        >
+          <Upload className="h-3.5 w-3.5" /> {importing ? "Importing…" : "Import CSV"}
+        </button>
+        <input
+          ref={fileInput}
+          type="file"
+          accept=".csv,text/csv"
+          onChange={onImportFile}
+          className="hidden"
+        />
+      </div>
+      <p className="mt-3 text-[11px] text-muted-foreground">
+        CSV headers: date, artist, tour, venue, city, country, rating, genre, notes, ticket_price, status, openers (pipe-separated).
+      </p>
+    </section>
   );
 }
 
