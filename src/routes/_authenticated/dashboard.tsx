@@ -1,6 +1,6 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { cn } from "@/lib/utils";
-import { ArrowUpRight, Clock, Star, TrendingUp, Users } from "lucide-react";
+import { ArrowUpRight, Award, CalendarClock, Clock, Star, TrendingUp, Users } from "lucide-react";
 import {
   genreBreakdown,
   getConcertAge,
@@ -13,6 +13,7 @@ import {
   useConcerts,
   useProfile,
 } from "@/lib/concerts";
+import { computeBadges, onThisDay } from "@/lib/badges";
 import { useFriendships } from "@/lib/friends";
 import { useConcertMedia, useSignedMediaUrl, type ConcertMediaItem } from "@/lib/concert-media";
 
