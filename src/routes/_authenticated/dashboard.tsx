@@ -62,6 +62,8 @@ function Dashboard() {
   const yearArtists = new Set(inYear.map((c) => c.artist)).size;
   const yearCities = new Set(inYear.map((c) => c.city)).size;
   const streak = monthlyStreak(shows);
+  const badges = computeBadges(concerts);
+  const onThisDayShows = onThisDay(concerts);
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
