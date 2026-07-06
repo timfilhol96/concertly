@@ -23,6 +23,8 @@ import {
   useConcerts,
   type GenreBreakdownItem,
 } from "@/lib/concerts";
+import { spendStats } from "@/lib/badges";
+import type { Concert } from "@/lib/concerts";
 import { useFriendConcerts, useFriendships } from "@/lib/friends";
 
 type Search = { friendId?: string };
