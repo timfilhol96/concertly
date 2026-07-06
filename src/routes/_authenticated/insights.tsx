@@ -378,6 +378,8 @@ function Insights() {
           )}
         </ChartCard>
       </div>
+
+      <SpendSection concerts={concerts} />
     </main>
   );
 }
