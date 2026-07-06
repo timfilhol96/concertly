@@ -275,6 +275,39 @@ function Dashboard() {
             </Link>
           </div>
 
+          <Panel title="Badges">
+            <ul className="grid grid-cols-2 gap-2">
+              {badges.map((b) => (
+                <li
+                  key={b.id}
+                  className={cn(
+                    "flex items-start gap-2 rounded-xl border p-2.5 text-[11px]",
+                    b.earned
+                      ? "border-brand/40 bg-brand/5"
+                      : "border-hairline bg-surface/40 opacity-60",
+                  )}
+                  title={b.description}
+                >
+                  <span className="text-lg leading-none">{b.icon}</span>
+                  <div className="min-w-0">
+                    <p className="truncate font-semibold text-foreground">{b.label}</p>
+                    <p className="truncate text-muted-foreground">
+                      {b.earned ? (
+                        <span className="inline-flex items-center gap-1 text-brand">
+                          <Award className="h-3 w-3" /> Earned
+                        </span>
+                      ) : (
+                        b.progress ?? "Locked"
+                      )}
+                    </p>
+                  </div>
+                </li>
+              ))}
+            </ul>
+          </Panel>
+
+
+
           <Panel title="Top Venues">
             <ul className="space-y-3">
               {topVenues.map((v, i) => (
