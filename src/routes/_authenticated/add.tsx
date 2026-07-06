@@ -779,6 +779,23 @@ function AddShow() {
         onConfirm={performDelete}
         onOpenChange={setConfirmDelete}
       />
+      <ConfirmDialog
+        open={!!duplicateWarn}
+        title="Looks like a duplicate"
+        description={
+          (duplicateWarn?.reason ?? "") + " Add this show anyway?"
+        }
+        confirmLabel="Add anyway"
+        loading={add.isPending}
+        onConfirm={async () => {
+          const p = duplicateWarn?.payload;
+          setDuplicateWarn(null);
+          if (p) await saveConcert(p);
+        }}
+        onOpenChange={(o) => {
+          if (!o) setDuplicateWarn(null);
+        }}
+      />
     </main>
 
   );
