@@ -461,3 +461,69 @@ function ChartCard({
     </section>
   );
 }
+
+function SpendSection({ concerts }: { concerts: Concert[] }) {
+  const s = spendStats(concerts);
+  if (s.count === 0) return null;
+  const fmt = (n: number) =>
+    n.toLocaleString(undefined, { style: "currency", currency: "USD", maximumFractionDigits: 0 });
+  const maxYear = s.perYear.reduce((m, y) => Math.max(m, y.total), 0);
+  return (
+    <section className="mt-10 rounded-3xl border border-hairline bg-card p-6 md:p-8">
+      <div className="mb-6 flex items-end justify-between">
+        <div>
+          <h2 className="font-display text-2xl font-extrabold">Spend</h2>
+          <p className="text-xs text-muted-foreground">
+            Based on {s.count} show{s.count === 1 ? "" : "s"} with a ticket price logged.
+          </p>
+        </div>
+      </div>
+      <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+        <SpendStat label="Total spent" value={fmt(s.total)} />
+        <SpendStat label="This year" value={fmt(s.thisYear)} />
+        <SpendStat label="Avg / show" value={fmt(s.avg)} />
+        <SpendStat
+          label="Most expensive"
+          value={s.mostExpensive ? fmt(s.mostExpensive.ticketPrice ?? 0) : "—"}
+          sub={s.mostExpensive?.artist}
+        />
+      </div>
+      {s.perYear.length > 0 && (
+        <div className="mt-8">
+          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            By year
+          </p>
+          <ul className="space-y-2.5">
+            {s.perYear.map((y) => {
+              const pct = maxYear ? (y.total / maxYear) * 100 : 0;
+              return (
+                <li key={y.year}>
+                  <div className="mb-1 flex items-center justify-between text-xs">
+                    <span className="font-medium">{y.year}</span>
+                    <span className="font-mono text-muted-foreground">{fmt(y.total)}</span>
+                  </div>
+                  <div className="h-2 overflow-hidden rounded-full bg-surface-2">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-brand to-pink"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
+    </section>
+  );
+}
+
+function SpendStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
+  return (
+    <div className="rounded-2xl border border-hairline bg-surface p-4">
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="mt-1.5 font-display text-2xl font-extrabold">{value}</p>
+      {sub && <p className="mt-1 truncate text-[11px] text-muted-foreground">{sub}</p>}
+    </div>
+  );
+}
