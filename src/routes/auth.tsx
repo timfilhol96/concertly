@@ -6,6 +6,9 @@ import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/auth")({
   ssr: false,
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign in · Concertly" },
@@ -22,17 +25,25 @@ export const Route = createFileRoute("/auth")({
 
 function AuthPage() {
   const nav = useNavigate();
+  const { next } = Route.useSearch();
   const [mode, setMode] = useState<"sign-in" | "sign-up" | "forgot-password">("sign-in");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [loading, setLoading] = useState(false);
 
+  const goNext = () => {
+    if (next) window.location.assign(next);
+    else nav({ to: "/dashboard" });
+  };
+  const returnUrl = () => (next ? `${window.location.origin}${next}` : window.location.origin);
+
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {
-      if (data.session) nav({ to: "/dashboard" });
+      if (data.session) goNext();
     });
-  }, [nav]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -50,17 +61,17 @@ function AuthPage() {
           email,
           password,
           options: {
-            emailRedirectTo: window.location.origin,
+            emailRedirectTo: returnUrl(),
             data: { display_name: displayName || email.split("@")[0] },
           },
         });
         if (error) throw error;
         toast.success("Welcome to Concertly 🎟️", { description: "Your account is ready." });
-        nav({ to: "/dashboard" });
+        goNext();
       } else {
         const { error } = await supabase.auth.signInWithPassword({ email, password });
         if (error) throw error;
-        nav({ to: "/dashboard" });
+        goNext();
       }
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Something went wrong");
@@ -72,7 +83,7 @@ function AuthPage() {
   async function signInWithGoogle() {
     setLoading(true);
     const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
+      redirect_uri: returnUrl(),
     });
     if (result.error) {
       toast.error("Google sign-in failed");
@@ -80,7 +91,7 @@ function AuthPage() {
       return;
     }
     if (result.redirected) return;
-    nav({ to: "/dashboard" });
+    goNext();
   }
 
   return (

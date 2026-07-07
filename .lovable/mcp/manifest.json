@@ -1,0 +1,171 @@
+{
+  "version": 1,
+  "sdk_version": "0.20.0",
+  "path": "/mcp",
+  "auth": {
+    "type": "oauth",
+    "issuer": "https://awprrewjdtxuhmehsflu.supabase.co/auth/v1",
+    "accepted_audiences": [
+      "authenticated"
+    ]
+  },
+  "mcp": {
+    "server": {
+      "name": "concertly-mcp",
+      "version": "0.1.0",
+      "title": "Concertly"
+    },
+    "tools": [
+      {
+        "name": "list_concerts",
+        "title": "List concerts",
+        "description": "List the signed-in user's logged concerts, most recent first. Optionally filter by status (attended, upcoming, wishlist).",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "status": {
+              "type": "string",
+              "enum": [
+                "attended",
+                "upcoming",
+                "wishlist"
+              ],
+              "description": "Filter by concert status."
+            },
+            "limit": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "description": "Max rows to return. Defaults to 50."
+            }
+          },
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_concert",
+        "title": "Get concert",
+        "description": "Get full details for one concert by id, including setlist and openers.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "id": {
+              "type": "string",
+              "format": "uuid",
+              "description": "Concert id."
+            }
+          },
+          "required": [
+            "id"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "create_concert",
+        "title": "Log a concert",
+        "description": "Insert a new concert into the signed-in user's log.",
+        "annotations": {
+          "readOnlyHint": false,
+          "destructiveHint": false,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "artist": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Headlining artist."
+            },
+            "venue": {
+              "type": "string",
+              "minLength": 1,
+              "description": "Venue name."
+            },
+            "city": {
+              "type": "string",
+              "minLength": 1,
+              "description": "City."
+            },
+            "country": {
+              "type": "string",
+              "description": "Country."
+            },
+            "date": {
+              "type": "string",
+              "description": "Show date in YYYY-MM-DD."
+            },
+            "status": {
+              "type": "string",
+              "enum": [
+                "attended",
+                "upcoming",
+                "wishlist"
+              ],
+              "description": "Defaults to attended."
+            },
+            "rating": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 5,
+              "description": "Rating 0-5."
+            },
+            "tour": {
+              "type": "string"
+            },
+            "genre": {
+              "type": "string"
+            },
+            "ticket_price": {
+              "type": "number",
+              "minimum": 0
+            },
+            "notes": {
+              "type": "string"
+            }
+          },
+          "required": [
+            "artist",
+            "venue",
+            "city",
+            "date"
+          ],
+          "additionalProperties": false,
+          "$schema": "http://json-schema.org/draft-07/schema#"
+        },
+        "outputSchema": null
+      },
+      {
+        "name": "get_stats",
+        "title": "Concert stats",
+        "description": "Summary stats for the signed-in user: totals, top artists, top venues, top cities across attended shows.",
+        "annotations": {
+          "readOnlyHint": true,
+          "idempotentHint": true,
+          "openWorldHint": false
+        },
+        "inputSchema": {
+          "$schema": "http://json-schema.org/draft-07/schema#",
+          "type": "object",
+          "properties": {}
+        },
+        "outputSchema": null
+      }
+    ]
+  }
+}
