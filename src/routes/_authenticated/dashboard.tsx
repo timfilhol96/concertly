@@ -13,7 +13,7 @@ import {
   useConcerts,
   useProfile,
 } from "@/lib/concerts";
-import { computeBadges, onThisDay, type Badge } from "@/lib/badges";
+import { computeBadges, onThisDay } from "@/lib/badges";
 import { useFriendships } from "@/lib/friends";
 import { useConcertMedia, useSignedMediaUrl, type ConcertMediaItem } from "@/lib/concert-media";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
