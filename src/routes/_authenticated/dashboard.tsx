@@ -277,34 +277,56 @@ function Dashboard() {
           </div>
 
           <Panel title="Badges">
-            <ul className="grid grid-cols-2 gap-2">
-              {badges.map((b) => (
-                <li
-                  key={b.id}
-                  className={cn(
-                    "flex items-start gap-2 rounded-xl border p-2.5 text-[11px]",
-                    b.earned
-                      ? "border-brand/40 bg-brand/5"
-                      : "border-hairline bg-surface/40 opacity-60",
-                  )}
-                  title={b.description}
-                >
-                  <span className="text-lg leading-none">{b.icon}</span>
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-foreground">{b.label}</p>
-                    <p className="truncate text-muted-foreground">
-                      {b.earned ? (
-                        <span className="inline-flex items-center gap-1 text-brand">
-                          <Award className="h-3 w-3" /> Earned
-                        </span>
-                      ) : (
-                        b.progress ?? "Locked"
-                      )}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <TooltipProvider delayDuration={150}>
+              <ul className="grid grid-cols-2 gap-2">
+                {badges.map((b) => (
+                  <Tooltip key={b.id}>
+                    <TooltipTrigger asChild>
+                      <li
+                        className={cn(
+                          "flex cursor-default items-start gap-2 rounded-xl border p-2.5 text-[11px]",
+                          b.earned
+                            ? "border-brand/40 bg-brand/5"
+                            : "border-hairline bg-surface/40 opacity-60",
+                        )}
+                      >
+                        <span className="text-lg leading-none">{b.icon}</span>
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-foreground">{b.label}</p>
+                          <p className="truncate text-muted-foreground">
+                            {b.earned ? (
+                              <span className="inline-flex items-center gap-1 text-brand">
+                                <Award className="h-3 w-3" /> Earned
+                              </span>
+                            ) : (
+                              b.progress ?? "Locked"
+                            )}
+                          </p>
+                        </div>
+                      </li>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[220px] space-y-1 p-3">
+                      <p className="flex items-center gap-1.5 font-display text-sm font-bold">
+                        <span>{b.icon}</span>
+                        <span>{b.label}</span>
+                      </p>
+                      <p className="text-xs leading-relaxed text-primary-foreground/80">
+                        {b.description}
+                      </p>
+                      <p className="text-[11px] font-semibold text-primary-foreground/90">
+                        {b.earned ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Award className="h-3 w-3" /> Earned
+                          </span>
+                        ) : (
+                          `${b.value} of ${b.target} ${b.unit}`
+                        )}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </ul>
+            </TooltipProvider>
           </Panel>
 
 
