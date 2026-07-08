@@ -10,6 +10,9 @@ export type Badge = {
   icon: string; // emoji — matches the app's light-hearted card treatments
   earned: boolean;
   progress?: string; // e.g. "7 / 10"
+  value: number;
+  target: number;
+  unit: string;
 };
 
 function milestone(
@@ -21,13 +24,17 @@ function milestone(
   singular: string,
   plural = singular + "s",
 ): Badge {
+  const unit = target === 1 ? singular : plural;
   return {
     id,
     icon,
     label,
-    description: `Reach ${target} ${target === 1 ? singular : plural}.`,
+    description: `Reach ${target} ${unit}.`,
     earned: value >= target,
     progress: value >= target ? undefined : `${value} / ${target}`,
+    value,
+    target,
+    unit,
   };
 }
 
