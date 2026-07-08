@@ -1,7 +1,14 @@
 // Badges — pure derivations from a user's concert list.
 // Milestone/count based; nothing here writes to the database.
 
-import { attendedOnly, genreBreakdown, monthlyStreak, rankBy, uniqueShows, type Concert } from "@/lib/concerts";
+import {
+  attendedOnly,
+  genreBreakdown,
+  monthlyStreak,
+  rankBy,
+  uniqueShows,
+  type Concert,
+} from "@/lib/concerts";
 
 export type Badge = {
   id: string;
@@ -59,7 +66,15 @@ export function computeBadges(list: Concert[]): Badge[] {
     milestone("countries-5", "🌍", "Passport", countries, 5, "country", "countries"),
     milestone("genres-6", "🎧", "Genre Explorer", genres, 6, "genre"),
     milestone("streak-6", "📅", "Six-Month Streak", streak, 6, "month"),
-    milestone("superfan", "⭐", "Superfan", topArtistCount, 5, "show of one artist", "shows of one artist"),
+    milestone(
+      "superfan",
+      "⭐",
+      "Superfan",
+      topArtistCount,
+      5,
+      "show of one artist",
+      "shows of one artist",
+    ),
   ];
 }
 
