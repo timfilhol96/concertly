@@ -16,6 +16,7 @@ import {
 import { computeBadges, onThisDay } from "@/lib/badges";
 import { useFriendships } from "@/lib/friends";
 import { useConcertMedia, useSignedMediaUrl, type ConcertMediaItem } from "@/lib/concert-media";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -69,13 +70,16 @@ function Dashboard() {
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
       <div className="mb-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
         <div className="animate-reveal">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Welcome back</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
+            Welcome back
+          </p>
           <h1 className="mt-1 font-display text-4xl font-extrabold tracking-tight md:text-6xl">
             Hello, {(profile?.displayName ?? "friend").split(" ")[0]}.
           </h1>
           <p className="mt-3 text-muted-foreground md:text-lg">
-            You've seen <span className="font-semibold text-foreground">{yearArtists} artists</span> across{" "}
-            <span className="font-semibold text-foreground">{yearCities} cities</span> in {YEAR}.
+            You've seen <span className="font-semibold text-foreground">{yearArtists} artists</span>{" "}
+            across <span className="font-semibold text-foreground">{yearCities} cities</span> in{" "}
+            {YEAR}.
           </p>
         </div>
         <div className="grid grid-cols-3 gap-3 animate-reveal">
@@ -85,20 +89,26 @@ function Dashboard() {
         </div>
       </div>
 
-
       <div className="mb-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:grid-cols-5">
         <BigStat label={`Shows in ${YEAR}`} value={yearShows} sub={`${showStats.total} all-time`} />
         <BigStat label="Unique artists" value={showStats.uniqueArtists} sub="across all shows" />
-        <BigStat label="Cities visited" value={showStats.uniqueCities} sub={`${showStats.uniqueCountries} countries`} />
+        <BigStat
+          label="Cities visited"
+          value={showStats.uniqueCities}
+          sub={`${showStats.uniqueCountries} countries`}
+        />
         <BigStat label="Monthly streak" value={streak.current} sub={`longest ${streak.longest}`} />
 
         <Link to="/friends" className="bg-card p-6 transition-colors hover:bg-surface-2 md:p-8">
           <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
             <Users className="h-3 w-3" /> Friends
           </p>
-          <p className="mt-2 font-display text-4xl font-extrabold md:text-5xl">{friendCount.toLocaleString()}</p>
+          <p className="mt-2 font-display text-4xl font-extrabold md:text-5xl">
+            {friendCount.toLocaleString()}
+          </p>
           <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
-            <ArrowUpRight className="h-3 w-3" /> {friendCount === 0 ? "add your first" : "manage friends"}
+            <ArrowUpRight className="h-3 w-3" />{" "}
+            {friendCount === 0 ? "add your first" : "manage friends"}
           </p>
         </Link>
       </div>
@@ -108,7 +118,9 @@ function Dashboard() {
           <div className="mb-8 flex items-center justify-between">
             <div>
               <h2 className="font-display text-2xl font-extrabold">Yearly Attendance</h2>
-              <p className="text-xs text-muted-foreground">{yearShows} shows in {YEAR} · click a month to see them</p>
+              <p className="text-xs text-muted-foreground">
+                {yearShows} shows in {YEAR} · click a month to see them
+              </p>
             </div>
           </div>
           <div className="grid grid-cols-6 gap-3 md:grid-cols-12">
@@ -121,7 +133,9 @@ function Dashboard() {
                 className={`group flex aspect-square flex-col items-center justify-center rounded-xl ${heatColor(m.count, maxMonth)} transition-transform hover:scale-105 disabled:cursor-default disabled:hover:scale-100`}
                 title={`${m.label} ${YEAR} — ${m.count} show${m.count === 1 ? "" : "s"}`}
               >
-                <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/70">{m.label}</span>
+                <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/70">
+                  {m.label}
+                </span>
                 <span className="font-display text-xl font-extrabold">{m.count}</span>
               </button>
             ))}
@@ -147,41 +161,57 @@ function Dashboard() {
             {topArtists[0] ? (
               <div className="mt-6 flex items-center gap-4">
                 {(() => {
-                  const c = concerts.find((c) => c.artist === topArtists[0].name && c.artistImageUrl);
+                  const c = concerts.find(
+                    (c) => c.artist === topArtists[0].name && c.artistImageUrl,
+                  );
                   return c?.artistImageUrl ? (
-                    <img src={c.artistImageUrl} alt={topArtists[0].name} className="h-16 w-16 flex-shrink-0 rounded-2xl object-cover" />
+                    <img
+                      src={c.artistImageUrl}
+                      alt={topArtists[0].name}
+                      className="h-16 w-16 flex-shrink-0 rounded-2xl object-cover"
+                    />
                   ) : (
                     <div className="grid h-16 w-16 flex-shrink-0 place-items-center rounded-2xl bg-gradient-to-br from-brand to-pink font-display text-2xl font-black text-brand-foreground">
-                      {topArtists[0].name.split(" ").map((w) => w[0]).join("").slice(0, 2)}
+                      {topArtists[0].name
+                        .split(" ")
+                        .map((w) => w[0])
+                        .join("")
+                        .slice(0, 2)}
                     </div>
                   );
                 })()}
                 <div>
                   <h3 className="text-xl font-bold leading-tight">{topArtists[0].name}</h3>
-                  <p className="text-sm text-muted-foreground">{topArtists[0].count} shows attended</p>
+                  <p className="text-sm text-muted-foreground">
+                    {topArtists[0].count} shows attended
+                  </p>
                 </div>
               </div>
             ) : (
               <p className="mt-6 text-sm text-muted-foreground">Log a show to find out.</p>
             )}
           </div>
-          {topArtists[0] && showStats.total > 0 && (() => {
-            const share = Math.min(100, Math.round((topArtists[0].count / showStats.total) * 100));
-            return (
-              <div className="mt-8">
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
-                  <div
-                    className="h-full rounded-full bg-gradient-to-r from-brand to-pink transition-all"
-                    style={{ width: `${share}%` }}
-                  />
+          {topArtists[0] &&
+            showStats.total > 0 &&
+            (() => {
+              const share = Math.min(
+                100,
+                Math.round((topArtists[0].count / showStats.total) * 100),
+              );
+              return (
+                <div className="mt-8">
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-surface-2">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-brand to-pink transition-all"
+                      style={{ width: `${share}%` }}
+                    />
+                  </div>
+                  <p className="mt-2 text-[11px] text-muted-foreground">
+                    {share}% of your logged shows
+                  </p>
                 </div>
-                <p className="mt-2 text-[11px] text-muted-foreground">
-                  {share}% of your logged shows
-                </p>
-              </div>
-            );
-          })()}
-
+              );
+            })()}
         </div>
       </div>
 
@@ -189,7 +219,9 @@ function Dashboard() {
         <div className="mb-10 rounded-3xl border border-hairline bg-card p-6 md:p-8">
           <div className="mb-4 flex items-center gap-2">
             <CalendarClock className="h-4 w-4 text-brand" />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">On this day</p>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              On this day
+            </p>
           </div>
           <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-3">
             {onThisDayShows.slice(0, 6).map((c) => {
@@ -205,7 +237,9 @@ function Dashboard() {
                     {yearsAgo} year{yearsAgo === 1 ? "" : "s"} ago
                   </p>
                   <h4 className="mt-1 truncate font-display text-lg font-extrabold">{c.artist}</h4>
-                  <p className="mt-0.5 truncate text-xs text-muted-foreground">{c.venue} · {c.city}</p>
+                  <p className="mt-0.5 truncate text-xs text-muted-foreground">
+                    {c.venue} · {c.city}
+                  </p>
                 </Link>
               );
             })}
@@ -252,7 +286,13 @@ function Dashboard() {
                       className="h-full rounded-full"
                       style={{
                         width: `${g.pct}%`,
-                        backgroundColor: ["var(--brand)", "var(--teal)", "var(--pink)", "var(--chart-4)", "var(--chart-5)"][i % 5],
+                        backgroundColor: [
+                          "var(--brand)",
+                          "var(--teal)",
+                          "var(--pink)",
+                          "var(--chart-4)",
+                          "var(--chart-5)",
+                        ][i % 5],
                       }}
                     />
                   </div>
@@ -262,8 +302,12 @@ function Dashboard() {
           </Panel>
 
           <div className="rounded-2xl border border-brand/30 bg-gradient-to-br from-brand/20 via-transparent to-teal/10 p-6">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-brand">{YEAR} Wrapped</p>
-            <h4 className="mt-1 font-display text-xl font-extrabold">Your year in concerts is ready.</h4>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-brand">
+              {YEAR} Wrapped
+            </p>
+            <h4 className="mt-1 font-display text-xl font-extrabold">
+              Your year in concerts is ready.
+            </h4>
             <p className="mt-2 text-xs text-muted-foreground">
               {yearShows} shows · {yearArtists} artists.
             </p>
@@ -276,43 +320,65 @@ function Dashboard() {
           </div>
 
           <Panel title="Badges">
-            <ul className="grid grid-cols-2 gap-2">
-              {badges.map((b) => (
-                <li
-                  key={b.id}
-                  className={cn(
-                    "flex items-start gap-2 rounded-xl border p-2.5 text-[11px]",
-                    b.earned
-                      ? "border-brand/40 bg-brand/5"
-                      : "border-hairline bg-surface/40 opacity-60",
-                  )}
-                  title={b.description}
-                >
-                  <span className="text-lg leading-none">{b.icon}</span>
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold text-foreground">{b.label}</p>
-                    <p className="truncate text-muted-foreground">
-                      {b.earned ? (
-                        <span className="inline-flex items-center gap-1 text-brand">
-                          <Award className="h-3 w-3" /> Earned
-                        </span>
-                      ) : (
-                        b.progress ?? "Locked"
-                      )}
-                    </p>
-                  </div>
-                </li>
-              ))}
-            </ul>
+            <TooltipProvider delayDuration={150}>
+              <ul className="grid grid-cols-2 gap-2">
+                {badges.map((b) => (
+                  <Tooltip key={b.id}>
+                    <TooltipTrigger asChild>
+                      <li
+                        className={cn(
+                          "flex cursor-default items-start gap-2 rounded-xl border p-2.5 text-[11px]",
+                          b.earned
+                            ? "border-brand/40 bg-brand/5"
+                            : "border-hairline bg-surface/40 opacity-60",
+                        )}
+                      >
+                        <span className="text-lg leading-none">{b.icon}</span>
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-foreground">{b.label}</p>
+                          <p className="truncate text-muted-foreground">
+                            {b.earned ? (
+                              <span className="inline-flex items-center gap-1 text-brand">
+                                <Award className="h-3 w-3" /> Earned
+                              </span>
+                            ) : (
+                              (b.progress ?? "Locked")
+                            )}
+                          </p>
+                        </div>
+                      </li>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[220px] space-y-1 p-3">
+                      <p className="flex items-center gap-1.5 font-display text-sm font-bold">
+                        <span>{b.icon}</span>
+                        <span>{b.label}</span>
+                      </p>
+                      <p className="text-xs leading-relaxed text-primary-foreground/80">
+                        {b.description}
+                      </p>
+                      <p className="text-[11px] font-semibold text-primary-foreground/90">
+                        {b.earned ? (
+                          <span className="inline-flex items-center gap-1">
+                            <Award className="h-3 w-3" /> Earned
+                          </span>
+                        ) : (
+                          `${b.value} of ${b.target} ${b.unit}`
+                        )}
+                      </p>
+                    </TooltipContent>
+                  </Tooltip>
+                ))}
+              </ul>
+            </TooltipProvider>
           </Panel>
-
-
 
           <Panel title="Top Venues">
             <ul className="space-y-3">
               {topVenues.map((v, i) => (
                 <li key={v.name} className="flex items-center gap-3">
-                  <span className="w-5 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="w-5 text-xs font-bold text-muted-foreground">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
                   <span className="truncate text-sm">{v.name}</span>
                   <span className="ml-auto text-[10px] text-muted-foreground">{v.count} shows</span>
                 </li>
@@ -324,7 +390,9 @@ function Dashboard() {
             <ul className="space-y-3">
               {topCities.map((v, i) => (
                 <li key={v.name} className="flex items-center gap-3">
-                  <span className="w-5 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+                  <span className="w-5 text-xs font-bold text-muted-foreground">
+                    {String(i + 1).padStart(2, "0")}
+                  </span>
                   <span className="truncate text-sm">{v.name}</span>
                   <span className="ml-auto text-[10px] text-muted-foreground">{v.count} shows</span>
                 </li>
@@ -361,7 +429,8 @@ function EmptyState({ name }: { name: string }) {
         Hi {name.split(" ")[0]}. <span className="gradient-text">Log your first show.</span>
       </h1>
       <p className="mt-4 max-w-md text-muted-foreground">
-        The archive starts the moment you add a gig. Stats, heatmaps and your year-in-review unlock automatically.
+        The archive starts the moment you add a gig. Stats, heatmaps and your year-in-review unlock
+        automatically.
       </p>
       <Link
         to="/add"
@@ -373,7 +442,15 @@ function EmptyState({ name }: { name: string }) {
   );
 }
 
-function Stat({ label, value, accent }: { label: string; value: string; accent: "brand" | "teal" | "pink" }) {
+function Stat({
+  label,
+  value,
+  accent,
+}: {
+  label: string;
+  value: string;
+  accent: "brand" | "teal" | "pink";
+}) {
   const color = accent === "brand" ? "text-brand" : accent === "teal" ? "text-teal" : "text-pink";
   return (
     <div className="rounded-2xl border border-hairline bg-surface/60 p-4">
@@ -388,8 +465,12 @@ function Stat({ label, value, accent }: { label: string; value: string; accent: 
 function BigStat({ label, value, sub }: { label: string; value: number; sub?: string }) {
   return (
     <div className="bg-card p-6 md:p-8">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
-      <p className="mt-2 font-display text-4xl font-extrabold md:text-5xl">{value.toLocaleString()}</p>
+      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+        {label}
+      </p>
+      <p className="mt-2 font-display text-4xl font-extrabold md:text-5xl">
+        {value.toLocaleString()}
+      </p>
       {sub && (
         <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
           <TrendingUp className="h-3 w-3" /> {sub}
@@ -402,16 +483,36 @@ function BigStat({ label, value, sub }: { label: string; value: number; sub?: st
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
-      <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">{title}</h3>
+      <h3 className="mb-4 text-xs font-bold uppercase tracking-widest text-muted-foreground">
+        {title}
+      </h3>
       {children}
     </div>
   );
 }
 
 export function ConcertCard({
-  artist, tour, date, venue, city, rating, notes, imageUrl, concertId, isReadOnly,
+  artist,
+  tour,
+  date,
+  venue,
+  city,
+  rating,
+  notes,
+  imageUrl,
+  concertId,
+  isReadOnly,
 }: {
-  artist: string; tour?: string; date: string; venue: string; city: string; rating: number; notes?: string; imageUrl?: string; concertId?: string; isReadOnly?: boolean;
+  artist: string;
+  tour?: string;
+  date: string;
+  venue: string;
+  city: string;
+  rating: number;
+  notes?: string;
+  imageUrl?: string;
+  concertId?: string;
+  isReadOnly?: boolean;
 }) {
   const d = new Date(date);
   const { data: media } = useConcertMedia(concertId);
@@ -419,7 +520,12 @@ export function ConcertCard({
   const thumbUrl = useSignedMediaUrl(firstImage?.path);
   const dateLabel = d.toLocaleDateString("en", { day: "2-digit", month: "short", year: "numeric" });
   return (
-    <article className={cn("group rounded-2xl border border-hairline bg-card/60 p-5", !isReadOnly && "transition-colors hover:border-brand/30")}>
+    <article
+      className={cn(
+        "group rounded-2xl border border-hairline bg-card/60 p-5",
+        !isReadOnly && "transition-colors hover:border-brand/30",
+      )}
+    >
       <div className="flex flex-col gap-5 md:flex-row">
         <div className="grid w-full flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-surface-2 to-teal/20 md:h-32 md:w-32">
           {thumbUrl ? (
@@ -442,7 +548,9 @@ export function ConcertCard({
                 {artist}
                 {tour && <span className="text-muted-foreground"> · {tour}</span>}
               </h4>
-              <p className="mt-1 text-sm text-muted-foreground">{venue} · {city}</p>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {venue} · {city}
+              </p>
               <p className="mt-1 font-mono text-[11px] uppercase tracking-widest text-muted-foreground">
                 {dateLabel}
               </p>
@@ -484,4 +592,3 @@ function MediaThumb({ path, kind }: { path: string; kind: "image" | "video" }) {
   }
   return <img src={url} alt="" className="h-12 w-12 rounded-md object-cover" />;
 }
-

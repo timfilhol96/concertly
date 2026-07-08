@@ -1,7 +1,14 @@
 // Badges — pure derivations from a user's concert list.
 // Milestone/count based; nothing here writes to the database.
 
-import { attendedOnly, genreBreakdown, monthlyStreak, rankBy, uniqueShows, type Concert } from "@/lib/concerts";
+import {
+  attendedOnly,
+  genreBreakdown,
+  monthlyStreak,
+  rankBy,
+  uniqueShows,
+  type Concert,
+} from "@/lib/concerts";
 
 export type Badge = {
   id: string;
@@ -10,6 +17,9 @@ export type Badge = {
   icon: string; // emoji — matches the app's light-hearted card treatments
   earned: boolean;
   progress?: string; // e.g. "7 / 10"
+  value: number;
+  target: number;
+  unit: string;
 };
 
 function milestone(
@@ -21,13 +31,17 @@ function milestone(
   singular: string,
   plural = singular + "s",
 ): Badge {
+  const unit = target === 1 ? singular : plural;
   return {
     id,
     icon,
     label,
-    description: `Reach ${target} ${target === 1 ? singular : plural}.`,
+    description: `Reach ${target} ${unit}.`,
     earned: value >= target,
     progress: value >= target ? undefined : `${value} / ${target}`,
+    value,
+    target,
+    unit,
   };
 }
 
@@ -52,7 +66,15 @@ export function computeBadges(list: Concert[]): Badge[] {
     milestone("countries-5", "🌍", "Passport", countries, 5, "country", "countries"),
     milestone("genres-6", "🎧", "Genre Explorer", genres, 6, "genre"),
     milestone("streak-6", "📅", "Six-Month Streak", streak, 6, "month"),
-    milestone("superfan", "⭐", "Superfan", topArtistCount, 5, "show of one artist", "shows of one artist"),
+    milestone(
+      "superfan",
+      "⭐",
+      "Superfan",
+      topArtistCount,
+      5,
+      "show of one artist",
+      "shows of one artist",
+    ),
   ];
 }
 
