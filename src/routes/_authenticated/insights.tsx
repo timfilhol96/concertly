@@ -85,6 +85,7 @@ function Insights() {
   const topArtists = rankBy(concertsInYear, "artist", 8);
   const topCountries = rankBy(showsInYear, "country", 6);
   const topCities = rankBy(showsInYear, "city", 6);
+  const topVenues = rankBy(showsInYear, "venue", 6);
   const streak = monthlyStreak(shows);
 
   const totalInRange = byMonth.reduce((s, m) => s + m.count, 0);
