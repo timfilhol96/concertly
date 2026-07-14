@@ -380,6 +380,32 @@ function Insights() {
             </ul>
           )}
         </ChartCard>
+
+        <ChartCard className="lg:col-span-2" title="Top venues by shows" subtitle={scopeLabel}>
+          {topVenues.length === 0 ? (
+            <p className="text-sm text-muted-foreground">No venues logged yet.</p>
+          ) : (
+            <ul className="space-y-3">
+              {topVenues.map((v, i) => {
+                const pct = (v.count / (topVenues[0]?.count || 1)) * 100;
+                return (
+                  <li key={v.name}>
+                    <div className="mb-1 flex items-center justify-between text-sm">
+                      <span className="flex items-center gap-3">
+                        <span className="w-6 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
+                        <span>{v.name}</span>
+                      </span>
+                      <span className="font-mono text-xs text-muted-foreground">{v.count}</span>
+                    </div>
+                    <div className="h-2 overflow-hidden rounded-full bg-surface-2">
+                      <div className="h-full rounded-full bg-gradient-to-r from-brand to-teal" style={{ width: `${pct}%` }} />
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          )}
+        </ChartCard>
       </div>
 
       <SpendSection concerts={concerts} />
