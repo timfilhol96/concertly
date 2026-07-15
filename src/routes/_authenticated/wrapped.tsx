@@ -347,13 +347,49 @@ function Wrapped() {
           shows · {artistsThisYear.size} artists · {venuesThisYear.size} venues
         </p>
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Stat label="Cities" value={String(citiesThisYear.size)} />
-          <Stat label="Countries" value={String(countriesThisYear.size)} />
+          <Stat label="Artists" value={String(artistsThisYear.size)} />
+          <Stat label="Venues" value={String(venuesThisYear.size)} />
           <Stat label="Hours lived live" value={String(hoursLive)} />
           <Stat label="Ticket spend" value={moneySpent > 0 ? `$${Math.round(moneySpent).toLocaleString()}` : "—"} />
         </div>
+
+        {genres.length > 0 && (
+          <div className="mt-6">
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Top genres</p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {genres.map((g, i) => (
+                <span
+                  key={g.name}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur"
+                >
+                  <span className="opacity-70">#{i + 1}</span> {g.name}
+                  <span className="opacity-70">· {g.pct}%</span>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {citiesThisYear.size > 0 && (
+          <div className="mt-6">
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
+              Where you went · {citiesThisYear.size} {citiesThisYear.size === 1 ? "city" : "cities"} · {countriesThisYear.size} {countriesThisYear.size === 1 ? "country" : "countries"}
+            </p>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {[...new Map(yearShows.map((c) => [`${c.city}|${c.country ?? ""}`, c])).values()].map((c) => (
+                <span
+                  key={`${c.city}-${c.country ?? ""}`}
+                  className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur"
+                >
+                  <span className="text-sm leading-none">{countryFlag(c.country)}</span> {c.city}
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
         <div className="pointer-events-none absolute -right-10 -top-10 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
       </section>
+
 
       {/* #1s */}
       <Section title="Your #1s">
