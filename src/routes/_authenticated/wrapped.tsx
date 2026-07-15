@@ -430,10 +430,10 @@ function Wrapped() {
             ) : (
               <ol className="mt-4 space-y-3">
                 {genres.map((g, i) => (
-                  <li key={g.name} className="flex items-baseline gap-3">
+                <li key={g.name} className="flex items-baseline gap-3">
                     <span className="font-display text-2xl font-black text-brand">{i + 1}</span>
                     <span className="font-display text-xl font-extrabold">{g.name}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{g.count} shows · {g.pct}%</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{g.count} shows</span>
                   </li>
                 ))}
               </ol>
