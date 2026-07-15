@@ -342,8 +342,10 @@ function Wrapped() {
       {/* HEADLINE */}
       <section className={`relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br ${gradient.cls} ${gradient.text} p-8 md:p-12`}>
         <p className="text-xs font-bold uppercase tracking-widest opacity-80">Your year in numbers</p>
-        <p className="mt-4 font-display text-7xl font-black leading-none md:text-9xl">{yearShows.length}</p>
-        <p className="mt-3 font-display text-2xl font-extrabold md:text-3xl">shows</p>
+        <p className="mt-4 flex items-baseline gap-3 font-display text-7xl font-black leading-none md:text-9xl">
+          {yearShows.length}
+          <span className="font-display text-2xl font-extrabold md:text-3xl">shows</span>
+        </p>
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
           <Stat label="Artists" value={String(artistsThisYear.size)} />
           <Stat label="Venues" value={String(venuesThisYear.size)} />
@@ -372,7 +374,7 @@ function Wrapped() {
           <div className="mt-6">
             <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Top venues</p>
             <div className="mt-2 flex flex-wrap gap-2">
-              {rankBy(yearShows, "venue", 5).map((v, i) => (
+              {rankBy(yearShows, "venue", 3).map((v, i) => (
                 <span
                   key={v.name}
                   className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur"
