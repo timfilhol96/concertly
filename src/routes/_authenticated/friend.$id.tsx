@@ -261,7 +261,7 @@ function FriendDashboard() {
                     <li key={v.name} className="flex items-center gap-3">
                       <span className="w-5 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                       <span className="truncate text-sm">{v.name}</span>
-                      <span className="ml-auto text-[10px] text-muted-foreground">{v.count} shows</span>
+                      <span className="ml-auto text-[10px] text-muted-foreground">{plural(v.count, "show")}</span>
                     </li>
                   ))}
                 </ul>
