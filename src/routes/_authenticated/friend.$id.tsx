@@ -11,6 +11,7 @@ import {
 } from "@/lib/concerts";
 import { useFriendConcerts, useFriendships } from "@/lib/friends";
 import { ConcertCard } from "@/routes/_authenticated/dashboard";
+import { plural } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/friend/$id")({
   head: () => ({ meta: [{ title: "Friend · Concertly" }] }),
