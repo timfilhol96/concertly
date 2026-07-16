@@ -112,8 +112,8 @@ function FriendDashboard() {
           )}
           {list.length > 0 && (
             <p className="mt-3 text-muted-foreground md:text-lg">
-              They've seen <span className="font-semibold text-foreground">{yearArtists} artists</span> across{" "}
-              <span className="font-semibold text-foreground">{yearCities} cities</span> in {YEAR}.
+              They've seen <span className="font-semibold text-foreground">{plural(yearArtists, "artist")}</span> across{" "}
+              <span className="font-semibold text-foreground">{plural(yearCities, "city", "cities")}</span> in {YEAR}.
             </p>
           )}
         </div>
