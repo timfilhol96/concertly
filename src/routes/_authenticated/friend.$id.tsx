@@ -170,7 +170,7 @@ function FriendDashboard() {
                   <div
                     key={m.key}
                     className={`flex aspect-square flex-col items-center justify-center rounded-xl ${heatColor(m.count, maxMonth)}`}
-                    title={`${m.label} ${YEAR} — ${m.count} show${m.count === 1 ? "" : "s"}`}
+                    title={`${m.label} ${YEAR} — ${plural(m.count, "show")}`}
                   >
                     <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/70">{m.label}</span>
                     <span className="font-display text-xl font-extrabold">{m.count}</span>
