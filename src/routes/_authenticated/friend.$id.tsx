@@ -11,6 +11,7 @@ import {
 } from "@/lib/concerts";
 import { useFriendConcerts, useFriendships } from "@/lib/friends";
 import { ConcertCard } from "@/routes/_authenticated/dashboard";
+import { plural } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/friend/$id")({
   head: () => ({ meta: [{ title: "Friend · Concertly" }] }),
@@ -111,8 +112,8 @@ function FriendDashboard() {
           )}
           {list.length > 0 && (
             <p className="mt-3 text-muted-foreground md:text-lg">
-              They've seen <span className="font-semibold text-foreground">{yearArtists} artists</span> across{" "}
-              <span className="font-semibold text-foreground">{yearCities} cities</span> in {YEAR}.
+              They've seen <span className="font-semibold text-foreground">{plural(yearArtists, "artist")}</span> across{" "}
+              <span className="font-semibold text-foreground">{plural(yearCities, "city", "cities")}</span> in {YEAR}.
             </p>
           )}
         </div>
@@ -152,7 +153,7 @@ function FriendDashboard() {
           <div className="mb-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:grid-cols-4">
             <BigStat label={`Shows in ${YEAR}`} value={yearShows} sub={`${showStats.total} all-time`} />
             <BigStat label="Unique artists" value={stats.uniqueArtists} sub="across all shows" />
-            <BigStat label="Cities visited" value={stats.uniqueCities} sub={`${stats.uniqueCountries} countries`} />
+            <BigStat label="Cities visited" value={stats.uniqueCities} sub={plural(stats.uniqueCountries, "country", "countries")} />
             <BigStat label="Monthly streak" value={streak.current} sub={`longest ${streak.longest}`} />
           </div>
 
@@ -161,7 +162,7 @@ function FriendDashboard() {
               <div className="mb-8 flex items-center justify-between">
                 <div>
                   <h2 className="font-display text-2xl font-extrabold">Yearly Attendance</h2>
-                  <p className="text-xs text-muted-foreground">{yearShows} shows in {YEAR}</p>
+                  <p className="text-xs text-muted-foreground">{plural(yearShows, "show")} in {YEAR}</p>
                 </div>
               </div>
               <div className="grid grid-cols-6 gap-3 md:grid-cols-12">
@@ -169,7 +170,7 @@ function FriendDashboard() {
                   <div
                     key={m.key}
                     className={`flex aspect-square flex-col items-center justify-center rounded-xl ${heatColor(m.count, maxMonth)}`}
-                    title={`${m.label} ${YEAR} — ${m.count} show${m.count === 1 ? "" : "s"}`}
+                    title={`${m.label} ${YEAR} — ${plural(m.count, "show")}`}
                   >
                     <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/70">{m.label}</span>
                     <span className="font-display text-xl font-extrabold">{m.count}</span>
@@ -198,7 +199,7 @@ function FriendDashboard() {
                     })()}
                     <div>
                       <h3 className="text-xl font-bold leading-tight">{topArtists[0].name}</h3>
-                      <p className="text-sm text-muted-foreground">{topArtists[0].count} shows attended</p>
+                      <p className="text-sm text-muted-foreground">{plural(topArtists[0].count, "show")} attended</p>
                     </div>
                   </div>
                 ) : (
@@ -260,7 +261,7 @@ function FriendDashboard() {
                     <li key={v.name} className="flex items-center gap-3">
                       <span className="w-5 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                       <span className="truncate text-sm">{v.name}</span>
-                      <span className="ml-auto text-[10px] text-muted-foreground">{v.count} shows</span>
+                      <span className="ml-auto text-[10px] text-muted-foreground">{plural(v.count, "show")}</span>
                     </li>
                   ))}
                 </ul>
@@ -272,7 +273,7 @@ function FriendDashboard() {
                     <li key={v.name} className="flex items-center gap-3">
                       <span className="w-5 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                       <span className="truncate text-sm">{v.name}</span>
-                      <span className="ml-auto text-[10px] text-muted-foreground">{v.count} shows</span>
+                      <span className="ml-auto text-[10px] text-muted-foreground">{plural(v.count, "show")}</span>
                     </li>
                   ))}
                 </ul>

@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import { getPublicWrappedShare } from "@/lib/wrapped-share.functions";
 import type { WrappedSharePayload as SharePayload } from "@/lib/wrapped-share-types";
+import { plural } from "@/lib/utils";
 
 const searchSchema = z.object({
   d: z.string().optional(),
@@ -44,7 +45,7 @@ export const Route = createFileRoute("/w")({
   head: ({ match, loaderData }) => {
     const p = loaderData?.payload ?? decode((match.search as { d?: string }).d);
     const title = p
-      ? `${p.user ?? "A fan"}'s ${p.year} Wrapped · ${p.shows} shows`
+      ? `${p.user ?? "A fan"}'s ${p.year} Wrapped · ${plural(p.shows, "show")}`
       : "Concertly Wrapped";
     return {
       meta: [
@@ -52,7 +53,7 @@ export const Route = createFileRoute("/w")({
         {
           name: "description",
           content: p
-            ? `${p.shows} shows · ${p.artists} artists · ${p.venues} venues · ${p.cities} cities.`
+            ? `${plural(p.shows, "show")} · ${plural(p.artists, "artist")} · ${plural(p.venues, "venue")} · ${plural(p.cities, "city", "cities")}.`
             : "Your year in live music.",
         },
         { property: "og:title", content: title },
@@ -102,12 +103,12 @@ function SharedWrapped() {
         <p className="text-xs font-bold uppercase tracking-widest opacity-80">Year in numbers</p>
         <p className="mt-4 font-display text-7xl font-black leading-none md:text-9xl">{p.shows}</p>
         <p className="mt-3 font-display text-2xl font-extrabold md:text-3xl">
-          shows · {p.artists} artists · {p.venues} venues
+          {p.shows === 1 ? "show" : "shows"} · {plural(p.artists, "artist")} · {plural(p.venues, "venue")}
         </p>
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Stat label="Cities" value={String(p.cities)} />
-          <Stat label="Countries" value={String(p.countries)} />
-          <Stat label="Hours live" value={String(p.hours)} />
+          <Stat label={p.cities === 1 ? "City" : "Cities"} value={String(p.cities)} />
+          <Stat label={p.countries === 1 ? "Country" : "Countries"} value={String(p.countries)} />
+          <Stat label={p.hours === 1 ? "Hour live" : "Hours live"} value={String(p.hours)} />
           <Stat
             label="Ticket spend"
             value={p.ticketSpend && p.ticketSpend > 0 ? `$${Math.round(p.ticketSpend).toLocaleString()}` : "—"}
@@ -120,16 +121,16 @@ function SharedWrapped() {
         <Section title="Your #1s">
           <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
             {p.topVenue && (
-              <Card label="Favorite venue" value={p.topVenue} sub={p.topVenueCount ? `${p.topVenueCount} visits` : ""} tone="brand" />
+              <Card label="Favorite venue" value={p.topVenue} sub={p.topVenueCount ? plural(p.topVenueCount, "visit") : ""} tone="brand" />
             )}
             {p.topCity && (
-              <Card label="Favorite city" value={p.topCity} sub={p.topCityCount ? `${p.topCityCount} shows` : ""} tone="teal" />
+              <Card label="Favorite city" value={p.topCity} sub={p.topCityCount ? plural(p.topCityCount, "show") : ""} tone="teal" />
             )}
             {p.longestShow && (
               <Card
                 label="Longest show"
                 value={p.longestShow.artist}
-                sub={`${p.longestShow.songs} songs · ~${Math.round((p.longestShow.minutes / 60) * 10) / 10}h`}
+                sub={`${plural(p.longestShow.songs, "song")} · ~${Math.round((p.longestShow.minutes / 60) * 10) / 10}h`}
                 tone="pink"
               />
             )}
@@ -149,7 +150,7 @@ function SharedWrapped() {
                       <span className="font-display text-2xl font-black text-brand">{i + 1}</span>
                       <span className="font-display text-xl font-extrabold">{g.name}</span>
                       <span className="ml-auto text-xs text-muted-foreground">
-                        {g.count} shows · {g.pct}%
+                        {plural(g.count, "show")} · {g.pct}%
                       </span>
                     </li>
                   ))}
@@ -183,7 +184,7 @@ function SharedWrapped() {
           {p.newArtists && p.newArtists.length > 0 && (
             <div className="mt-6 rounded-3xl border border-hairline bg-card p-8">
               <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                First time seeing — {p.newArtists.length} new artists
+                First time seeing — {plural(p.newArtists.length, "new artist")}
               </p>
               <div className="mt-4 flex flex-wrap gap-2">
                 {p.newArtists.map((a) => (
@@ -204,7 +205,7 @@ function SharedWrapped() {
               <Card
                 label="Average rating"
                 value={p.avgRating.toFixed(2)}
-                sub={`out of 10 across ${p.totalRated ?? p.shows} shows`}
+                sub={`out of 10 across ${plural(p.totalRated ?? p.shows, "show")}`}
                 tone="brand"
               />
             )}
@@ -227,13 +228,13 @@ function SharedWrapped() {
               <Card label="Concert weekday" value={p.peakWeekday} sub={`a ${p.peakWeekday}-night person`} tone="pink" />
             )}
             {p.peakMonth && (
-              <Card label="Peak month" value={p.peakMonth} sub={p.peakMonthCount ? `${p.peakMonthCount} shows` : ""} tone="brand" />
+              <Card label="Peak month" value={p.peakMonth} sub={p.peakMonthCount ? plural(p.peakMonthCount, "show") : ""} tone="brand" />
             )}
             {typeof p.avgPerMonth === "number" && (
               <Card
                 label="Avg shows / active month"
                 value={p.avgPerMonth.toFixed(1)}
-                sub={p.monthsWithShows ? `across ${p.monthsWithShows} months` : ""}
+                sub={p.monthsWithShows ? `across ${plural(p.monthsWithShows, "month")}` : ""}
                 tone="teal"
               />
             )}

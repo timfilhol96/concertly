@@ -26,6 +26,7 @@ import {
 import { spendStats } from "@/lib/badges";
 import type { Concert } from "@/lib/concerts";
 import { useFriendConcerts, useFriendships } from "@/lib/friends";
+import { plural } from "@/lib/utils";
 
 type Search = { friendId?: string };
 
@@ -156,8 +157,8 @@ function Insights() {
         <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{headerTitle}</h1>
         <p className="mt-2 max-w-2xl text-muted-foreground">{headerSub}</p>
         <p className="mt-3 text-xs text-muted-foreground">
-          <span className="font-semibold text-foreground">{totalShows}</span> show{totalShows === 1 ? "" : "s"} attended ·{" "}
-          <span className="font-semibold text-foreground">{totalArtists}</span> artist{totalArtists === 1 ? "" : "s"} seen
+          <span className="font-semibold text-foreground">{totalShows}</span> {totalShows === 1 ? "show" : "shows"} attended ·{" "}
+          <span className="font-semibold text-foreground">{totalArtists}</span> {totalArtists === 1 ? "artist" : "artists"} seen
         </p>
       </div>
 
@@ -261,7 +262,7 @@ function Insights() {
                 type="button"
                 onClick={() => handleGenreClick(g.name)}
                 className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2 py-1 transition hover:bg-surface-3 hover:ring-1 hover:ring-hairline"
-                title={`${g.artists} artist${g.artists === 1 ? "" : "s"} · ${g.count} show${g.count === 1 ? "" : "s"} · click to view`}
+                title={`${plural(g.artists, "artist")} · ${plural(g.count, "show")} · click to view`}
               >
                 <span className="h-2 w-2 rounded-full" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
                 {g.name} · {g.pct}%
@@ -315,7 +316,7 @@ function Insights() {
                       <span className="w-6 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                       <span className="font-medium">{a.name}</span>
                     </span>
-                    <span className="font-mono text-xs text-muted-foreground">{a.count} shows</span>
+                    <span className="font-mono text-xs text-muted-foreground">{plural(a.count, "show")}</span>
                   </div>
                   <div className="h-3 overflow-hidden rounded-full bg-surface-2">
                     <div className="h-full rounded-full bg-gradient-to-r from-brand to-teal transition-all" style={{ width: `${pct}%` }} />
@@ -429,7 +430,7 @@ function GenreTooltip({ active, payload }: { active?: boolean; payload?: Array<{
     <div className="rounded-xl border border-hairline bg-card px-3 py-2 text-xs shadow-lg">
       <div className="font-semibold">{g.name}</div>
       <div className="text-muted-foreground">
-        {g.artists} artist{g.artists === 1 ? "" : "s"} · {g.count} show{g.count === 1 ? "" : "s"} · {g.pct}%
+        {plural(g.artists, "artist")} · {plural(g.count, "show")} · {g.pct}%
       </div>
     </div>
   );
@@ -501,7 +502,7 @@ function SpendSection({ concerts }: { concerts: Concert[] }) {
         <div>
           <h2 className="font-display text-2xl font-extrabold">Spend</h2>
           <p className="text-xs text-muted-foreground">
-            Based on {s.count} show{s.count === 1 ? "" : "s"} with a ticket price logged.
+            Based on {plural(s.count, "show")} with a ticket price logged.
           </p>
         </div>
       </div>
