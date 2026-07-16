@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { cn } from "@/lib/utils";
+import { cn, plural } from "@/lib/utils";
 import { ArrowUpRight, Award, CalendarClock, Clock, Star, TrendingUp, Users } from "lucide-react";
 import {
   genreBreakdown,
@@ -77,8 +77,8 @@ function Dashboard() {
             Hello, {(profile?.displayName ?? "friend").split(" ")[0]}.
           </h1>
           <p className="mt-3 text-muted-foreground md:text-lg">
-            You've seen <span className="font-semibold text-foreground">{yearArtists} artists</span>{" "}
-            across <span className="font-semibold text-foreground">{yearCities} cities</span> in{" "}
+            You've seen <span className="font-semibold text-foreground">{plural(yearArtists, "artist")}</span>{" "}
+            across <span className="font-semibold text-foreground">{plural(yearCities, "city", "cities")}</span> in{" "}
             {YEAR}.
           </p>
         </div>
@@ -95,7 +95,7 @@ function Dashboard() {
         <BigStat
           label="Cities visited"
           value={showStats.uniqueCities}
-          sub={`${showStats.uniqueCountries} countries`}
+          sub={plural(showStats.uniqueCountries, "country", "countries")}
         />
         <BigStat label="Monthly streak" value={streak.current} sub={`longest ${streak.longest}`} />
 
@@ -119,7 +119,7 @@ function Dashboard() {
             <div>
               <h2 className="font-display text-2xl font-extrabold">Yearly Attendance</h2>
               <p className="text-xs text-muted-foreground">
-                {yearShows} shows in {YEAR} · click a month to see them
+                {plural(yearShows, "show")} in {YEAR} · click a month to see them
               </p>
             </div>
           </div>
@@ -131,7 +131,7 @@ function Dashboard() {
                 disabled={m.count === 0}
                 onClick={() => nav({ to: "/shows", search: { month: m.key } })}
                 className={`group flex aspect-square flex-col items-center justify-center rounded-xl ${heatColor(m.count, maxMonth)} transition-transform hover:scale-105 disabled:cursor-default disabled:hover:scale-100`}
-                title={`${m.label} ${YEAR} — ${m.count} show${m.count === 1 ? "" : "s"}`}
+                title={`${m.label} ${YEAR} — ${plural(m.count, "show")}`}
               >
                 <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/70">
                   {m.label}
@@ -183,7 +183,7 @@ function Dashboard() {
                 <div>
                   <h3 className="text-xl font-bold leading-tight">{topArtists[0].name}</h3>
                   <p className="text-sm text-muted-foreground">
-                    {topArtists[0].count} shows attended
+                    {plural(topArtists[0].count, "show")} attended
                   </p>
                 </div>
               </div>
@@ -234,7 +234,7 @@ function Dashboard() {
                   className="rounded-2xl border border-hairline bg-surface p-4 transition-colors hover:border-brand/40"
                 >
                   <p className="text-[10px] font-bold uppercase tracking-widest text-brand">
-                    {yearsAgo} year{yearsAgo === 1 ? "" : "s"} ago
+                    {plural(yearsAgo, "year")} ago
                   </p>
                   <h4 className="mt-1 truncate font-display text-lg font-extrabold">{c.artist}</h4>
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">
@@ -309,7 +309,7 @@ function Dashboard() {
               Your year in concerts is ready.
             </h4>
             <p className="mt-2 text-xs text-muted-foreground">
-              {yearShows} shows · {yearArtists} artists.
+              {plural(yearShows, "show")} · {plural(yearArtists, "artist")}.
             </p>
             <Link
               to="/wrapped"
@@ -380,7 +380,7 @@ function Dashboard() {
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="truncate text-sm">{v.name}</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground">{v.count} shows</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground">{plural(v.count, "show")}</span>
                 </li>
               ))}
             </ul>
@@ -394,7 +394,7 @@ function Dashboard() {
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="truncate text-sm">{v.name}</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground">{v.count} shows</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground">{plural(v.count, "show")}</span>
                 </li>
               ))}
             </ul>

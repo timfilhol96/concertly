@@ -20,6 +20,7 @@ import {
   useProfile,
   type Concert,
 } from "@/lib/concerts";
+import { plural } from "@/lib/utils";
 import { createWrappedShare } from "@/lib/wrapped-share";
 import type { WrappedSharePayload } from "@/lib/wrapped-share-types";
 
@@ -231,7 +232,7 @@ function Wrapped() {
                   monthsWithShows,
                 };
                 const origin = typeof window !== "undefined" ? window.location.origin : "";
-                const text = `My ${YEAR} Concertly Wrapped: ${yearShows.length} shows · ${artistsThisYear.size} artists · ${venuesThisYear.size} venues · ${citiesThisYear.size} cities · ${hoursLive}h live.`;
+                const text = `My ${YEAR} Concertly Wrapped: ${plural(yearShows.length, "show")} · ${plural(artistsThisYear.size, "artist")} · ${plural(venuesThisYear.size, "venue")} · ${plural(citiesThisYear.size, "city", "cities")} · ${hoursLive}h live.`;
                 const getShareUrl = async () => {
                   const id = await createWrappedShare(sharePayload, gradientId);
                   return `${origin}/w?id=${id}`;
@@ -344,12 +345,12 @@ function Wrapped() {
         <p className="text-xs font-bold uppercase tracking-widest opacity-80">Your year in numbers</p>
         <p className="mt-4 flex items-baseline gap-3 font-display text-7xl font-black leading-none md:text-9xl">
           {yearShows.length}
-          <span className="font-display text-2xl font-extrabold md:text-3xl">shows</span>
+          <span className="font-display text-2xl font-extrabold md:text-3xl">{yearShows.length === 1 ? "show" : "shows"}</span>
         </p>
         <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Stat label="Artists" value={String(artistsThisYear.size)} />
-          <Stat label="Venues" value={String(venuesThisYear.size)} />
-          <Stat label="Hours lived live" value={String(hoursLive)} />
+          <Stat label={artistsThisYear.size === 1 ? "Artist" : "Artists"} value={String(artistsThisYear.size)} />
+          <Stat label={venuesThisYear.size === 1 ? "Venue" : "Venues"} value={String(venuesThisYear.size)} />
+          <Stat label={hoursLive === 1 ? "Hour lived live" : "Hours lived live"} value={String(hoursLive)} />
           <Stat label="Ticket spend" value={moneySpent > 0 ? `$${Math.round(moneySpent).toLocaleString()}` : "—"} />
         </div>
 
@@ -363,7 +364,7 @@ function Wrapped() {
                   className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur"
                 >
                   <span className="opacity-70">#{i + 1}</span> {g.name}
-                  <span className="opacity-70">· {g.count} shows</span>
+                  <span className="opacity-70">· {plural(g.count, "show")}</span>
                 </span>
               ))}
             </div>
@@ -380,7 +381,7 @@ function Wrapped() {
                   className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur"
                 >
                   <span className="opacity-70">#{i + 1}</span> {v.name}
-                  <span className="opacity-70">· {v.count} {v.count === 1 ? "show" : "shows"}</span>
+                  <span className="opacity-70">· {plural(v.count, "show")}</span>
                 </span>
               ))}
             </div>
@@ -390,7 +391,7 @@ function Wrapped() {
         {citiesThisYear.size > 0 && (
           <div className="mt-6">
             <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
-              Where you went · {citiesThisYear.size} {citiesThisYear.size === 1 ? "city" : "cities"} · {countriesThisYear.size} {countriesThisYear.size === 1 ? "country" : "countries"}
+              Where you went · {plural(citiesThisYear.size, "city", "cities")} · {plural(countriesThisYear.size, "country", "countries")}
             </p>
             <div className="mt-2 flex flex-wrap gap-2">
               {[...new Map(yearShows.map((c) => [`${c.city}|${c.country ?? ""}`, c])).values()].map((c) => (
@@ -411,12 +412,12 @@ function Wrapped() {
       {/* #1s */}
       <Section title="Your #1s">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <WrappedCard label="Favorite venue" value={topVenue?.name ?? "—"} sub={topVenue ? `${topVenue.count} visits` : ""} tone="brand" />
-          <WrappedCard label="Favorite city" value={topCity?.name ?? "—"} sub={topCity ? `${topCity.count} shows` : ""} tone="teal" />
+          <WrappedCard label="Favorite venue" value={topVenue?.name ?? "—"} sub={topVenue ? plural(topVenue.count, "visit") : ""} tone="brand" />
+          <WrappedCard label="Favorite city" value={topCity?.name ?? "—"} sub={topCity ? plural(topCity.count, "show") : ""} tone="teal" />
           <WrappedCard
             label="Longest show"
             value={longestShow?.artist ?? "—"}
-            sub={longestShow ? `${longestShow.setlist?.length ?? longestShow.songsSeen ?? 0} songs · ~${Math.round(longestMins / 60 * 10) / 10}h` : ""}
+            sub={longestShow ? `${plural(longestShow.setlist?.length ?? longestShow.songsSeen ?? 0, "song")} · ~${Math.round(longestMins / 60 * 10) / 10}h` : ""}
             tone="pink"
           />
         </div>
@@ -435,7 +436,7 @@ function Wrapped() {
                 <li key={g.name} className="flex items-baseline gap-3">
                     <span className="font-display text-2xl font-black text-brand">{i + 1}</span>
                     <span className="font-display text-xl font-extrabold">{g.name}</span>
-                    <span className="ml-auto text-xs text-muted-foreground">{g.count} shows</span>
+                    <span className="ml-auto text-xs text-muted-foreground">{plural(g.count, "show")}</span>
                   </li>
                 ))}
               </ol>
@@ -466,7 +467,7 @@ function Wrapped() {
         </div>
         <div className="mt-6 rounded-3xl border border-hairline bg-card p-8">
           <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            First time seeing — {newArtists.length} new artists
+            First time seeing — {plural(newArtists.length, "new artist")}
           </p>
           {newArtists.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">All returning favorites this year.</p>
@@ -485,7 +486,7 @@ function Wrapped() {
       {/* Crowd & vibe */}
       <Section title="Crowd & vibe">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-          <WrappedCard label="Average rating" value={avgRating.toFixed(2)} sub={`out of 10 across ${yearConcerts.length} shows`} tone="brand" />
+          <WrappedCard label="Average rating" value={avgRating.toFixed(2)} sub={`out of 10 across ${plural(yearConcerts.length, "show")}`} tone="brand" />
           {topRated && (
             <WrappedCard
               label="Highest rated show"
@@ -509,13 +510,13 @@ function Wrapped() {
           <WrappedCard
             label="Peak month"
             value={MONTHS[peakMonthIdx]}
-            sub={`${monthCounts[peakMonthIdx]} shows`}
+            sub={plural(monthCounts[peakMonthIdx], "show")}
             tone="brand"
           />
           <WrappedCard
             label="Avg shows / active month"
             value={avgPerMonth.toFixed(1)}
-            sub={`across ${monthsWithShows} months`}
+            sub={`across ${plural(monthsWithShows, "month")}`}
             tone="teal"
           />
         </div>
