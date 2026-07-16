@@ -162,7 +162,7 @@ function FriendDashboard() {
               <div className="mb-8 flex items-center justify-between">
                 <div>
                   <h2 className="font-display text-2xl font-extrabold">Yearly Attendance</h2>
-                  <p className="text-xs text-muted-foreground">{yearShows} shows in {YEAR}</p>
+                  <p className="text-xs text-muted-foreground">{plural(yearShows, "show")} in {YEAR}</p>
                 </div>
               </div>
               <div className="grid grid-cols-6 gap-3 md:grid-cols-12">
