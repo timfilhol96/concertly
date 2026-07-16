@@ -199,7 +199,7 @@ function FriendDashboard() {
                     })()}
                     <div>
                       <h3 className="text-xl font-bold leading-tight">{topArtists[0].name}</h3>
-                      <p className="text-sm text-muted-foreground">{topArtists[0].count} shows attended</p>
+                      <p className="text-sm text-muted-foreground">{plural(topArtists[0].count, "show")} attended</p>
                     </div>
                   </div>
                 ) : (
