@@ -5,10 +5,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { Crown, Pencil, RefreshCw, Search, Star, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
+import { cn, plural } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 import {
+  uniqueShows,
   useAddConcert,
   useConcerts,
   useDeleteConcert,
@@ -649,17 +650,17 @@ function Shows() {
         <div>
           <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{pageTitle}</h1>
           <p className="mt-2 text-muted-foreground">
-            {monthLabel
-              ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} in ${monthLabel}`
-              : year
-                ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} in ${year}`
-                : genre
-                  ? `Showing ${list.length} show${list.length === 1 ? "" : "s"} tagged ${genre}`
-                  : withFriendsSet.size > 0
-                    ? `Showing ${list.length} co-attended show${list.length === 1 ? "" : "s"}.`
-                    : friendProfile
-                      ? `Every gig in their archive — ${concerts.length} total.`
-                      : `Every gig in your archive — ${concerts.length} total.`}
+            {(() => {
+              const listCount = uniqueShows(list).length;
+              const totalCount = uniqueShows(concerts).length;
+              if (monthLabel) return `Showing ${plural(listCount, "show")} in ${monthLabel}`;
+              if (year) return `Showing ${plural(listCount, "show")} in ${year}`;
+              if (genre) return `Showing ${plural(listCount, "show")} tagged ${genre}`;
+              if (withFriendsSet.size > 0) return `Showing ${plural(listCount, "co-attended show")}.`;
+              return friendProfile
+                ? `Every gig in their archive — ${totalCount} total.`
+                : `Every gig in your archive — ${totalCount} total.`;
+            })()}
           </p>
           {(month || genre || year || withFriendsSet.size > 0) && (
             <button
@@ -895,7 +896,7 @@ function Shows() {
       />
       <ConfirmDialog
         open={confirmRefreshAll}
-        title={`Refresh all ${concerts.length} show${concerts.length === 1 ? "" : "s"}?`}
+        title={`Refresh all ${plural(uniqueShows(concerts).length, "show")}?`}
         description="You'll be asked to confirm when something's ambiguous. Your existing rating, notes, and ticket price are always kept."
         confirmLabel="Refresh all"
         onConfirm={runRefreshAll}
