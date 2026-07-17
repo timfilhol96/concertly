@@ -896,7 +896,7 @@ function Shows() {
       />
       <ConfirmDialog
         open={confirmRefreshAll}
-        title={`Refresh all ${concerts.length} show${concerts.length === 1 ? "" : "s"}?`}
+        title={`Refresh all ${plural(uniqueShows(concerts).length, "show")}?`}
         description="You'll be asked to confirm when something's ambiguous. Your existing rating, notes, and ticket price are always kept."
         confirmLabel="Refresh all"
         onConfirm={runRefreshAll}
