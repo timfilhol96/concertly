@@ -5,10 +5,11 @@ import { useServerFn } from "@tanstack/react-start";
 import { Crown, Pencil, RefreshCw, Search, Star, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { cn } from "@/lib/utils";
+import { cn, plural } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 
 import {
+  uniqueShows,
   useAddConcert,
   useConcerts,
   useDeleteConcert,
