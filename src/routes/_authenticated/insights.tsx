@@ -13,6 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import {
+  attendedOnly,
   availableYears,
   genreBreakdown,
   monthlyStreak,
