@@ -13,6 +13,7 @@ import {
   YAxis,
 } from "recharts";
 import {
+  attendedOnly,
   availableYears,
   genreBreakdown,
   monthlyStreak,
@@ -100,7 +101,7 @@ function Insights() {
 
   // Totals header: distinguish shows attended from artists seen.
   const totalShows = shows.length;
-  const totalArtists = concerts.length;
+  const totalArtists = new Set(attendedOnly(concerts).map((c) => c.artist)).size;
 
   const scopeLabel = year === "all" ? "All time" : String(year);
 

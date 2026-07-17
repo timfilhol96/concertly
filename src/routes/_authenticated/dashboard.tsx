@@ -2,6 +2,7 @@ import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { cn, plural } from "@/lib/utils";
 import { ArrowUpRight, Award, CalendarClock, Clock, Star, TrendingUp, Users } from "lucide-react";
 import {
+  attendedOnly,
   genreBreakdown,
   getConcertAge,
   getStats,
@@ -91,7 +92,7 @@ function Dashboard() {
 
       <div className="mb-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:grid-cols-5">
         <BigStat label={`Shows in ${YEAR}`} value={yearShows} sub={`${showStats.total} all-time`} />
-        <BigStat label="Unique artists" value={showStats.uniqueArtists} sub="across all shows" />
+        <BigStat label="Unique artists" value={new Set(attendedOnly(concerts).map((c) => c.artist)).size} sub="across all shows" />
         <BigStat
           label="Cities visited"
           value={showStats.uniqueCities}
