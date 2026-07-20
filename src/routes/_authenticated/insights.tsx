@@ -331,9 +331,21 @@ function Insights() {
                 cursor={{ fill: "var(--surface-2)" }}
                 contentStyle={{ background: "var(--card)", border: "1px solid var(--hairline)", borderRadius: 12, fontSize: 12 }}
               />
-              <Bar dataKey="count" radius={[6, 6, 0, 0]} fill="var(--teal)" />
+              <Bar
+                dataKey="count"
+                radius={[6, 6, 0, 0]}
+                fill="var(--teal)"
+                onClick={(d: { day?: number }) =>
+                  typeof d?.day === "number" && handleWeekdayClick(d.day)
+                }
+                style={{ cursor: friendId ? "default" : "pointer" }}
+              />
             </BarChart>
           </ResponsiveContainer>
+          {!friendId && (
+            <p className="mt-2 text-[11px] text-muted-foreground">Click a bar to see those shows.</p>
+          )}
+
         </ChartCard>
 
 
