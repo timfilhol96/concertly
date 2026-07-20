@@ -83,6 +83,7 @@ function Insights() {
 
   const byMonth = showsByMonth(shows, year);
   const byYear = showsByYear(shows);
+  const byDay = showsByDay(showsInYear);
   const genres = genreBreakdown(showsInYear);
   // Top artists is per-artist seen — keep using the full list so support acts count.
   const topArtists = rankBy(concertsInYear, "artist", 8);
