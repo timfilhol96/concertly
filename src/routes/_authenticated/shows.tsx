@@ -94,7 +94,7 @@ type Prompt = ArtistPrompt | CoPerformerPrompt | NotFoundPrompt;
 
 function Shows() {
   const nav = useNavigate();
-  const { month, genre, year, friendId, withFriends } = Route.useSearch();
+  const { month, genre, year, weekday, friendId, withFriends } = Route.useSearch();
   const { data: friendData } = useFriendships();
   const friendProfile = friendId ? friendData?.profiles?.[friendId] : undefined;
   const isFriend = friendId
