@@ -35,6 +35,7 @@ type Search = {
   month?: string;
   genre?: string;
   year?: string;
+  weekday?: string;
   friendId?: string;
   withFriends?: string[];
 };
@@ -45,12 +46,14 @@ export const Route = createFileRoute("/_authenticated/shows")({
     month: typeof s.month === "string" && /^\d{4}-\d{2}$/.test(s.month) ? s.month : undefined,
     genre: typeof s.genre === "string" && s.genre.length > 0 ? s.genre : undefined,
     year: typeof s.year === "string" && /^\d{4}$/.test(s.year) ? s.year : undefined,
+    weekday: typeof s.weekday === "string" && /^[0-6]$/.test(s.weekday) ? s.weekday : undefined,
     friendId:
       typeof s.friendId === "string" && s.friendId.length > 0 ? s.friendId : undefined,
     withFriends: Array.isArray(s.withFriends)
       ? (s.withFriends.filter((x) => typeof x === "string" && x.length > 0) as string[])
       : undefined,
   }),
+
   component: Shows,
 });
 
