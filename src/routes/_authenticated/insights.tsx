@@ -126,6 +126,15 @@ function Insights() {
     nav({ to: "/shows", search: { year: String(y) } });
   }
 
+  function handleWeekdayClick(day: number) {
+    if (friendId) return;
+    nav({
+      to: "/shows",
+      search: year === "all" ? { weekday: String(day) } : { weekday: String(day), year: String(year) },
+    });
+  }
+
+
   if (friendId && (!isFriend || !friendProfile)) {
     return (
       <main className="mx-auto max-w-2xl px-6 py-20 text-center">
