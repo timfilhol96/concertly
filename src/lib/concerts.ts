@@ -370,6 +370,17 @@ export function showsByYear(list: Concert[]) {
     .map(([year, count]) => ({ year: String(year), count }));
 }
 
+export function showsByDay(list: Concert[]) {
+  list = attendedOnly(list);
+  const labels = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+  const arr = labels.map((label, day) => ({ label, day, count: 0 }));
+  for (const c of list) {
+    const d = new Date(c.date);
+    arr[d.getDay()].count++;
+  }
+  return arr;
+}
+
 // Monthly heatmap: 12 buckets for the given year (or all-time max month count).
 export function monthlyHeatmap(list: Concert[], year: number) {
   list = attendedOnly(list);
