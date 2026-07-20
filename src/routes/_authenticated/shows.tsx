@@ -211,10 +211,13 @@ function Shows() {
     return filtered.sort((a, b) =>
       sort === "date" ? (a.date < b.date ? 1 : -1) : b.rating - a.rating,
     );
-  }, [q, sort, attendedConcerts, month, genre, year, withFriendsSet, coAttendance]);
+  }, [q, sort, attendedConcerts, month, genre, year, weekday, withFriendsSet, coAttendance]);
 
   const monthLabel = month
     ? new Date(`${month}-01T00:00:00`).toLocaleString("en", { month: "long", year: "numeric" })
+    : null;
+  const weekdayLabel = weekday
+    ? ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"][Number(weekday)]
     : null;
 
   function toggleFriendFilter(fid: string) {
@@ -227,10 +230,12 @@ function Shows() {
         month,
         genre,
         year,
+        weekday,
         friendId,
         withFriends: next.size > 0 ? [...next] : undefined,
       },
     });
+
   }
 
 
