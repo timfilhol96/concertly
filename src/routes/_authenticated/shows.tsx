@@ -669,13 +669,15 @@ function Shows() {
               if (monthLabel) return `Showing ${plural(listCount, "show")} in ${monthLabel}`;
               if (year) return `Showing ${plural(listCount, "show")} in ${year}`;
               if (genre) return `Showing ${plural(listCount, "show")} tagged ${genre}`;
+              if (weekdayLabel) return `Showing ${plural(listCount, "show")} on ${weekdayLabel}`;
               if (withFriendsSet.size > 0) return `Showing ${plural(listCount, "co-attended show")}.`;
               return friendProfile
                 ? `Every gig in their archive — ${totalCount} total.`
                 : `Every gig in your archive — ${totalCount} total.`;
             })()}
           </p>
-          {(month || genre || year || withFriendsSet.size > 0) && (
+          {(month || genre || year || weekday || withFriendsSet.size > 0) && (
+
             <button
               type="button"
               onClick={() => nav({ to: "/shows", search: friendId ? { friendId } : {} })}
