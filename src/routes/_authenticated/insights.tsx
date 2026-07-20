@@ -18,6 +18,7 @@ import {
   genreBreakdown,
   monthlyStreak,
   rankBy,
+  showsByDay,
   showsByMonth,
   showsByYear,
   uniqueShows,
