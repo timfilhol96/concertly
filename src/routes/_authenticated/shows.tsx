@@ -195,6 +195,11 @@ function Shows() {
       const g = genre.toLowerCase();
       filtered = filtered.filter((c) => (c.genre ?? "Unknown").toLowerCase() === g);
     }
+    if (weekday) {
+      const wd = Number(weekday);
+      filtered = filtered.filter((c) => new Date(c.date).getDay() === wd);
+    }
+
     if (withFriendsSet.size > 0 && coAttendance) {
       filtered = filtered.filter((c) => {
         const attendees = coAttendance.byKey[coAttendanceKey(c.date, c.venue, c.city)] ?? [];
