@@ -35,6 +35,7 @@ type Search = {
   month?: string;
   genre?: string;
   year?: string;
+  weekday?: string;
   friendId?: string;
   withFriends?: string[];
 };
@@ -45,12 +46,14 @@ export const Route = createFileRoute("/_authenticated/shows")({
     month: typeof s.month === "string" && /^\d{4}-\d{2}$/.test(s.month) ? s.month : undefined,
     genre: typeof s.genre === "string" && s.genre.length > 0 ? s.genre : undefined,
     year: typeof s.year === "string" && /^\d{4}$/.test(s.year) ? s.year : undefined,
+    weekday: typeof s.weekday === "string" && /^[0-6]$/.test(s.weekday) ? s.weekday : undefined,
     friendId:
       typeof s.friendId === "string" && s.friendId.length > 0 ? s.friendId : undefined,
     withFriends: Array.isArray(s.withFriends)
       ? (s.withFriends.filter((x) => typeof x === "string" && x.length > 0) as string[])
       : undefined,
   }),
+
   component: Shows,
 });
 
@@ -91,7 +94,7 @@ type Prompt = ArtistPrompt | CoPerformerPrompt | NotFoundPrompt;
 
 function Shows() {
   const nav = useNavigate();
-  const { month, genre, year, friendId, withFriends } = Route.useSearch();
+  const { month, genre, year, weekday, friendId, withFriends } = Route.useSearch();
   const { data: friendData } = useFriendships();
   const friendProfile = friendId ? friendData?.profiles?.[friendId] : undefined;
   const isFriend = friendId
@@ -192,6 +195,11 @@ function Shows() {
       const g = genre.toLowerCase();
       filtered = filtered.filter((c) => (c.genre ?? "Unknown").toLowerCase() === g);
     }
+    if (weekday) {
+      const wd = Number(weekday);
+      filtered = filtered.filter((c) => new Date(c.date).getDay() === wd);
+    }
+
     if (withFriendsSet.size > 0 && coAttendance) {
       filtered = filtered.filter((c) => {
         const attendees = coAttendance.byKey[coAttendanceKey(c.date, c.venue, c.city)] ?? [];
@@ -203,10 +211,13 @@ function Shows() {
     return filtered.sort((a, b) =>
       sort === "date" ? (a.date < b.date ? 1 : -1) : b.rating - a.rating,
     );
-  }, [q, sort, attendedConcerts, month, genre, year, withFriendsSet, coAttendance]);
+  }, [q, sort, attendedConcerts, month, genre, year, weekday, withFriendsSet, coAttendance]);
 
   const monthLabel = month
     ? new Date(`${month}-01T00:00:00`).toLocaleString("en", { month: "long", year: "numeric" })
+    : null;
+  const weekdayLabel = weekday
+    ? ["Sundays", "Mondays", "Tuesdays", "Wednesdays", "Thursdays", "Fridays", "Saturdays"][Number(weekday)]
     : null;
 
   function toggleFriendFilter(fid: string) {
@@ -219,10 +230,12 @@ function Shows() {
         month,
         genre,
         year,
+        weekday,
         friendId,
         withFriends: next.size > 0 ? [...next] : undefined,
       },
     });
+
   }
 
 
@@ -656,13 +669,15 @@ function Shows() {
               if (monthLabel) return `Showing ${plural(listCount, "show")} in ${monthLabel}`;
               if (year) return `Showing ${plural(listCount, "show")} in ${year}`;
               if (genre) return `Showing ${plural(listCount, "show")} tagged ${genre}`;
+              if (weekdayLabel) return `Showing ${plural(listCount, "show")} on ${weekdayLabel}`;
               if (withFriendsSet.size > 0) return `Showing ${plural(listCount, "co-attended show")}.`;
               return friendProfile
                 ? `Every gig in their archive — ${totalCount} total.`
                 : `Every gig in your archive — ${totalCount} total.`;
             })()}
           </p>
-          {(month || genre || year || withFriendsSet.size > 0) && (
+          {(month || genre || year || weekday || withFriendsSet.size > 0) && (
+
             <button
               type="button"
               onClick={() => nav({ to: "/shows", search: friendId ? { friendId } : {} })}
@@ -736,7 +751,7 @@ function Shows() {
           {withFriendsSet.size > 0 && (
             <button
               type="button"
-              onClick={() => nav({ to: "/shows", search: { month, genre, year, friendId } })}
+              onClick={() => nav({ to: "/shows", search: { month, genre, year, weekday, friendId } })}
               className="ml-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
             >
               <X className="h-3 w-3" /> clear
