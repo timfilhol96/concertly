@@ -751,7 +751,7 @@ function Shows() {
           {withFriendsSet.size > 0 && (
             <button
               type="button"
-              onClick={() => nav({ to: "/shows", search: { month, genre, year, friendId } })}
+              onClick={() => nav({ to: "/shows", search: { month, genre, year, weekday, friendId } })}
               className="ml-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
             >
               <X className="h-3 w-3" /> clear
