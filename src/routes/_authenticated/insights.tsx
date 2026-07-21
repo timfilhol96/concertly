@@ -288,64 +288,63 @@ function Insights() {
 
         <ChartCard
           className="lg:col-span-2"
-          title="Shows per month"
+          title="Shows per month & per day"
           subtitle={scopeLabel}
         >
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart data={byMonth} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="2 4" stroke="var(--hairline)" />
-              <XAxis dataKey="label" tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} />
-              <YAxis tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} allowDecimals={false} />
-              <Tooltip
-                cursor={{ fill: "var(--surface-2)" }}
-                contentStyle={{ background: "var(--card)", border: "1px solid var(--hairline)", borderRadius: 12, fontSize: 12 }}
-              />
-              <Bar
-                dataKey="count"
-                radius={[6, 6, 0, 0]}
-                fill="var(--brand)"
-                onClick={(d: { month?: number }) =>
-                  typeof d?.month === "number" && handleMonthClick(d.month)
-                }
-                style={{ cursor: year === "all" ? "default" : "pointer" }}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            Average: <span className="font-semibold text-foreground">{avgPerMonth.toFixed(2)}</span> shows / month
-            {year !== "all" && " · click a bar to see those shows"}
-          </p>
-        </ChartCard>
+          <div className="mb-6">
+            <p className="mb-2 text-xs font-semibold text-muted-foreground">Per month</p>
+            <ResponsiveContainer width="100%" height={240}>
+              <BarChart data={byMonth} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="2 4" stroke="var(--hairline)" />
+                <XAxis dataKey="label" tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} />
+                <YAxis tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} allowDecimals={false} />
+                <Tooltip
+                  cursor={{ fill: "var(--surface-2)" }}
+                  contentStyle={{ background: "var(--card)", border: "1px solid var(--hairline)", borderRadius: 12, fontSize: 12 }}
+                />
+                <Bar
+                  dataKey="count"
+                  radius={[6, 6, 0, 0]}
+                  fill="var(--brand)"
+                  onClick={(d: { month?: number }) =>
+                    typeof d?.month === "number" && handleMonthClick(d.month)
+                  }
+                  style={{ cursor: year === "all" ? "default" : "pointer" }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+            <p className="mt-2 text-[11px] text-muted-foreground">
+              Average: <span className="font-semibold text-foreground">{avgPerMonth.toFixed(2)}</span> shows / month
+              {year !== "all" && " · click a bar to see those shows"}
+            </p>
+          </div>
 
-        <ChartCard
-          className="lg:col-span-2"
-          title="Shows per day"
-          subtitle={scopeLabel}
-        >
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={byDay} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
-              <CartesianGrid strokeDasharray="2 4" stroke="var(--hairline)" />
-              <XAxis dataKey="label" tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} />
-              <YAxis tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} allowDecimals={false} />
-              <Tooltip
-                cursor={{ fill: "var(--surface-2)" }}
-                contentStyle={{ background: "var(--card)", border: "1px solid var(--hairline)", borderRadius: 12, fontSize: 12 }}
-              />
-              <Bar
-                dataKey="count"
-                radius={[6, 6, 0, 0]}
-                fill="var(--teal)"
-                onClick={(d: { day?: number }) =>
-                  typeof d?.day === "number" && handleWeekdayClick(d.day)
-                }
-                style={{ cursor: friendId ? "default" : "pointer" }}
-              />
-            </BarChart>
-          </ResponsiveContainer>
-          {!friendId && (
-            <p className="mt-2 text-[11px] text-muted-foreground">Click a bar to see those shows.</p>
-          )}
-
+          <div className="border-t border-hairline pt-6">
+            <p className="mb-2 text-xs font-semibold text-muted-foreground">Per day of the week</p>
+            <ResponsiveContainer width="100%" height={220}>
+              <BarChart data={byDay} margin={{ top: 8, right: 12, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="2 4" stroke="var(--hairline)" />
+                <XAxis dataKey="label" tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} />
+                <YAxis tickLine={false} axisLine={false} stroke="var(--muted-foreground)" fontSize={11} allowDecimals={false} />
+                <Tooltip
+                  cursor={{ fill: "var(--surface-2)" }}
+                  contentStyle={{ background: "var(--card)", border: "1px solid var(--hairline)", borderRadius: 12, fontSize: 12 }}
+                />
+                <Bar
+                  dataKey="count"
+                  radius={[6, 6, 0, 0]}
+                  fill="var(--teal)"
+                  onClick={(d: { day?: number }) =>
+                    typeof d?.day === "number" && handleWeekdayClick(d.day)
+                  }
+                  style={{ cursor: friendId ? "default" : "pointer" }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+            {!friendId && (
+              <p className="mt-2 text-[11px] text-muted-foreground">Click a bar to see those shows.</p>
+            )}
+          </div>
         </ChartCard>
 
 
