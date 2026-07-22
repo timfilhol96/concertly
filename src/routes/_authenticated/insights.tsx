@@ -361,7 +361,7 @@ function Insights() {
                       <span className="w-6 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                       <span className="font-medium">{a.name}</span>
                     </span>
-                    <span className="font-mono text-xs text-muted-foreground">{plural(a.count, "show")} ({Math.round(share)}%)</span>
+                    <span className="font-mono text-xs text-muted-foreground">{plural(a.count, "show")} ({Math.ceil(share)}%)</span>
                   </div>
                   <div className="h-3 overflow-hidden rounded-full bg-surface-2">
                     <div className="h-full rounded-full bg-gradient-to-r from-brand to-teal transition-all" style={{ width: `${pct}%` }} />
@@ -391,7 +391,7 @@ function Insights() {
                         <span className="w-6 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                         <span>{c.name}</span>
                       </span>
-                      <span className="font-mono text-xs text-muted-foreground">{plural(c.count, "show")} ({Math.round(share)}%)</span>
+                      <span className="font-mono text-xs text-muted-foreground">{plural(c.count, "show")} ({Math.ceil(share)}%)</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-surface-2">
                       <div className="h-full rounded-full bg-gradient-to-r from-pink to-brand" style={{ width: `${pct}%` }} />
@@ -419,7 +419,7 @@ function Insights() {
                         <span className="w-6 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                         <span>{c.name}</span>
                       </span>
-                      <span className="font-mono text-xs text-muted-foreground">{plural(c.count, "show")} ({Math.round(share)}%)</span>
+                      <span className="font-mono text-xs text-muted-foreground">{plural(c.count, "show")} ({Math.ceil(share)}%)</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-surface-2">
                       <div className="h-full rounded-full bg-gradient-to-r from-teal to-brand" style={{ width: `${pct}%` }} />
@@ -447,7 +447,7 @@ function Insights() {
                         <span className="w-6 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                         <span>{v.name}</span>
                       </span>
-                      <span className="font-mono text-xs text-muted-foreground">{plural(v.count, "show")} ({Math.round(share)}%)</span>
+                      <span className="font-mono text-xs text-muted-foreground">{plural(v.count, "show")} ({Math.ceil(share)}%)</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-surface-2">
                       <div className="h-full rounded-full bg-gradient-to-r from-brand to-teal" style={{ width: `${pct}%` }} />

@@ -197,7 +197,7 @@ function Dashboard() {
             (() => {
               const share = Math.min(
                 100,
-                Math.round((topArtists[0].count / showStats.total) * 100),
+                Math.ceil((topArtists[0].count / showStats.total) * 100),
               );
               return (
                 <div className="mt-8">
@@ -382,7 +382,7 @@ function Dashboard() {
                   </span>
                   <span className="truncate text-sm">{v.name}</span>
                   <span className="ml-auto text-[10px] text-muted-foreground">
-                    {plural(v.count, "show")} ({showStats.total ? Math.round((v.count / showStats.total) * 100) : 0}%)
+                    {plural(v.count, "show")} ({showStats.total ? Math.ceil((v.count / showStats.total) * 100) : 0}%)
                   </span>
                 </li>
               ))}
@@ -398,7 +398,7 @@ function Dashboard() {
                   </span>
                   <span className="truncate text-sm">{v.name}</span>
                   <span className="ml-auto text-[10px] text-muted-foreground">
-                    {plural(v.count, "show")} ({showStats.total ? Math.round((v.count / showStats.total) * 100) : 0}%)
+                    {plural(v.count, "show")} ({showStats.total ? Math.ceil((v.count / showStats.total) * 100) : 0}%)
                   </span>
                 </li>
               ))}
