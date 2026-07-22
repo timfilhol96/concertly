@@ -340,7 +340,7 @@ export function genreBreakdown(list: Concert[]): GenreBreakdownItem[] {
       name,
       count,
       artists: artistSets.get(name)?.size ?? 0,
-      pct: Math.ceil((count / total) * 100),
+      pct: Math.round((count / total) * 100),
     }));
 }
 
