@@ -274,10 +274,10 @@ function Insights() {
                 type="button"
                 onClick={() => handleGenreClick(g.name)}
                 className="inline-flex items-center gap-1.5 rounded-full bg-surface-2 px-2 py-1 transition hover:bg-surface-3 hover:ring-1 hover:ring-hairline"
-                title={`${plural(g.artists, "artist")} · ${plural(g.count, "show")} · click to view`}
+                title={`${plural(g.artists, "artist")} · ${plural(g.count, "show")} (${g.pct}%) · click to view`}
               >
                 <span className="h-2 w-2 rounded-full" style={{ background: CHART_COLORS[i % CHART_COLORS.length] }} />
-                {g.name} · {g.pct}%
+                {g.name} · {plural(g.count, "show")} ({g.pct}%)
               </button>
             ))}
           </div>
@@ -351,7 +351,9 @@ function Insights() {
         <ChartCard className="lg:col-span-2" title="Top artists by shows" subtitle={scopeLabel}>
           <div className="space-y-4">
             {topArtists.map((a, i) => {
-              const pct = (a.count / (topArtists[0]?.count || 1)) * 100;
+              const max = topArtists[0]?.count || 1;
+              const share = showsInYear.length ? (a.count / showsInYear.length) * 100 : 0;
+              const pct = (a.count / max) * 100;
               return (
                 <div key={a.name}>
                   <div className="mb-1.5 flex items-center justify-between text-sm">
@@ -359,7 +361,7 @@ function Insights() {
                       <span className="w-6 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                       <span className="font-medium">{a.name}</span>
                     </span>
-                    <span className="font-mono text-xs text-muted-foreground">{plural(a.count, "show")}</span>
+                    <span className="font-mono text-xs text-muted-foreground">{plural(a.count, "show")} ({Math.round(share)}%)</span>
                   </div>
                   <div className="h-3 overflow-hidden rounded-full bg-surface-2">
                     <div className="h-full rounded-full bg-gradient-to-r from-brand to-teal transition-all" style={{ width: `${pct}%` }} />
@@ -379,7 +381,9 @@ function Insights() {
           ) : (
             <ul className="space-y-3">
               {topCountries.map((c, i) => {
-                const pct = (c.count / (topCountries[0]?.count || 1)) * 100;
+                const max = topCountries[0]?.count || 1;
+                const share = showsInYear.length ? (c.count / showsInYear.length) * 100 : 0;
+                const pct = (c.count / max) * 100;
                 return (
                   <li key={c.name}>
                     <div className="mb-1 flex items-center justify-between text-sm">
@@ -387,7 +391,7 @@ function Insights() {
                         <span className="w-6 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                         <span>{c.name}</span>
                       </span>
-                      <span className="font-mono text-xs text-muted-foreground">{c.count}</span>
+                      <span className="font-mono text-xs text-muted-foreground">{plural(c.count, "show")} ({Math.round(share)}%)</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-surface-2">
                       <div className="h-full rounded-full bg-gradient-to-r from-pink to-brand" style={{ width: `${pct}%` }} />
@@ -405,7 +409,9 @@ function Insights() {
           ) : (
             <ul className="space-y-3">
               {topCities.map((c, i) => {
-                const pct = (c.count / (topCities[0]?.count || 1)) * 100;
+                const max = topCities[0]?.count || 1;
+                const share = showsInYear.length ? (c.count / showsInYear.length) * 100 : 0;
+                const pct = (c.count / max) * 100;
                 return (
                   <li key={c.name}>
                     <div className="mb-1 flex items-center justify-between text-sm">
@@ -413,7 +419,7 @@ function Insights() {
                         <span className="w-6 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                         <span>{c.name}</span>
                       </span>
-                      <span className="font-mono text-xs text-muted-foreground">{c.count}</span>
+                      <span className="font-mono text-xs text-muted-foreground">{plural(c.count, "show")} ({Math.round(share)}%)</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-surface-2">
                       <div className="h-full rounded-full bg-gradient-to-r from-teal to-brand" style={{ width: `${pct}%` }} />
@@ -431,7 +437,9 @@ function Insights() {
           ) : (
             <ul className="space-y-3">
               {topVenues.map((v, i) => {
-                const pct = (v.count / (topVenues[0]?.count || 1)) * 100;
+                const max = topVenues[0]?.count || 1;
+                const share = showsInYear.length ? (v.count / showsInYear.length) * 100 : 0;
+                const pct = (v.count / max) * 100;
                 return (
                   <li key={v.name}>
                     <div className="mb-1 flex items-center justify-between text-sm">
@@ -439,7 +447,7 @@ function Insights() {
                         <span className="w-6 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                         <span>{v.name}</span>
                       </span>
-                      <span className="font-mono text-xs text-muted-foreground">{v.count}</span>
+                      <span className="font-mono text-xs text-muted-foreground">{plural(v.count, "show")} ({Math.round(share)}%)</span>
                     </div>
                     <div className="h-2 overflow-hidden rounded-full bg-surface-2">
                       <div className="h-full rounded-full bg-gradient-to-r from-brand to-teal" style={{ width: `${pct}%` }} />
@@ -473,7 +481,7 @@ function GenreTooltip({ active, payload }: { active?: boolean; payload?: Array<{
     <div className="rounded-xl border border-hairline bg-card px-3 py-2 text-xs shadow-lg">
       <div className="font-semibold">{g.name}</div>
       <div className="text-muted-foreground">
-        {plural(g.artists, "artist")} · {plural(g.count, "show")} · {g.pct}%
+        {plural(g.artists, "artist")} · {plural(g.count, "show")} ({g.pct}%)
       </div>
     </div>
   );

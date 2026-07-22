@@ -280,7 +280,7 @@ function Dashboard() {
                 <div key={g.name} className="space-y-1.5">
                   <div className="flex justify-between text-xs">
                     <span>{g.name}</span>
-                    <span className="text-muted-foreground">{g.pct}%</span>
+                    <span className="text-muted-foreground">{plural(g.count, "show")} ({g.pct}%)</span>
                   </div>
                   <div className="h-1 overflow-hidden rounded-full bg-surface-2">
                     <div
@@ -381,7 +381,9 @@ function Dashboard() {
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="truncate text-sm">{v.name}</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground">{plural(v.count, "show")}</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground">
+                    {plural(v.count, "show")} ({showStats.total ? Math.round((v.count / showStats.total) * 100) : 0}%)
+                  </span>
                 </li>
               ))}
             </ul>
@@ -395,7 +397,9 @@ function Dashboard() {
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="truncate text-sm">{v.name}</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground">{plural(v.count, "show")}</span>
+                  <span className="ml-auto text-[10px] text-muted-foreground">
+                    {plural(v.count, "show")} ({showStats.total ? Math.round((v.count / showStats.total) * 100) : 0}%)
+                  </span>
                 </li>
               ))}
             </ul>
