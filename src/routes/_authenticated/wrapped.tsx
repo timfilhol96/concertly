@@ -71,6 +71,28 @@ function showLengthMinutes(c: Concert) {
   return songs * 4; // ~4 min per song
 }
 
+function genreColor(name: string): string {
+  const palette = [
+    "#1f2937", "#4b5563", "#9ca3af", "#d1d5db",
+    "#111827", "#374151", "#6b7280", "#e5e7eb",
+  ];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h + name.charCodeAt(i) * 31) % palette.length;
+  return palette[h];
+}
+
+function genreBarGradient(genres: { name: string; pct: number }[]): string {
+  let pos = 0;
+  const stops: string[] = [];
+  for (const g of genres) {
+    const next = pos + g.pct;
+    stops.push(`${genreColor(g.name)} ${pos}%`, `${genreColor(g.name)} ${next}%`);
+    pos = next;
+  }
+  return `linear-gradient(to right, ${stops.join(", ")})`;
+}
+
+
 
 function Wrapped() {
   const { data: profile } = useProfile();
