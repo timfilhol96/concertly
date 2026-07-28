@@ -90,7 +90,8 @@ function SharedWrapped() {
 
       {/* HEADLINE */}
       <section
-        className={`relative mt-8 overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br ${gradient.cls} ${gradient.text} p-8 md:p-12`}
+        className={`relative mt-8 overflow-hidden rounded-3xl border border-hairline ${gradient.text} p-8 md:p-12`}
+        style={{ backgroundImage: gradient.bg }}
       >
         <p className="text-xs font-bold uppercase tracking-widest opacity-80">Year in numbers</p>
         <p className="mt-4 font-display text-7xl font-black leading-none md:text-9xl">{p.shows}</p>
