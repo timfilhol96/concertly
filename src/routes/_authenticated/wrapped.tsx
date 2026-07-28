@@ -553,6 +553,16 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
+function CompactStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="flex flex-col justify-center p-5 md:p-6">
+      <p className="font-display text-3xl font-black leading-none md:text-4xl">{value}</p>
+      <p className="mt-1.5 text-xs font-bold uppercase tracking-widest opacity-80">{label}</p>
+    </div>
+  );
+}
+
+
 function MilestoneCard({ label, concert }: { label: string; concert: Concert | undefined }) {
   if (!concert) return null;
   return (
