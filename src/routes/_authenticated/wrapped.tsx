@@ -73,13 +73,17 @@ function showLengthMinutes(c: Concert) {
 
 function genreColor(name: string): string {
   const palette = [
-    "oklch(0.31 0.03 264)", "oklch(0.44 0.03 264)", "oklch(0.62 0.03 264)", "oklch(0.78 0.03 264)",
-    "oklch(0.24 0.03 264)", "oklch(0.37 0.03 264)", "oklch(0.53 0.03 264)", "oklch(0.87 0.03 264)",
+    "var(--brand)",
+    "var(--teal)",
+    "var(--pink)",
+    "var(--chart-4)",
+    "var(--chart-5)",
   ];
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h + name.charCodeAt(i) * 31) % palette.length;
   return palette[h];
 }
+
 
 function genreBarGradient(genres: { name: string; pct: number }[]): string {
   let pos = 0;
