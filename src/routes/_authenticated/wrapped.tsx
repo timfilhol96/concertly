@@ -71,6 +71,29 @@ function showLengthMinutes(c: Concert) {
   return songs * 4; // ~4 min per song
 }
 
+function genreColor(name: string): string {
+  const palette = [
+    "oklch(0.31 0.03 264)", "oklch(0.44 0.03 264)", "oklch(0.62 0.03 264)", "oklch(0.78 0.03 264)",
+    "oklch(0.24 0.03 264)", "oklch(0.37 0.03 264)", "oklch(0.53 0.03 264)", "oklch(0.87 0.03 264)",
+  ];
+  let h = 0;
+  for (let i = 0; i < name.length; i++) h = (h + name.charCodeAt(i) * 31) % palette.length;
+  return palette[h];
+}
+
+function genreBarGradient(genres: { name: string; pct: number }[]): string {
+  let pos = 0;
+  const stops: string[] = [];
+  for (const g of genres) {
+    const next = pos + g.pct;
+    stops.push(`${genreColor(g.name)} ${pos}%`, `${genreColor(g.name)} ${next}%`);
+    pos = next;
+  }
+  return `linear-gradient(to right, ${stops.join(", ")})`;
+}
+
+
+
 
 function Wrapped() {
   const { data: profile } = useProfile();
@@ -341,70 +364,50 @@ function Wrapped() {
 
 
       {/* HEADLINE */}
-      <section className={`relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br ${gradient.cls} ${gradient.text} p-8 md:p-12`}>
-        <p className="text-xs font-bold uppercase tracking-widest opacity-80">Your year in numbers</p>
-        <p className="mt-4 flex items-baseline gap-3 font-display text-7xl font-black leading-none md:text-9xl">
-          {yearShows.length}
-          <span className="font-display text-2xl font-extrabold md:text-3xl">{yearShows.length === 1 ? "show" : "shows"}</span>
-        </p>
-        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Stat label={artistsThisYear.size === 1 ? "Artist" : "Artists"} value={String(artistsThisYear.size)} />
-          <Stat label={venuesThisYear.size === 1 ? "Venue" : "Venues"} value={String(venuesThisYear.size)} />
-          <Stat label={hoursLive === 1 ? "Hour lived live" : "Hours lived live"} value={String(hoursLive)} />
-          <Stat label="Ticket spend" value={moneySpent > 0 ? `$${Math.round(moneySpent).toLocaleString()}` : "—"} />
+      <section
+        className={`relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br ${gradient.cls} ${gradient.text}`}
+      >
+        {/* Standout night */}
+        <div className="p-8 md:p-12">
+          <p className="text-xs font-bold uppercase tracking-widest opacity-80">Your standout night</p>
+          <p className="mt-3 font-display text-3xl font-black leading-tight md:text-4xl">
+            Most-visited: {topVenue?.name ?? "—"}
+          </p>
+          <p className="mt-2 text-lg font-medium opacity-90 md:text-xl">
+            {topVenue ? (
+              <>
+                {plural(topVenue.count, "show")} there this year — more than anywhere else
+              </>
+            ) : (
+              "No venues logged yet"
+            )}
+          </p>
         </div>
 
+        {/* Compact stat grid */}
+        <div className="grid grid-cols-2 divide-y divide-black/10 border-y border-black/10 bg-white/15 backdrop-blur md:grid-cols-4 md:divide-y-0 md:divide-x">
+          <CompactStat label={yearShows.length === 1 ? "Show" : "Shows"} value={yearShows.length} />
+          <CompactStat label={artistsThisYear.size === 1 ? "Artist" : "Artists"} value={artistsThisYear.size} />
+          <CompactStat label={venuesThisYear.size === 1 ? "Venue" : "Venues"} value={venuesThisYear.size} />
+          <CompactStat label="Live time" value={`${hoursLive}h`} />
+        </div>
+
+        {/* Genre mix */}
         {genres.length > 0 && (
-          <div className="mt-6">
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Top genres</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {genres.map((g, i) => (
-                <span
-                  key={g.name}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur"
-                >
-                  <span className="opacity-70">#{i + 1}</span> {g.name}
-                  <span className="opacity-70">· {plural(g.count, "show")}</span>
+          <div className="p-8 md:px-12 md:py-10">
+            <p className="text-xs font-bold uppercase tracking-widest opacity-80">Genre mix</p>
+            <div className="mt-4 h-4 w-full overflow-hidden rounded-full" style={{ background: genreBarGradient(genres) }} />
+            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
+              {genres.map((g) => (
+                <span key={g.name} className="inline-flex items-center gap-2 text-sm font-semibold">
+                  <span className="h-3 w-3 rounded-full" style={{ background: genreColor(g.name) }} />
+                  {g.name} · {g.pct}%
                 </span>
               ))}
             </div>
           </div>
         )}
 
-        {topVenue && (
-          <div className="mt-6">
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">Top venues</p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {rankBy(yearShows, "venue", 3).map((v, i) => (
-                <span
-                  key={v.name}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur"
-                >
-                  <span className="opacity-70">#{i + 1}</span> {v.name}
-                  <span className="opacity-70">· {plural(v.count, "show")}</span>
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {citiesThisYear.size > 0 && (
-          <div className="mt-6">
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">
-              Where you went · {plural(citiesThisYear.size, "city", "cities")} · {plural(countriesThisYear.size, "country", "countries")}
-            </p>
-            <div className="mt-2 flex flex-wrap gap-2">
-              {[...new Map(yearShows.map((c) => [`${c.city}|${c.country ?? ""}`, c])).values()].map((c) => (
-                <span
-                  key={`${c.city}-${c.country ?? ""}`}
-                  className="inline-flex items-center gap-1.5 rounded-full bg-white/20 px-3 py-1 text-xs font-bold backdrop-blur"
-                >
-                  <span className="text-sm leading-none">{countryFlag(c.country)}</span> {c.city}
-                </span>
-              ))}
-            </div>
-          </div>
-        )}
         <div className="pointer-events-none absolute -right-10 -top-10 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
       </section>
 
@@ -550,6 +553,16 @@ function Stat({ label, value }: { label: string; value: string }) {
     </div>
   );
 }
+
+function CompactStat({ label, value }: { label: string; value: string | number }) {
+  return (
+    <div className="flex flex-col justify-center p-5 md:p-6">
+      <p className="font-display text-3xl font-black leading-none md:text-4xl">{value}</p>
+      <p className="mt-1.5 text-xs font-bold uppercase tracking-widest opacity-80">{label}</p>
+    </div>
+  );
+}
+
 
 function MilestoneCard({ label, concert }: { label: string; concert: Concert | undefined }) {
   if (!concert) return null;
