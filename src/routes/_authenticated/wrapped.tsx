@@ -362,7 +362,8 @@ function Wrapped() {
 
       {/* HEADLINE */}
       <section
-        className={`relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br ${gradient.cls} ${gradient.text}`}
+        className={`relative overflow-hidden rounded-3xl border border-hairline ${gradient.text}`}
+        style={{ backgroundImage: gradient.bg }}
       >
         {/* Standout night */}
         <div className="p-8 md:p-12">
