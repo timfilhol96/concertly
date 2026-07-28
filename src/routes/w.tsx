@@ -13,16 +13,8 @@ const searchSchema = z.object({
 
 type WrappedSearch = z.infer<typeof searchSchema>;
 
-const GRADIENTS: Record<string, { cls: string; text: string }> = {
-  sunset: { cls: "from-orange-500 via-pink-500 to-purple-600", text: "text-white" },
-  ocean: { cls: "from-cyan-400 via-blue-500 to-indigo-700", text: "text-white" },
-  ember: { cls: "from-red-600 via-orange-500 to-yellow-400", text: "text-white" },
-  noir: { cls: "from-slate-900 via-slate-700 to-slate-900", text: "text-white" },
-  citrus: { cls: "from-lime-400 via-emerald-500 to-teal-600", text: "text-white" },
-  berry: { cls: "from-fuchsia-600 via-purple-700 to-indigo-900", text: "text-white" },
-  aurora: { cls: "from-green-400 via-cyan-500 to-purple-600", text: "text-white" },
-  candy: { cls: "from-pink-400 via-rose-400 to-amber-300", text: "text-slate-900" },
-};
+import { getWrappedTheme } from "@/lib/wrapped-themes";
+
 
 function decode(d?: string): SharePayload | null {
   if (!d) return null;
