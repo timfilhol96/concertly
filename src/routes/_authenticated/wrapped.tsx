@@ -33,18 +33,11 @@ const YEAR = new Date().getFullYear();
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-const GRADIENTS = [
-  { id: "sunset", label: "Sunset", cls: "from-orange-500 via-pink-500 to-purple-600", text: "text-white", swatch: "linear-gradient(135deg, #f97316, #ec4899, #9333ea)" },
-  { id: "ocean", label: "Ocean", cls: "from-cyan-400 via-blue-500 to-indigo-700", text: "text-white", swatch: "linear-gradient(135deg, #22d3ee, #3b82f6, #4338ca)" },
-  { id: "ember", label: "Ember", cls: "from-red-600 via-orange-500 to-yellow-400", text: "text-white", swatch: "linear-gradient(135deg, #dc2626, #f97316, #facc15)" },
-  { id: "noir", label: "Noir", cls: "from-slate-900 via-slate-700 to-slate-900", text: "text-white", swatch: "linear-gradient(135deg, #0f172a, #475569, #0f172a)" },
-  { id: "citrus", label: "Citrus", cls: "from-lime-400 via-emerald-500 to-teal-600", text: "text-white", swatch: "linear-gradient(135deg, #a3e635, #10b981, #0d9488)" },
-  { id: "berry", label: "Berry", cls: "from-fuchsia-600 via-purple-700 to-indigo-900", text: "text-white", swatch: "linear-gradient(135deg, #c026d3, #7e22ce, #312e81)" },
-  { id: "aurora", label: "Aurora", cls: "from-green-400 via-cyan-500 to-purple-600", text: "text-white", swatch: "linear-gradient(135deg, #4ade80, #06b6d4, #9333ea)" },
-  { id: "candy", label: "Candy", cls: "from-pink-400 via-rose-400 to-amber-300", text: "text-slate-900", swatch: "linear-gradient(135deg, #f472b6, #fb7185, #fcd34d)" },
-] as const;
+import { WRAPPED_THEMES, type WrappedThemeId } from "@/lib/wrapped-themes";
 
-type GradientId = (typeof GRADIENTS)[number]["id"];
+const GRADIENTS = WRAPPED_THEMES;
+type GradientId = WrappedThemeId;
+
 
 const COUNTRY_FLAGS: Record<string, string> = {
   "United States": "🇺🇸", USA: "🇺🇸", US: "🇺🇸",
@@ -369,7 +362,8 @@ function Wrapped() {
 
       {/* HEADLINE */}
       <section
-        className={`relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br ${gradient.cls} ${gradient.text}`}
+        className={`relative overflow-hidden rounded-3xl border border-hairline ${gradient.text}`}
+        style={{ backgroundImage: gradient.bg }}
       >
         {/* Standout night */}
         <div className="p-8 md:p-12">
