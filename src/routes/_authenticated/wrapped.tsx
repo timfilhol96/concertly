@@ -380,7 +380,7 @@ function Wrapped() {
           <p className="mt-2 text-lg font-medium opacity-90 md:text-xl">
             {topVenue ? (
               <>
-                {plural(topVenue.count, "show")} there this year — more than anywhere else
+                {plural(topVenue.count, "show")} there this year, more than anywhere else
               </>
             ) : (
               "No venues logged yet"
