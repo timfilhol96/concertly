@@ -59,7 +59,7 @@ function SharedWrapped() {
   const { d, g } = Route.useSearch();
   const share = Route.useLoaderData();
   const p: SharePayload | null = share?.payload ?? decode(d);
-  const gradient = GRADIENTS[share?.gradient ?? g ?? "sunset"] ?? GRADIENTS.sunset;
+  const gradient = getWrappedTheme(share?.gradient ?? g);
 
   if (!p) {
     return (
