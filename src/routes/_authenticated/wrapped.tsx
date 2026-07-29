@@ -116,7 +116,9 @@ function Wrapped() {
   const longestShow = [...yearConcerts].sort((a, b) => showLengthMinutes(b) - showLengthMinutes(a))[0];
   const longestMins = longestShow ? showLengthMinutes(longestShow) : 0;
 
-  const genres = genreBreakdown(yearShows).filter((g) => g.name !== "Unknown").slice(0, 3);
+  const rawGenres = genreBreakdown(yearShows).filter((g) => g.name !== "Unknown");
+  const knownGenreTotal = rawGenres.reduce((s, g) => s + g.count, 0) || 1;
+  const genres = rawGenres.map((g) => ({ ...g, pct: (g.count / knownGenreTotal) * 100 }));
   const priorGenres = new Set(priorConcerts.map((c) => c.genre).filter(Boolean));
   const discoveredGenres = [...new Set(yearConcerts.map((c) => c.genre).filter(Boolean) as string[])]
     .filter((g) => !priorGenres.has(g));
@@ -379,8 +381,8 @@ function Wrapped() {
                 <div
                   key={g.name}
                   className="h-full"
-                  style={{ width: `${Math.max(0, Math.min(100, g.pct))}%`, background: swatches[i] }}
-                  title={`${g.name} · ${g.pct}%`}
+                  style={{ flex: g.count, background: swatches[i] }}
+                  title={`${g.name} · ${Math.round(g.pct)}%`}
                 />
               ))}
             </div>
@@ -388,7 +390,7 @@ function Wrapped() {
               {genres.map((g, i) => (
                 <span key={g.name} className="inline-flex items-center gap-2 text-sm font-semibold">
                   <span className="h-3 w-3 rounded-full" style={{ background: swatches[i] }} />
-                  {g.name} · {g.pct}%
+                  {g.name} · {Math.round(g.pct)}%
                 </span>
               ))}
             </div>
@@ -423,7 +425,7 @@ function Wrapped() {
               <p className="mt-4 text-sm text-muted-foreground">Add a genre to your shows to see this.</p>
             ) : (
               <ol className="mt-4 space-y-3">
-                {genres.map((g, i) => (
+                {genres.slice(0, 3).map((g, i) => (
                 <li key={g.name} className="flex items-baseline gap-3">
                     <span className="font-display text-2xl font-black text-brand">{i + 1}</span>
                     <span className="font-display text-xl font-extrabold">{g.name}</span>
