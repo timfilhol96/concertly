@@ -116,7 +116,9 @@ function Wrapped() {
   const longestShow = [...yearConcerts].sort((a, b) => showLengthMinutes(b) - showLengthMinutes(a))[0];
   const longestMins = longestShow ? showLengthMinutes(longestShow) : 0;
 
-  const genres = genreBreakdown(yearShows).filter((g) => g.name !== "Unknown").slice(0, 3);
+  const rawGenres = genreBreakdown(yearShows).filter((g) => g.name !== "Unknown");
+  const knownGenreTotal = rawGenres.reduce((s, g) => s + g.count, 0) || 1;
+  const genres = rawGenres.map((g) => ({ ...g, pct: (g.count / knownGenreTotal) * 100 }));
   const priorGenres = new Set(priorConcerts.map((c) => c.genre).filter(Boolean));
   const discoveredGenres = [...new Set(yearConcerts.map((c) => c.genre).filter(Boolean) as string[])]
     .filter((g) => !priorGenres.has(g));
