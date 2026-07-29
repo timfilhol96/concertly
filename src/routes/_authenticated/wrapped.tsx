@@ -64,17 +64,8 @@ function showLengthMinutes(c: Concert) {
   return songs * 4; // ~4 min per song
 }
 
-function genreBarGradient(genres: { name: string; pct: number }[], colors: string[]): string {
-  let pos = 0;
-  const stops: string[] = [];
-  genres.forEach((g, i) => {
-    const color = colors[i % colors.length];
-    const next = pos + g.pct;
-    stops.push(`${color} ${pos}%`, `${color} ${next}%`);
-    pos = next;
-  });
-  return `linear-gradient(to right, ${stops.join(", ")})`;
-}
+
+
 
 
 
