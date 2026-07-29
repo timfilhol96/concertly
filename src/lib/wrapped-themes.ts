@@ -9,7 +9,27 @@ export type WrappedTheme = {
   swatch: string;
   /** Tailwind text color class for content on top of `bg` */
   text: string;
+  /** Accent hue in oklch degrees */
+  hue: number;
+  /** Base chroma */
+  chroma: number;
+  /** True when the theme renders dark content on a light background */
+  light: boolean;
 };
+
+/**
+ * Genre-mix swatches derived from the active theme: same hue, stepped
+ * lightness/chroma so every segment stays visible on the theme background.
+ */
+export function genreColors(theme: WrappedTheme, count: number): string[] {
+  const n = Math.max(count, 1);
+  return Array.from({ length: n }, (_, i) => {
+    const t = n === 1 ? 0 : i / (n - 1);
+    const l = theme.light ? 0.55 - t * 0.33 : 0.95 - t * 0.42;
+    const c = Math.max(theme.chroma * (0.6 + t * 0.9), 0.02);
+    return `oklch(${l.toFixed(3)} ${c.toFixed(3)} ${theme.hue})`;
+  });
+}
 
 // hue → single-hue ramp. Keep chroma modest; vary lightness for depth.
 const ramp = (hue: number, chroma: number, text: string = "text-white"): Omit<WrappedTheme, "id" | "label"> => {
