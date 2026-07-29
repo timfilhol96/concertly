@@ -381,8 +381,8 @@ function Wrapped() {
                 <div
                   key={g.name}
                   className="h-full"
-                  style={{ width: `${Math.max(0, Math.min(100, g.pct))}%`, background: swatches[i] }}
-                  title={`${g.name} · ${g.pct}%`}
+                  style={{ flex: g.count, background: swatches[i] }}
+                  title={`${g.name} · ${Math.round(g.pct)}%`}
                 />
               ))}
             </div>
@@ -390,7 +390,7 @@ function Wrapped() {
               {genres.map((g, i) => (
                 <span key={g.name} className="inline-flex items-center gap-2 text-sm font-semibold">
                   <span className="h-3 w-3 rounded-full" style={{ background: swatches[i] }} />
-                  {g.name} · {g.pct}%
+                  {g.name} · {Math.round(g.pct)}%
                 </span>
               ))}
             </div>
