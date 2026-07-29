@@ -40,6 +40,9 @@ const ramp = (hue: number, chroma: number, text: string = "text-white"): Omit<Wr
     bg: `linear-gradient(to bottom right, ${from}, ${via}, ${to})`,
     swatch: `linear-gradient(135deg, ${from}, ${via}, ${to})`,
     text,
+    hue,
+    chroma,
+    light: false,
   };
 };
 
@@ -51,6 +54,9 @@ const lightRamp = (hue: number, chroma: number): Omit<WrappedTheme, "id" | "labe
     bg: `linear-gradient(to bottom right, ${from}, ${via}, ${to})`,
     swatch: `linear-gradient(135deg, ${from}, ${via}, ${to})`,
     text: "text-slate-900",
+    hue,
+    chroma,
+    light: true,
   };
 };
 
