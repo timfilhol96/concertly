@@ -33,7 +33,7 @@ const YEAR = new Date().getFullYear();
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-import { WRAPPED_THEMES, type WrappedThemeId } from "@/lib/wrapped-themes";
+import { WRAPPED_THEMES, genreColors, type WrappedThemeId } from "@/lib/wrapped-themes";
 
 const GRADIENTS = WRAPPED_THEMES;
 type GradientId = WrappedThemeId;
