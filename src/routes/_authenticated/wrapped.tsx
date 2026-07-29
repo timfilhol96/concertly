@@ -425,7 +425,7 @@ function Wrapped() {
               <p className="mt-4 text-sm text-muted-foreground">Add a genre to your shows to see this.</p>
             ) : (
               <ol className="mt-4 space-y-3">
-                {genres.map((g, i) => (
+                {genres.slice(0, 3).map((g, i) => (
                 <li key={g.name} className="flex items-baseline gap-3">
                     <span className="font-display text-2xl font-black text-brand">{i + 1}</span>
                     <span className="font-display text-xl font-extrabold">{g.name}</span>
