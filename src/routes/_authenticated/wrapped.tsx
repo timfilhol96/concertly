@@ -33,7 +33,7 @@ const YEAR = new Date().getFullYear();
 const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
-import { WRAPPED_THEMES, type WrappedThemeId } from "@/lib/wrapped-themes";
+import { WRAPPED_THEMES, genreColors, type WrappedThemeId } from "@/lib/wrapped-themes";
 
 const GRADIENTS = WRAPPED_THEMES;
 type GradientId = WrappedThemeId;
@@ -64,28 +64,15 @@ function showLengthMinutes(c: Concert) {
   return songs * 4; // ~4 min per song
 }
 
-function genreColor(name: string): string {
-  const palette = [
-    "var(--brand)",
-    "var(--teal)",
-    "var(--pink)",
-    "var(--chart-4)",
-    "var(--chart-5)",
-  ];
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h + name.charCodeAt(i) * 31) % palette.length;
-  return palette[h];
-}
-
-
-function genreBarGradient(genres: { name: string; pct: number }[]): string {
+function genreBarGradient(genres: { name: string; pct: number }[], colors: string[]): string {
   let pos = 0;
   const stops: string[] = [];
-  for (const g of genres) {
+  genres.forEach((g, i) => {
+    const color = colors[i % colors.length];
     const next = pos + g.pct;
-    stops.push(`${genreColor(g.name)} ${pos}%`, `${genreColor(g.name)} ${next}%`);
+    stops.push(`${color} ${pos}%`, `${color} ${next}%`);
     pos = next;
-  }
+  });
   return `linear-gradient(to right, ${stops.join(", ")})`;
 }
 
@@ -391,20 +378,26 @@ function Wrapped() {
         </div>
 
         {/* Genre mix */}
-        {genres.length > 0 && (
+        {genres.length > 0 && (() => {
+          const swatches = genreColors(gradient, genres.length);
+          return (
           <div className="p-8 md:px-12 md:py-10">
             <p className="text-xs font-bold uppercase tracking-widest opacity-80">Genre mix</p>
-            <div className="mt-4 h-4 w-full overflow-hidden rounded-full" style={{ background: genreBarGradient(genres) }} />
+            <div
+              className="mt-4 h-4 w-full overflow-hidden rounded-full"
+              style={{ background: genreBarGradient(genres, swatches) }}
+            />
             <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-              {genres.map((g) => (
+              {genres.map((g, i) => (
                 <span key={g.name} className="inline-flex items-center gap-2 text-sm font-semibold">
-                  <span className="h-3 w-3 rounded-full" style={{ background: genreColor(g.name) }} />
+                  <span className="h-3 w-3 rounded-full" style={{ background: swatches[i] }} />
                   {g.name} · {g.pct}%
                 </span>
               ))}
             </div>
           </div>
-        )}
+          );
+        })()}
 
         <div className="pointer-events-none absolute -right-10 -top-10 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
       </section>
