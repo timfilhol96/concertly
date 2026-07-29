@@ -64,28 +64,15 @@ function showLengthMinutes(c: Concert) {
   return songs * 4; // ~4 min per song
 }
 
-function genreColor(name: string): string {
-  const palette = [
-    "var(--brand)",
-    "var(--teal)",
-    "var(--pink)",
-    "var(--chart-4)",
-    "var(--chart-5)",
-  ];
-  let h = 0;
-  for (let i = 0; i < name.length; i++) h = (h + name.charCodeAt(i) * 31) % palette.length;
-  return palette[h];
-}
-
-
-function genreBarGradient(genres: { name: string; pct: number }[]): string {
+function genreBarGradient(genres: { name: string; pct: number }[], colors: string[]): string {
   let pos = 0;
   const stops: string[] = [];
-  for (const g of genres) {
+  genres.forEach((g, i) => {
+    const color = colors[i % colors.length];
     const next = pos + g.pct;
-    stops.push(`${genreColor(g.name)} ${pos}%`, `${genreColor(g.name)} ${next}%`);
+    stops.push(`${color} ${pos}%`, `${color} ${next}%`);
     pos = next;
-  }
+  });
   return `linear-gradient(to right, ${stops.join(", ")})`;
 }
 
