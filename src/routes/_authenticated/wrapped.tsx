@@ -368,21 +368,11 @@ function Wrapped() {
         className={`relative overflow-hidden rounded-3xl border border-hairline ${gradient.text}`}
         style={{ backgroundImage: gradient.bg }}
       >
-        {/* Standout night */}
-        <div className="p-8 md:p-12">
-          <p className="text-xs font-bold uppercase tracking-widest opacity-80">Your standout night</p>
-          <p className="mt-3 font-display text-3xl font-black leading-tight md:text-4xl">
-            Most-visited: {topVenue?.name ?? "—"}
-          </p>
-          <p className="mt-2 text-lg font-medium opacity-90 md:text-xl">
-            {topVenue ? (
-              <>
-                {plural(topVenue.count, "show")} there this year, more than anywhere else
-              </>
-            ) : (
-              "No venues logged yet"
-            )}
-          </p>
+        {/* Card title */}
+        <div className="p-8 pb-6 md:p-12 md:pb-8">
+          <h2 className="font-display text-3xl font-black leading-tight md:text-4xl">
+            My Concertly {YEAR} wrapped
+          </h2>
         </div>
 
         {/* Compact stat grid */}
