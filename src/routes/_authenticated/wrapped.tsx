@@ -115,10 +115,33 @@ function Wrapped() {
 
   const longestShow = [...yearConcerts].sort((a, b) => showLengthMinutes(b) - showLengthMinutes(a))[0];
   const longestMins = longestShow ? showLengthMinutes(longestShow) : 0;
+  const timedShows = yearConcerts.filter((c) => showLengthMinutes(c) > 0);
+  const shortestShow = [...timedShows].sort((a, b) => showLengthMinutes(a) - showLengthMinutes(b))[0];
+  const shortestMins = shortestShow ? showLengthMinutes(shortestShow) : 0;
+
+  const prevYearShows = uniqueShows(
+    concerts.filter((c) => new Date(c.date).getFullYear() === YEAR - 1),
+  ).length;
+  const showsDiff = yearShows.length - prevYearShows;
+
+  const topRatedArtists = (() => {
+    const seen = new Map<string, Concert>();
+    for (const c of [...yearConcerts].sort((a, b) => b.rating - a.rating)) {
+      if (!seen.has(c.artist)) seen.set(c.artist, c);
+    }
+    return [...seen.values()].slice(0, 3);
+  })();
+
+  const topVenues3 = rankBy(yearShows, "venue", 3).map((v) => ({
+    ...v,
+    country: yearShows.find((c) => c.venue === v.name)?.country ?? null,
+  }));
 
   const rawGenres = genreBreakdown(yearShows).filter((g) => g.name !== "Unknown");
-  const knownGenreTotal = rawGenres.reduce((s, g) => s + g.count, 0) || 1;
-  const genres = rawGenres.map((g) => ({ ...g, pct: (g.count / knownGenreTotal) * 100 }));
+  const top5Genres = [...rawGenres].sort((a, b) => b.count - a.count).slice(0, 5);
+  const top5Total = top5Genres.reduce((s, g) => s + g.count, 0) || 1;
+  const genres = top5Genres.map((g) => ({ ...g, pct: (g.count / top5Total) * 100 }));
+
   const priorGenres = new Set(priorConcerts.map((c) => c.genre).filter(Boolean));
   const discoveredGenres = [...new Set(yearConcerts.map((c) => c.genre).filter(Boolean) as string[])]
     .filter((g) => !priorGenres.has(g));
@@ -149,10 +172,11 @@ function Wrapped() {
     <main className="mx-auto max-w-5xl px-6 py-10 md:py-14">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-brand">Concertly Wrapped</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-brand">{profile?.displayName ?? "You"}</p>
           <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-6xl">
-            {YEAR} · {profile?.displayName ?? "You"}
+            Your Concertly {YEAR} wrapped
           </h1>
+
         </div>
         <div className="hidden flex-wrap items-center gap-2 md:flex">
           <DropdownMenu>
@@ -363,12 +387,78 @@ function Wrapped() {
         </div>
 
         {/* Compact stat grid */}
-        <div className="grid grid-cols-2 divide-y divide-black/10 border-y border-black/10 bg-white/15 backdrop-blur md:grid-cols-4 md:divide-y-0 md:divide-x">
-          <CompactStat label={yearShows.length === 1 ? "Show" : "Shows"} value={yearShows.length} />
-          <CompactStat label={artistsThisYear.size === 1 ? "Artist" : "Artists"} value={artistsThisYear.size} />
-          <CompactStat label={venuesThisYear.size === 1 ? "Venue" : "Venues"} value={venuesThisYear.size} />
-          <CompactStat label="Live time" value={`${hoursLive}h`} />
+        
+        <div className="grid grid-cols-1 divide-y divide-black/10 border-y border-black/10 bg-white/15 backdrop-blur sm:grid-cols-2 md:grid-cols-4 md:divide-y-0 md:divide-x">
+          <CompactStat label={yearShows.length === 1 ? "Show" : "Shows"} value={yearShows.length}>
+            <p className="text-xs font-semibold opacity-90">
+              {prevYearShows === 0
+                ? `First year on record`
+                : `${showsDiff > 0 ? "+" : ""}${showsDiff} vs ${YEAR - 1} (${prevYearShows})`}
+            </p>
+          </CompactStat>
+
+          <CompactStat label={artistsThisYear.size === 1 ? "Artist" : "Artists"} value={artistsThisYear.size}>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Best rated</p>
+            <ul className="mt-1.5 space-y-1.5">
+              {topRatedArtists.map((c) => (
+                <li key={c.artist} className="flex items-center gap-2">
+                  {c.artistImageUrl ? (
+                    <img
+                      src={c.artistImageUrl}
+                      alt={c.artist}
+                      loading="lazy"
+                      className="h-6 w-6 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-current/20 text-[10px] font-black">
+                      {c.artist.slice(0, 1)}
+                    </span>
+                  )}
+                  <span className="truncate text-xs font-semibold">{c.artist}</span>
+                  <span className="ml-auto text-xs font-bold opacity-80">{c.rating}</span>
+                </li>
+              ))}
+            </ul>
+          </CompactStat>
+
+          <CompactStat label={venuesThisYear.size === 1 ? "Venue" : "Venues"} value={venuesThisYear.size}>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Most visited</p>
+            <ul className="mt-1.5 space-y-1.5">
+              {topVenues3.map((v) => (
+                <li key={v.name} className="flex items-center gap-2">
+                  <span className="text-sm leading-none">{countryFlag(v.country)}</span>
+                  <span className="truncate text-xs font-semibold">{v.name}</span>
+                  <span className="ml-auto text-xs font-bold opacity-80">{v.count}</span>
+                </li>
+              ))}
+            </ul>
+          </CompactStat>
+
+          <CompactStat label="Live time" value={`${hoursLive}h`}>
+            <ul className="space-y-1.5">
+              {longestShow && (
+                <li className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">Longest</span>
+                  <span className="truncate text-xs font-semibold">{longestShow.artist}</span>
+                  <span className="ml-auto text-xs font-bold opacity-80">
+                    {Math.round((longestMins / 60) * 10) / 10}h
+                  </span>
+                </li>
+              )}
+              {shortestShow && (
+                <li className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">Shortest</span>
+                  <span className="truncate text-xs font-semibold">{shortestShow.artist}</span>
+                  <span className="ml-auto text-xs font-bold opacity-80">
+                    {Math.round((shortestMins / 60) * 10) / 10}h
+                  </span>
+                </li>
+              )}
+            </ul>
+          </CompactStat>
         </div>
+
+
 
         {/* Genre mix */}
         {genres.length > 0 && (() => {
@@ -381,8 +471,8 @@ function Wrapped() {
                 <div
                   key={g.name}
                   className="h-full"
-                  style={{ flex: g.count, background: swatches[i] }}
-                  title={`${g.name} · ${Math.round(g.pct)}%`}
+                  style={{ width: `${g.pct}%`, background: swatches[i] }}
+                  title={`${g.name} · ${plural(g.count, "show")}`}
                 />
               ))}
             </div>
@@ -390,10 +480,11 @@ function Wrapped() {
               {genres.map((g, i) => (
                 <span key={g.name} className="inline-flex items-center gap-2 text-sm font-semibold">
                   <span className="h-3 w-3 rounded-full" style={{ background: swatches[i] }} />
-                  {g.name} · {Math.round(g.pct)}%
+                  {g.name} · {plural(g.count, "show")}
                 </span>
               ))}
             </div>
+
           </div>
           );
         })()}
@@ -544,14 +635,24 @@ function Stat({ label, value }: { label: string; value: string }) {
   );
 }
 
-function CompactStat({ label, value }: { label: string; value: string | number }) {
+function CompactStat({
+  label,
+  value,
+  children,
+}: {
+  label: string;
+  value: string | number;
+  children?: React.ReactNode;
+}) {
   return (
-    <div className="flex flex-col justify-center p-5 md:p-6">
+    <div className="flex flex-col p-5 md:p-6">
       <p className="font-display text-3xl font-black leading-none md:text-4xl">{value}</p>
       <p className="mt-1.5 text-xs font-bold uppercase tracking-widest opacity-80">{label}</p>
+      {children && <div className="mt-3">{children}</div>}
     </div>
   );
 }
+
 
 
 function MilestoneCard({ label, concert }: { label: string; concert: Concert | undefined }) {
