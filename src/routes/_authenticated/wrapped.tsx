@@ -387,7 +387,7 @@ function Wrapped() {
         </div>
 
         {/* Compact stat grid */}
-        <div className="grid grid-cols-2 divide-y divide-black/10 border-y border-black/10 bg-white/15 backdrop-blur md:grid-cols-4 md:divide-y-0 md:divide-x">
+        
         <div className="grid grid-cols-1 divide-y divide-black/10 border-y border-black/10 bg-white/15 backdrop-blur sm:grid-cols-2 md:grid-cols-4 md:divide-y-0 md:divide-x">
           <CompactStat label={yearShows.length === 1 ? "Show" : "Shows"} value={yearShows.length}>
             <p className="text-xs font-semibold opacity-90">
