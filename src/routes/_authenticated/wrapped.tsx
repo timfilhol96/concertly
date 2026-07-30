@@ -388,11 +388,77 @@ function Wrapped() {
 
         {/* Compact stat grid */}
         <div className="grid grid-cols-2 divide-y divide-black/10 border-y border-black/10 bg-white/15 backdrop-blur md:grid-cols-4 md:divide-y-0 md:divide-x">
-          <CompactStat label={yearShows.length === 1 ? "Show" : "Shows"} value={yearShows.length} />
-          <CompactStat label={artistsThisYear.size === 1 ? "Artist" : "Artists"} value={artistsThisYear.size} />
-          <CompactStat label={venuesThisYear.size === 1 ? "Venue" : "Venues"} value={venuesThisYear.size} />
-          <CompactStat label="Live time" value={`${hoursLive}h`} />
+        <div className="grid grid-cols-1 divide-y divide-black/10 border-y border-black/10 bg-white/15 backdrop-blur sm:grid-cols-2 md:grid-cols-4 md:divide-y-0 md:divide-x">
+          <CompactStat label={yearShows.length === 1 ? "Show" : "Shows"} value={yearShows.length}>
+            <p className="text-xs font-semibold opacity-90">
+              {prevYearShows === 0
+                ? `First year on record`
+                : `${showsDiff > 0 ? "+" : ""}${showsDiff} vs ${YEAR - 1} (${prevYearShows})`}
+            </p>
+          </CompactStat>
+
+          <CompactStat label={artistsThisYear.size === 1 ? "Artist" : "Artists"} value={artistsThisYear.size}>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Best rated</p>
+            <ul className="mt-1.5 space-y-1.5">
+              {topRatedArtists.map((c) => (
+                <li key={c.artist} className="flex items-center gap-2">
+                  {c.artistImageUrl ? (
+                    <img
+                      src={c.artistImageUrl}
+                      alt={c.artist}
+                      loading="lazy"
+                      className="h-6 w-6 shrink-0 rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-current/20 text-[10px] font-black">
+                      {c.artist.slice(0, 1)}
+                    </span>
+                  )}
+                  <span className="truncate text-xs font-semibold">{c.artist}</span>
+                  <span className="ml-auto text-xs font-bold opacity-80">{c.rating}</span>
+                </li>
+              ))}
+            </ul>
+          </CompactStat>
+
+          <CompactStat label={venuesThisYear.size === 1 ? "Venue" : "Venues"} value={venuesThisYear.size}>
+            <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Most visited</p>
+            <ul className="mt-1.5 space-y-1.5">
+              {topVenues3.map((v) => (
+                <li key={v.name} className="flex items-center gap-2">
+                  <span className="text-sm leading-none">{countryFlag(v.country)}</span>
+                  <span className="truncate text-xs font-semibold">{v.name}</span>
+                  <span className="ml-auto text-xs font-bold opacity-80">{v.count}</span>
+                </li>
+              ))}
+            </ul>
+          </CompactStat>
+
+          <CompactStat label="Live time" value={`${hoursLive}h`}>
+            <ul className="space-y-1.5">
+              {longestShow && (
+                <li className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">Longest</span>
+                  <span className="truncate text-xs font-semibold">{longestShow.artist}</span>
+                  <span className="ml-auto text-xs font-bold opacity-80">
+                    {Math.round((longestMins / 60) * 10) / 10}h
+                  </span>
+                </li>
+              )}
+              {shortestShow && (
+                <li className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">Shortest</span>
+                  <span className="truncate text-xs font-semibold">{shortestShow.artist}</span>
+                  <span className="ml-auto text-xs font-bold opacity-80">
+                    {Math.round((shortestMins / 60) * 10) / 10}h
+                  </span>
+                </li>
+              )}
+            </ul>
+          </CompactStat>
         </div>
+
+
 
         {/* Genre mix */}
         {genres.length > 0 && (() => {
