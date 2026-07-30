@@ -115,10 +115,33 @@ function Wrapped() {
 
   const longestShow = [...yearConcerts].sort((a, b) => showLengthMinutes(b) - showLengthMinutes(a))[0];
   const longestMins = longestShow ? showLengthMinutes(longestShow) : 0;
+  const timedShows = yearConcerts.filter((c) => showLengthMinutes(c) > 0);
+  const shortestShow = [...timedShows].sort((a, b) => showLengthMinutes(a) - showLengthMinutes(b))[0];
+  const shortestMins = shortestShow ? showLengthMinutes(shortestShow) : 0;
+
+  const prevYearShows = uniqueShows(
+    concerts.filter((c) => new Date(c.date).getFullYear() === YEAR - 1),
+  ).length;
+  const showsDiff = yearShows.length - prevYearShows;
+
+  const topRatedArtists = (() => {
+    const seen = new Map<string, Concert>();
+    for (const c of [...yearConcerts].sort((a, b) => b.rating - a.rating)) {
+      if (!seen.has(c.artist)) seen.set(c.artist, c);
+    }
+    return [...seen.values()].slice(0, 3);
+  })();
+
+  const topVenues3 = rankBy(yearShows, "venue", 3).map((v) => ({
+    ...v,
+    country: yearShows.find((c) => c.venue === v.name)?.country ?? null,
+  }));
 
   const rawGenres = genreBreakdown(yearShows).filter((g) => g.name !== "Unknown");
-  const knownGenreTotal = rawGenres.reduce((s, g) => s + g.count, 0) || 1;
-  const genres = rawGenres.map((g) => ({ ...g, pct: (g.count / knownGenreTotal) * 100 }));
+  const top5Genres = [...rawGenres].sort((a, b) => b.count - a.count).slice(0, 5);
+  const top5Total = top5Genres.reduce((s, g) => s + g.count, 0) || 1;
+  const genres = top5Genres.map((g) => ({ ...g, pct: (g.count / top5Total) * 100 }));
+
   const priorGenres = new Set(priorConcerts.map((c) => c.genre).filter(Boolean));
   const discoveredGenres = [...new Set(yearConcerts.map((c) => c.genre).filter(Boolean) as string[])]
     .filter((g) => !priorGenres.has(g));
