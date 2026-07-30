@@ -172,10 +172,11 @@ function Wrapped() {
     <main className="mx-auto max-w-5xl px-6 py-10 md:py-14">
       <div className="mb-8 flex items-center justify-between">
         <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-brand">Concertly Wrapped</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-brand">{profile?.displayName ?? "You"}</p>
           <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-6xl">
-            {YEAR} · {profile?.displayName ?? "You"}
+            Your Concertly {YEAR} wrapped
           </h1>
+
         </div>
         <div className="hidden flex-wrap items-center gap-2 md:flex">
           <DropdownMenu>
