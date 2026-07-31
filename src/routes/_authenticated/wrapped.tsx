@@ -449,12 +449,12 @@ function Wrapped() {
 
 
 
-        {/* Genre mix */}
+        {/* Top 5 genres */}
         {genres.length > 0 && (() => {
           const swatches = genreColors(gradient, genres.length);
           return (
           <div className="p-8 md:px-12 md:py-10">
-            <p className="text-xs font-bold uppercase tracking-widest opacity-80">Genre mix</p>
+            <p className="text-xs font-bold uppercase tracking-widest opacity-80">Top 5 genres</p>
             <div className="mt-4 flex h-4 w-full overflow-hidden rounded-full bg-current/15">
               {genres.map((g, i) => (
                 <div
