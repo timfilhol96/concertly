@@ -4,17 +4,16 @@ import { z } from "zod";
 import { getPublicWrappedShare } from "@/lib/wrapped-share.functions";
 import type { WrappedSharePayload as SharePayload } from "@/lib/wrapped-share-types";
 import { plural } from "@/lib/utils";
+import { getWrappedTheme } from "@/lib/wrapped-themes";
 
 const searchSchema = z.object({
   d: z.string().optional(),
   g: z.string().optional(),
   id: z.string().regex(/^[A-Za-z0-9_-]{8,32}$/).optional(),
+  card: z.string().optional(),
 });
 
 type WrappedSearch = z.infer<typeof searchSchema>;
-
-import { getWrappedTheme } from "@/lib/wrapped-themes";
-
 
 function decode(d?: string): SharePayload | null {
   if (!d) return null;
@@ -56,10 +55,11 @@ export const Route = createFileRoute("/w")({
 });
 
 function SharedWrapped() {
-  const { d, g } = Route.useSearch();
+  const { d, g, card } = Route.useSearch();
   const share = Route.useLoaderData();
   const p: SharePayload | null = share?.payload ?? decode(d);
   const gradient = getWrappedTheme(share?.gradient ?? g);
+  const cardOnly = card === "1" || card === "true";
 
   if (!p) {
     return (
@@ -82,15 +82,19 @@ function SharedWrapped() {
   const hasPatterns = p.peakWeekday || p.peakMonth || typeof p.avgPerMonth === "number";
 
   return (
-    <main className="mx-auto max-w-5xl px-6 py-10 md:py-14">
-      <p className="text-xs font-bold uppercase tracking-widest text-brand">Concertly Wrapped</p>
-      <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-6xl">
-        {p.year} · {p.user ?? "A fan"}
-      </h1>
+    <main className={`mx-auto max-w-5xl px-6 py-10 md:py-14 ${cardOnly ? "flex min-h-screen flex-col items-center justify-center" : ""}`}>
+      {!cardOnly && (
+        <>
+          <p className="text-xs font-bold uppercase tracking-widest text-brand">Concertly Wrapped</p>
+          <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-6xl">
+            {p.year} · {p.user ?? "A fan"}
+          </h1>
+        </>
+      )}
 
       {/* HEADLINE */}
       <section
-        className={`relative mt-8 overflow-hidden rounded-3xl border border-hairline ${gradient.text} p-8 md:p-12`}
+        className={`relative overflow-hidden rounded-3xl border border-hairline ${gradient.text} p-8 md:p-12 ${cardOnly ? "w-full max-w-3xl shadow-2xl" : "mt-8"}`}
         style={{ backgroundImage: gradient.bg }}
       >
         <p className="text-xs font-bold uppercase tracking-widest opacity-80">Year in numbers</p>
@@ -110,141 +114,145 @@ function SharedWrapped() {
         <div className="pointer-events-none absolute -right-10 -top-10 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
       </section>
 
-      {hasOnes && (
-        <Section title="Your #1s">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {p.topVenue && (
-              <Card label="Favorite venue" value={p.topVenue} sub={p.topVenueCount ? plural(p.topVenueCount, "visit") : ""} tone="brand" />
-            )}
-            {p.topCity && (
-              <Card label="Favorite city" value={p.topCity} sub={p.topCityCount ? plural(p.topCityCount, "show") : ""} tone="teal" />
-            )}
-            {p.longestShow && (
-              <Card
-                label="Longest show"
-                value={p.longestShow.artist}
-                sub={`${plural(p.longestShow.songs, "song")} · ~${Math.round((p.longestShow.minutes / 60) * 10) / 10}h`}
-                tone="pink"
-              />
-            )}
-          </div>
-        </Section>
-      )}
-
-      {hasTaste && (
-        <Section title="Taste & genre">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {p.topGenres && p.topGenres.length > 0 && (
-              <div className="rounded-3xl border border-hairline bg-card p-8">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Top genres live</p>
-                <ol className="mt-4 space-y-3">
-                  {p.topGenres.map((g, i) => (
-                    <li key={g.name} className="flex items-baseline gap-3">
-                      <span className="font-display text-2xl font-black text-brand">{i + 1}</span>
-                      <span className="font-display text-xl font-extrabold">{g.name}</span>
-                      <span className="ml-auto text-xs text-muted-foreground">
-                        {plural(g.count, "show")} · {g.pct}%
-                      </span>
-                    </li>
-                  ))}
-                </ol>
+      {cardOnly ? null : (
+        <>
+          {hasOnes && (
+            <Section title="Your #1s">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                {p.topVenue && (
+                  <Card label="Favorite venue" value={p.topVenue} sub={p.topVenueCount ? plural(p.topVenueCount, "visit") : ""} tone="brand" />
+                )}
+                {p.topCity && (
+                  <Card label="Favorite city" value={p.topCity} sub={p.topCityCount ? plural(p.topCityCount, "show") : ""} tone="teal" />
+                )}
+                {p.longestShow && (
+                  <Card
+                    label="Longest show"
+                    value={p.longestShow.artist}
+                    sub={`${plural(p.longestShow.songs, "song")} · ~${Math.round((p.longestShow.minutes / 60) * 10) / 10}h`}
+                    tone="pink"
+                  />
+                )}
               </div>
-            )}
-            {p.discoveredGenres && p.discoveredGenres.length > 0 && (
-              <div className="rounded-3xl border border-hairline bg-card p-8">
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                  Discovered live this year
-                </p>
-                <div className="mt-4 flex flex-wrap gap-2">
-                  {p.discoveredGenres.map((gen) => (
-                    <span key={gen} className="rounded-full border border-hairline bg-surface px-3 py-1.5 text-sm font-semibold">
-                      {gen}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
-        </Section>
-      )}
-
-      {hasFirsts && (
-        <Section title="Firsts & milestones">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {p.firstShow && <Milestone label="First show of the year" show={p.firstShow} />}
-            {p.lastShow && <Milestone label="Last show of the year" show={p.lastShow} />}
-          </div>
-          {p.newArtists && p.newArtists.length > 0 && (
-            <div className="mt-6 rounded-3xl border border-hairline bg-card p-8">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                First time seeing — {plural(p.newArtists.length, "new artist")}
-              </p>
-              <div className="mt-4 flex flex-wrap gap-2">
-                {p.newArtists.map((a) => (
-                  <span key={a} className="rounded-full border border-hairline bg-surface px-3 py-1.5 text-sm font-semibold">
-                    {a}
-                  </span>
-                ))}
-              </div>
-            </div>
+            </Section>
           )}
-        </Section>
-      )}
 
-      {hasVibe && (
-        <Section title="Crowd & vibe">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-            {typeof p.avgRating === "number" && (
-              <Card
-                label="Average rating"
-                value={p.avgRating.toFixed(2)}
-                sub={`out of 10 across ${plural(p.totalRated ?? p.shows, "show")}`}
-                tone="brand"
-              />
-            )}
-            {p.topRated && (
-              <Card
-                label="Highest rated show"
-                value={p.topRated.artist}
-                sub={`${p.topRated.rating}/10${p.topRated.venue ? ` · ${p.topRated.venue}` : ""}${p.topRated.city ? `, ${p.topRated.city}` : ""}`}
-                tone="teal"
-              />
-            )}
+          {hasTaste && (
+            <Section title="Taste & genre">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {p.topGenres && p.topGenres.length > 0 && (
+                  <div className="rounded-3xl border border-hairline bg-card p-8">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Top genres live</p>
+                    <ol className="mt-4 space-y-3">
+                      {p.topGenres.map((g, i) => (
+                        <li key={g.name} className="flex items-baseline gap-3">
+                          <span className="font-display text-2xl font-black text-brand">{i + 1}</span>
+                          <span className="font-display text-xl font-extrabold">{g.name}</span>
+                          <span className="ml-auto text-xs text-muted-foreground">
+                            {plural(g.count, "show")} · {g.pct}%
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </div>
+                )}
+                {p.discoveredGenres && p.discoveredGenres.length > 0 && (
+                  <div className="rounded-3xl border border-hairline bg-card p-8">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                      Discovered live this year
+                    </p>
+                    <div className="mt-4 flex flex-wrap gap-2">
+                      {p.discoveredGenres.map((gen) => (
+                        <span key={gen} className="rounded-full border border-hairline bg-surface px-3 py-1.5 text-sm font-semibold">
+                          {gen}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            </Section>
+          )}
+
+          {hasFirsts && (
+            <Section title="Firsts & milestones">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {p.firstShow && <Milestone label="First show of the year" show={p.firstShow} />}
+                {p.lastShow && <Milestone label="Last show of the year" show={p.lastShow} />}
+              </div>
+              {p.newArtists && p.newArtists.length > 0 && (
+                <div className="mt-6 rounded-3xl border border-hairline bg-card p-8">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    First time seeing — {plural(p.newArtists.length, "new artist")}
+                  </p>
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    {p.newArtists.map((a) => (
+                      <span key={a} className="rounded-full border border-hairline bg-surface px-3 py-1.5 text-sm font-semibold">
+                        {a}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </Section>
+          )}
+
+          {hasVibe && (
+            <Section title="Crowd & vibe">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                {typeof p.avgRating === "number" && (
+                  <Card
+                    label="Average rating"
+                    value={p.avgRating.toFixed(2)}
+                    sub={`out of 10 across ${plural(p.totalRated ?? p.shows, "show")}`}
+                    tone="brand"
+                  />
+                )}
+                {p.topRated && (
+                  <Card
+                    label="Highest rated show"
+                    value={p.topRated.artist}
+                    sub={`${p.topRated.rating}/10${p.topRated.venue ? ` · ${p.topRated.venue}` : ""}${p.topRated.city ? `, ${p.topRated.city}` : ""}`}
+                    tone="teal"
+                  />
+                )}
+              </div>
+            </Section>
+          )}
+
+          {hasPatterns && (
+            <Section title="Patterns & personality">
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                {p.peakWeekday && (
+                  <Card label="Concert weekday" value={p.peakWeekday} sub={`a ${p.peakWeekday}-night person`} tone="pink" />
+                )}
+                {p.peakMonth && (
+                  <Card label="Peak month" value={p.peakMonth} sub={p.peakMonthCount ? plural(p.peakMonthCount, "show") : ""} tone="brand" />
+                )}
+                {typeof p.avgPerMonth === "number" && (
+                  <Card
+                    label="Avg shows / active month"
+                    value={p.avgPerMonth.toFixed(1)}
+                    sub={p.monthsWithShows ? `across ${plural(p.monthsWithShows, "month")}` : ""}
+                    tone="teal"
+                  />
+                )}
+              </div>
+            </Section>
+          )}
+
+          <div className="mt-10 rounded-3xl border border-hairline bg-card p-8 text-center">
+            <h3 className="font-display text-2xl font-extrabold">Track your own live year.</h3>
+            <p className="mt-2 text-muted-foreground">Log every show on Concertly and get your own Wrapped.</p>
+            <Link
+              to="/"
+              className="mt-6 inline-flex rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground hover:scale-[1.03] active:scale-95"
+            >
+              Try Concertly
+            </Link>
           </div>
-        </Section>
+        </>
       )}
-
-      {hasPatterns && (
-        <Section title="Patterns & personality">
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-            {p.peakWeekday && (
-              <Card label="Concert weekday" value={p.peakWeekday} sub={`a ${p.peakWeekday}-night person`} tone="pink" />
-            )}
-            {p.peakMonth && (
-              <Card label="Peak month" value={p.peakMonth} sub={p.peakMonthCount ? plural(p.peakMonthCount, "show") : ""} tone="brand" />
-            )}
-            {typeof p.avgPerMonth === "number" && (
-              <Card
-                label="Avg shows / active month"
-                value={p.avgPerMonth.toFixed(1)}
-                sub={p.monthsWithShows ? `across ${plural(p.monthsWithShows, "month")}` : ""}
-                tone="teal"
-              />
-            )}
-          </div>
-        </Section>
-      )}
-
-      <div className="mt-10 rounded-3xl border border-hairline bg-card p-8 text-center">
-        <h3 className="font-display text-2xl font-extrabold">Track your own live year.</h3>
-        <p className="mt-2 text-muted-foreground">Log every show on Concertly and get your own Wrapped.</p>
-        <Link
-          to="/"
-          className="mt-6 inline-flex rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground hover:scale-[1.03] active:scale-95"
-        >
-          Try Concertly
-        </Link>
-      </div>
     </main>
   );
 }

@@ -258,7 +258,7 @@ function Wrapped() {
                 const text = `My ${YEAR} Concertly Wrapped: ${plural(yearShows.length, "show")} · ${plural(artistsThisYear.size, "artist")} · ${plural(venuesThisYear.size, "venue")} · ${plural(citiesThisYear.size, "city", "cities")} · ${hoursLive}h live.`;
                 const getShareUrl = async () => {
                   const id = await createWrappedShare(sharePayload, gradientId);
-                  return `${origin}/w?id=${id}`;
+                  return `${origin}/w?id=${id}&card=1`;
                 };
                 return (
                   <>
