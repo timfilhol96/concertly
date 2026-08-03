@@ -9,7 +9,9 @@ const searchSchema = z.object({
   d: z.string().optional(),
   g: z.string().optional(),
   id: z.string().regex(/^[A-Za-z0-9_-]{8,32}$/).optional(),
+  card: z.string().optional(),
 });
+
 
 type WrappedSearch = z.infer<typeof searchSchema>;
 
