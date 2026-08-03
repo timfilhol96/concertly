@@ -283,27 +283,33 @@ function Wrapped() {
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={async () => {
+                        let shareUrl: string;
                         try {
-                          const shareUrl = await getShareUrl();
-                          if (navigator.clipboard) await navigator.clipboard.writeText(`${text} ${shareUrl}`);
-                          toast.success("Copied — paste into your Instagram story or DM");
-                          window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
+                          shareUrl = await getShareUrl();
                         } catch {
-                          toast.error("Couldn't copy. Try the link option.");
+                          toast.error("Couldn't create share link");
+                          return;
                         }
+                        const ok = await copyText(`${text} ${shareUrl}`);
+                        if (ok) toast.success("Copied, paste into your Instagram story or DM");
+                        else toast.message("Copy this link", { description: shareUrl, duration: 15000 });
+                        window.open("https://www.instagram.com/", "_blank", "noopener,noreferrer");
                       }}
                     >
                       <Instagram className="mr-2 h-4 w-4 text-pink-500" /> Instagram
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={async () => {
+                        let shareUrl: string;
                         try {
-                          const shareUrl = await getShareUrl();
-                          await navigator.clipboard.writeText(shareUrl);
-                          toast.success("Link copied to clipboard");
+                          shareUrl = await getShareUrl();
                         } catch {
-                          toast.error("Couldn't copy link");
+                          toast.error("Couldn't create share link");
+                          return;
                         }
+                        const ok = await copyText(shareUrl);
+                        if (ok) toast.success("Link copied to clipboard");
+                        else toast.message("Copy this link", { description: shareUrl, duration: 15000 });
                       }}
                     >
                       <LinkIcon className="mr-2 h-4 w-4" /> Copy link
