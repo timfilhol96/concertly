@@ -24,6 +24,7 @@ import { copyText } from "@/lib/clipboard";
 import { plural } from "@/lib/utils";
 import { createWrappedShare } from "@/lib/wrapped-share";
 import type { WrappedSharePayload } from "@/lib/wrapped-share-types";
+import { WrappedStatCard, type WrappedCardData } from "@/components/wrapped-card";
 
 export const Route = createFileRoute("/_authenticated/wrapped")({
   head: () => ({ meta: [{ title: "Your Wrapped · Concertly" }] }),
@@ -40,25 +41,8 @@ const GRADIENTS = WRAPPED_THEMES;
 type GradientId = WrappedThemeId;
 
 
-const COUNTRY_FLAGS: Record<string, string> = {
-  "United States": "🇺🇸", USA: "🇺🇸", US: "🇺🇸",
-  "United Kingdom": "🇬🇧", UK: "🇬🇧", England: "🇬🇧", Scotland: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", Wales: "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
-  France: "🇫🇷", Germany: "🇩🇪", Spain: "🇪🇸", Italy: "🇮🇹", Portugal: "🇵🇹",
-  Netherlands: "🇳🇱", Belgium: "🇧🇪", Ireland: "🇮🇪", Switzerland: "🇨🇭", Austria: "🇦🇹",
-  Sweden: "🇸🇪", Norway: "🇳🇴", Denmark: "🇩🇰", Finland: "🇫🇮", Iceland: "🇮🇸",
-  Poland: "🇵🇱", Czechia: "🇨🇿", "Czech Republic": "🇨🇿", Hungary: "🇭🇺", Greece: "🇬🇷",
-  Canada: "🇨🇦", Mexico: "🇲🇽", Brazil: "🇧🇷", Argentina: "🇦🇷", Chile: "🇨🇱", Colombia: "🇨🇴",
-  Japan: "🇯🇵", "South Korea": "🇰🇷", China: "🇨🇳", "Hong Kong": "🇭🇰", Taiwan: "🇹🇼",
-  Thailand: "🇹🇭", Singapore: "🇸🇬", Malaysia: "🇲🇾", Indonesia: "🇮🇩", Vietnam: "🇻🇳", Philippines: "🇵🇭", India: "🇮🇳",
-  Australia: "🇦🇺", "New Zealand": "🇳🇿",
-  "South Africa": "🇿🇦", Morocco: "🇲🇦", Egypt: "🇪🇬",
-  Turkey: "🇹🇷", "United Arab Emirates": "🇦🇪", UAE: "🇦🇪", Israel: "🇮🇱",
-};
 
-function countryFlag(name?: string | null): string {
-  if (!name) return "🌍";
-  return COUNTRY_FLAGS[name] ?? "🌍";
-}
+
 
 function showLengthMinutes(c: Concert) {
   const songs = c.setlist?.length ?? c.songsSeen ?? 0;
@@ -142,6 +126,29 @@ function Wrapped() {
   const top5Genres = [...rawGenres].sort((a, b) => b.count - a.count).slice(0, 5);
   const top5Total = top5Genres.reduce((s, g) => s + g.count, 0) || 1;
   const genres = top5Genres.map((g) => ({ ...g, pct: (g.count / top5Total) * 100 }));
+
+  const cardData: WrappedCardData = {
+    year: YEAR,
+    shows: yearShows.length,
+    artists: artistsThisYear.size,
+    venues: venuesThisYear.size,
+    hours: hoursLive,
+    prevYearShows,
+    bestRatedArtists: topRatedArtists.map((c) => ({
+      name: c.artist,
+      rating: c.rating,
+      image: c.artistImageUrl ?? null,
+    })),
+    topVenues: topVenues3.map((v) => ({ name: v.name, count: v.count, country: v.country })),
+    longest: longestShow
+      ? { artist: longestShow.artist, hours: Math.round((longestMins / 60) * 10) / 10 }
+      : undefined,
+    shortest: shortestShow
+      ? { artist: shortestShow.artist, hours: Math.round((shortestMins / 60) * 10) / 10 }
+      : undefined,
+    topGenres: genres.map((g) => ({ name: g.name, count: g.count, pct: g.pct })),
+  };
+
 
   const priorGenres = new Set(priorConcerts.map((c) => c.genre).filter(Boolean));
   const discoveredGenres = [...new Set(yearConcerts.map((c) => c.genre).filter(Boolean) as string[])]
@@ -254,6 +261,11 @@ function Wrapped() {
                   peakMonthCount: monthCounts[peakMonthIdx],
                   avgPerMonth: Number(avgPerMonth.toFixed(1)),
                   monthsWithShows,
+                  prevYearShows,
+                  bestRatedArtists: cardData.bestRatedArtists,
+                  topVenues: cardData.topVenues,
+                  longestHours: cardData.longest?.hours,
+                  shortestShow: cardData.shortest,
                 };
                 const origin = typeof window !== "undefined" ? window.location.origin : "";
                 const text = `My ${YEAR} Concertly Wrapped: ${plural(yearShows.length, "show")} · ${plural(artistsThisYear.size, "artist")} · ${plural(venuesThisYear.size, "venue")} · ${plural(citiesThisYear.size, "city", "cities")} · ${hoursLive}h live.`;
@@ -371,122 +383,8 @@ function Wrapped() {
 
 
       {/* HEADLINE */}
-      <section
-        className={`relative overflow-hidden rounded-3xl border border-hairline ${gradient.text}`}
-        style={{ backgroundImage: gradient.bg }}
-      >
-        {/* Card title */}
-        <div className="p-8 pb-6 md:p-12 md:pb-8">
-          <h2 className="font-display text-3xl font-black leading-tight md:text-4xl">
-            My Concertly {YEAR} wrapped
-          </h2>
-        </div>
+      <WrappedStatCard theme={gradient} data={cardData} />
 
-        {/* Compact stat grid */}
-        
-        <div className="grid grid-cols-1 divide-y divide-black/10 border-y border-black/10 bg-white/15 backdrop-blur sm:grid-cols-2 md:grid-cols-4 md:divide-y-0 md:divide-x">
-          <CompactStat label={yearShows.length === 1 ? "Show" : "Shows"} value={yearShows.length}>
-            <p className="text-xs font-semibold opacity-90">
-              {prevYearShows === 0
-                ? `First year on record`
-                : `${showsDiff > 0 ? "+" : ""}${showsDiff} vs ${YEAR - 1} (${prevYearShows})`}
-            </p>
-          </CompactStat>
-
-          <CompactStat label={artistsThisYear.size === 1 ? "Artist" : "Artists"} value={artistsThisYear.size}>
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Best rated</p>
-            <ul className="mt-1.5 space-y-1.5">
-              {topRatedArtists.map((c) => (
-                <li key={c.artist} className="flex items-center gap-2">
-                  {c.artistImageUrl ? (
-                    <img
-                      src={c.artistImageUrl}
-                      alt={c.artist}
-                      loading="lazy"
-                      className="h-6 w-6 shrink-0 rounded-full object-cover"
-                    />
-                  ) : (
-                    <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-current/20 text-[10px] font-black">
-                      {c.artist.slice(0, 1)}
-                    </span>
-                  )}
-                  <span className="truncate text-xs font-semibold">{c.artist}</span>
-                  <span className="ml-auto text-xs font-bold opacity-80">{c.rating}</span>
-                </li>
-              ))}
-            </ul>
-          </CompactStat>
-
-          <CompactStat label={venuesThisYear.size === 1 ? "Venue" : "Venues"} value={venuesThisYear.size}>
-            <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Most visited</p>
-            <ul className="mt-1.5 space-y-1.5">
-              {topVenues3.map((v) => (
-                <li key={v.name} className="flex items-center gap-2">
-                  <span className="text-sm leading-none">{countryFlag(v.country)}</span>
-                  <span className="truncate text-xs font-semibold">{v.name}</span>
-                  <span className="ml-auto text-xs font-bold opacity-80">{v.count}</span>
-                </li>
-              ))}
-            </ul>
-          </CompactStat>
-
-          <CompactStat label="Live time" value={`${hoursLive}h`}>
-            <ul className="space-y-1.5">
-              {longestShow && (
-                <li className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">Longest</span>
-                  <span className="truncate text-xs font-semibold">{longestShow.artist}</span>
-                  <span className="ml-auto text-xs font-bold opacity-80">
-                    {Math.round((longestMins / 60) * 10) / 10}h
-                  </span>
-                </li>
-              )}
-              {shortestShow && (
-                <li className="flex items-center gap-2">
-                  <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">Shortest</span>
-                  <span className="truncate text-xs font-semibold">{shortestShow.artist}</span>
-                  <span className="ml-auto text-xs font-bold opacity-80">
-                    {Math.round((shortestMins / 60) * 10) / 10}h
-                  </span>
-                </li>
-              )}
-            </ul>
-          </CompactStat>
-        </div>
-
-
-
-        {/* Top 5 genres */}
-        {genres.length > 0 && (() => {
-          const swatches = genreColors(gradient, genres.length);
-          return (
-          <div className="p-8 md:px-12 md:py-10">
-            <p className="text-xs font-bold uppercase tracking-widest opacity-80">Top 5 genres</p>
-            <div className="mt-4 flex h-4 w-full overflow-hidden rounded-full bg-current/15">
-              {genres.map((g, i) => (
-                <div
-                  key={g.name}
-                  className="h-full"
-                  style={{ width: `${g.pct}%`, background: swatches[i] }}
-                  title={`${g.name} · ${plural(g.count, "show")}`}
-                />
-              ))}
-            </div>
-            <div className="mt-4 flex flex-wrap items-center gap-x-6 gap-y-2">
-              {genres.map((g, i) => (
-                <span key={g.name} className="inline-flex items-center gap-2 text-sm font-semibold">
-                  <span className="h-3 w-3 rounded-full" style={{ background: swatches[i] }} />
-                  {g.name} · {plural(g.count, "show")}
-                </span>
-              ))}
-            </div>
-
-          </div>
-          );
-        })()}
-
-        <div className="pointer-events-none absolute -right-10 -top-10 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
-      </section>
 
 
       {/* #1s */}

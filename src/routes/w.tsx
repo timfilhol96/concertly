@@ -5,6 +5,7 @@ import { getPublicWrappedShare } from "@/lib/wrapped-share.functions";
 import type { WrappedSharePayload as SharePayload } from "@/lib/wrapped-share-types";
 import { plural } from "@/lib/utils";
 import { getWrappedTheme } from "@/lib/wrapped-themes";
+import { WrappedStatCard } from "@/components/wrapped-card";
 
 const searchSchema = z.object({
   d: z.coerce.string().optional(),
@@ -96,26 +97,27 @@ function SharedWrapped() {
       )}
 
       {/* HEADLINE */}
-      <section
-        className={`relative overflow-hidden rounded-3xl border border-hairline ${gradient.text} p-8 md:p-12 ${cardOnly ? "w-full max-w-3xl shadow-2xl" : "mt-8"}`}
-        style={{ backgroundImage: gradient.bg }}
-      >
-        <p className="text-xs font-bold uppercase tracking-widest opacity-80">Year in numbers</p>
-        <p className="mt-4 font-display text-7xl font-black leading-none md:text-9xl">{p.shows}</p>
-        <p className="mt-3 font-display text-2xl font-extrabold md:text-3xl">
-          {p.shows === 1 ? "show" : "shows"} · {plural(p.artists, "artist")} · {plural(p.venues, "venue")}
-        </p>
-        <div className="mt-6 grid grid-cols-2 gap-4 md:grid-cols-4">
-          <Stat label={p.cities === 1 ? "City" : "Cities"} value={String(p.cities)} />
-          <Stat label={p.countries === 1 ? "Country" : "Countries"} value={String(p.countries)} />
-          <Stat label={p.hours === 1 ? "Hour live" : "Hours live"} value={String(p.hours)} />
-          <Stat
-            label="Ticket spend"
-            value={p.ticketSpend && p.ticketSpend > 0 ? `$${Math.round(p.ticketSpend).toLocaleString()}` : "—"}
-          />
-        </div>
-        <div className="pointer-events-none absolute -right-10 -top-10 h-72 w-72 rounded-full bg-white/20 blur-3xl" />
-      </section>
+      <WrappedStatCard
+        theme={gradient}
+        className={cardOnly ? "w-full max-w-3xl shadow-2xl" : "mt-8"}
+        data={{
+          year: p.year,
+          shows: p.shows,
+          artists: p.artists,
+          venues: p.venues,
+          hours: p.hours,
+          prevYearShows: p.prevYearShows,
+          bestRatedArtists: p.bestRatedArtists,
+          topVenues: p.topVenues,
+          longest:
+            p.longestShow && p.longestHours != null
+              ? { artist: p.longestShow.artist, hours: p.longestHours }
+              : undefined,
+          shortest: p.shortestShow,
+          topGenres: p.topGenres,
+        }}
+      />
+
 
       {cardOnly ? null : (
         <>
