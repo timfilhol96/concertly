@@ -7,10 +7,10 @@ import { plural } from "@/lib/utils";
 import { getWrappedTheme } from "@/lib/wrapped-themes";
 
 const searchSchema = z.object({
-  d: z.string().optional(),
-  g: z.string().optional(),
-  id: z.string().regex(/^[A-Za-z0-9_-]{8,32}$/).optional(),
-  card: z.string().optional(),
+  d: z.coerce.string().optional(),
+  g: z.coerce.string().optional(),
+  id: z.coerce.string().regex(/^[A-Za-z0-9_-]{8,32}$/).optional(),
+  card: z.union([z.string(), z.number(), z.boolean()]).optional(),
 });
 
 type WrappedSearch = z.infer<typeof searchSchema>;
@@ -27,7 +27,10 @@ function decode(d?: string): SharePayload | null {
 }
 
 export const Route = createFileRoute("/w")({
-  validateSearch: (s) => searchSchema.parse(s),
+  validateSearch: (s): WrappedSearch => {
+    const parsed = searchSchema.safeParse(s);
+    return parsed.success ? parsed.data : {};
+  },
   loaderDeps: ({ search }) => search,
   loader: ({ deps }) => {
     const { id } = deps as WrappedSearch;
@@ -59,7 +62,7 @@ function SharedWrapped() {
   const share = Route.useLoaderData();
   const p: SharePayload | null = share?.payload ?? decode(d);
   const gradient = getWrappedTheme(share?.gradient ?? g);
-  const cardOnly = card === "1" || card === "true";
+  const cardOnly = String(card) === "1" || String(card) === "true";
 
   if (!p) {
     return (
