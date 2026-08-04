@@ -62,7 +62,7 @@ function SharedWrapped() {
   const share = Route.useLoaderData();
   const p: SharePayload | null = share?.payload ?? decode(d);
   const gradient = getWrappedTheme(share?.gradient ?? g);
-  const cardOnly = card === "1" || card === "true";
+  const cardOnly = String(card) === "1" || String(card) === "true";
 
   if (!p) {
     return (
