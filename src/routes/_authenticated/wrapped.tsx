@@ -127,6 +127,29 @@ function Wrapped() {
   const top5Total = top5Genres.reduce((s, g) => s + g.count, 0) || 1;
   const genres = top5Genres.map((g) => ({ ...g, pct: (g.count / top5Total) * 100 }));
 
+  const cardData: WrappedCardData = {
+    year: YEAR,
+    shows: yearShows.length,
+    artists: artistsThisYear.size,
+    venues: venuesThisYear.size,
+    hours: hoursLive,
+    prevYearShows,
+    bestRatedArtists: topRatedArtists.map((c) => ({
+      name: c.artist,
+      rating: c.rating,
+      image: c.artistImageUrl ?? null,
+    })),
+    topVenues: topVenues3.map((v) => ({ name: v.name, count: v.count, country: v.country })),
+    longest: longestShow
+      ? { artist: longestShow.artist, hours: Math.round((longestMins / 60) * 10) / 10 }
+      : undefined,
+    shortest: shortestShow
+      ? { artist: shortestShow.artist, hours: Math.round((shortestMins / 60) * 10) / 10 }
+      : undefined,
+    topGenres: genres.map((g) => ({ name: g.name, count: g.count, pct: g.pct })),
+  };
+
+
   const priorGenres = new Set(priorConcerts.map((c) => c.genre).filter(Boolean));
   const discoveredGenres = [...new Set(yearConcerts.map((c) => c.genre).filter(Boolean) as string[])]
     .filter((g) => !priorGenres.has(g));
