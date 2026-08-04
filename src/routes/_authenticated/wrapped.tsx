@@ -261,6 +261,11 @@ function Wrapped() {
                   peakMonthCount: monthCounts[peakMonthIdx],
                   avgPerMonth: Number(avgPerMonth.toFixed(1)),
                   monthsWithShows,
+                  prevYearShows,
+                  bestRatedArtists: cardData.bestRatedArtists,
+                  topVenues: cardData.topVenues,
+                  longestHours: cardData.longest?.hours,
+                  shortestShow: cardData.shortest,
                 };
                 const origin = typeof window !== "undefined" ? window.location.origin : "";
                 const text = `My ${YEAR} Concertly Wrapped: ${plural(yearShows.length, "show")} · ${plural(artistsThisYear.size, "artist")} · ${plural(venuesThisYear.size, "venue")} · ${plural(citiesThisYear.size, "city", "cities")} · ${hoursLive}h live.`;
