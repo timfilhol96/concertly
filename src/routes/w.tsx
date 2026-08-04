@@ -10,7 +10,7 @@ const searchSchema = z.object({
   d: z.coerce.string().optional(),
   g: z.coerce.string().optional(),
   id: z.coerce.string().regex(/^[A-Za-z0-9_-]{8,32}$/).optional(),
-  card: z.coerce.string().optional(),
+  card: z.union([z.string(), z.number(), z.boolean()]).optional(),
 });
 
 type WrappedSearch = z.infer<typeof searchSchema>;
