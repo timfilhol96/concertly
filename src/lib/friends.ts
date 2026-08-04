@@ -140,12 +140,16 @@ export function useSendFriendRequest() {
       const me = userRes.user?.id;
       if (!me) throw new Error("Not signed in");
 
-      const { data: target, error: lookupErr } = await supabase
-        .from("profiles")
-        .select("id, username, display_name")
-        .eq("username", u)
-        .maybeSingle();
+      // Username lookup goes through a security-definer function so profiles
+      // stay readable only to the owner and their connections.
+      const { data: found, error: lookupErr } = await (
+        supabase.rpc as unknown as (
+          fn: string,
+          args: Record<string, unknown>,
+        ) => Promise<{ data: { id: string }[] | null; error: unknown }>
+      )("find_profile_by_username", { _username: u });
       if (lookupErr) throw lookupErr;
+      const target = found?.[0];
       if (!target) throw new Error(`No user @${u}`);
       if (target.id === me) throw new Error("That's you!");
 
