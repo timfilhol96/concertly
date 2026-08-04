@@ -26,6 +26,11 @@ export type WrappedSharePayload = {
   peakMonthCount?: number;
   avgPerMonth?: number;
   monthsWithShows?: number;
+  prevYearShows?: number;
+  bestRatedArtists?: Array<{ name: string; rating: number; image?: string | null }>;
+  topVenues?: Array<{ name: string; count: number; country?: string | null }>;
+  longestHours?: number;
+  shortestShow?: { artist: string; hours: number };
 };
 
 export type WrappedShare = {
