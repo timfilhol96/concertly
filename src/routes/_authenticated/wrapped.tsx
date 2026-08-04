@@ -41,25 +41,8 @@ const GRADIENTS = WRAPPED_THEMES;
 type GradientId = WrappedThemeId;
 
 
-const COUNTRY_FLAGS: Record<string, string> = {
-  "United States": "🇺🇸", USA: "🇺🇸", US: "🇺🇸",
-  "United Kingdom": "🇬🇧", UK: "🇬🇧", England: "🇬🇧", Scotland: "🏴󠁧󠁢󠁳󠁣󠁴󠁿", Wales: "🏴󠁧󠁢󠁷󠁬󠁳󠁿",
-  France: "🇫🇷", Germany: "🇩🇪", Spain: "🇪🇸", Italy: "🇮🇹", Portugal: "🇵🇹",
-  Netherlands: "🇳🇱", Belgium: "🇧🇪", Ireland: "🇮🇪", Switzerland: "🇨🇭", Austria: "🇦🇹",
-  Sweden: "🇸🇪", Norway: "🇳🇴", Denmark: "🇩🇰", Finland: "🇫🇮", Iceland: "🇮🇸",
-  Poland: "🇵🇱", Czechia: "🇨🇿", "Czech Republic": "🇨🇿", Hungary: "🇭🇺", Greece: "🇬🇷",
-  Canada: "🇨🇦", Mexico: "🇲🇽", Brazil: "🇧🇷", Argentina: "🇦🇷", Chile: "🇨🇱", Colombia: "🇨🇴",
-  Japan: "🇯🇵", "South Korea": "🇰🇷", China: "🇨🇳", "Hong Kong": "🇭🇰", Taiwan: "🇹🇼",
-  Thailand: "🇹🇭", Singapore: "🇸🇬", Malaysia: "🇲🇾", Indonesia: "🇮🇩", Vietnam: "🇻🇳", Philippines: "🇵🇭", India: "🇮🇳",
-  Australia: "🇦🇺", "New Zealand": "🇳🇿",
-  "South Africa": "🇿🇦", Morocco: "🇲🇦", Egypt: "🇪🇬",
-  Turkey: "🇹🇷", "United Arab Emirates": "🇦🇪", UAE: "🇦🇪", Israel: "🇮🇱",
-};
 
-function countryFlag(name?: string | null): string {
-  if (!name) return "🌍";
-  return COUNTRY_FLAGS[name] ?? "🌍";
-}
+
 
 function showLengthMinutes(c: Concert) {
   const songs = c.setlist?.length ?? c.songsSeen ?? 0;
