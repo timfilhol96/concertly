@@ -24,6 +24,7 @@ import { copyText } from "@/lib/clipboard";
 import { plural } from "@/lib/utils";
 import { createWrappedShare } from "@/lib/wrapped-share";
 import type { WrappedSharePayload } from "@/lib/wrapped-share-types";
+import { WrappedStatCard, countryFlag, type WrappedCardData } from "@/components/wrapped-card";
 
 export const Route = createFileRoute("/_authenticated/wrapped")({
   head: () => ({ meta: [{ title: "Your Wrapped · Concertly" }] }),
