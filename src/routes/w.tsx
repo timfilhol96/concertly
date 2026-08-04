@@ -7,10 +7,10 @@ import { plural } from "@/lib/utils";
 import { getWrappedTheme } from "@/lib/wrapped-themes";
 
 const searchSchema = z.object({
-  d: z.string().optional(),
-  g: z.string().optional(),
-  id: z.string().regex(/^[A-Za-z0-9_-]{8,32}$/).optional(),
-  card: z.string().optional(),
+  d: z.coerce.string().optional(),
+  g: z.coerce.string().optional(),
+  id: z.coerce.string().regex(/^[A-Za-z0-9_-]{8,32}$/).optional(),
+  card: z.coerce.string().optional(),
 });
 
 type WrappedSearch = z.infer<typeof searchSchema>;
