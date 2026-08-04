@@ -5,6 +5,7 @@ import { getPublicWrappedShare } from "@/lib/wrapped-share.functions";
 import type { WrappedSharePayload as SharePayload } from "@/lib/wrapped-share-types";
 import { plural } from "@/lib/utils";
 import { getWrappedTheme } from "@/lib/wrapped-themes";
+import { WrappedStatCard } from "@/components/wrapped-card";
 
 const searchSchema = z.object({
   d: z.coerce.string().optional(),
