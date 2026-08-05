@@ -85,8 +85,8 @@ export function WrappedStatCard({
                         {a.name.slice(0, 1)}
                       </span>
                     )}
-                    <span className="truncate text-xs font-semibold">{a.name}</span>
-                    <span className="ml-auto text-xs font-bold opacity-80">{a.rating}</span>
+                    <span className="min-w-0 flex-1 break-words text-xs font-semibold leading-tight">{a.name}</span>
+                    <span className="shrink-0 text-xs font-bold opacity-80">{a.rating}</span>
                   </li>
                 ))}
               </ul>
@@ -100,10 +100,10 @@ export function WrappedStatCard({
               <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Most visited</p>
               <ul className="mt-1.5 space-y-1.5">
                 {data.topVenues.map((v) => (
-                  <li key={v.name} className="flex items-center gap-2">
-                    <span className="text-sm leading-none">{countryFlag(v.country)}</span>
-                    <span className="truncate text-xs font-semibold">{v.name}</span>
-                    <span className="ml-auto text-xs font-bold opacity-80">{v.count}</span>
+                  <li key={v.name} className="flex items-start gap-2">
+                    <span className="text-sm leading-tight">{countryFlag(v.country)}</span>
+                    <span className="min-w-0 flex-1 break-words text-xs font-semibold leading-tight">{v.name}</span>
+                    <span className="shrink-0 text-xs font-bold opacity-80">{v.count}</span>
                   </li>
                 ))}
               </ul>
@@ -112,19 +112,23 @@ export function WrappedStatCard({
         </CompactStat>
 
         <CompactStat label="Live time" value={`${data.hours}h`}>
-          <ul className="space-y-1.5">
+          <ul className="space-y-2">
             {data.longest && (
-              <li className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">Longest</span>
-                <span className="truncate text-xs font-semibold">{data.longest.artist}</span>
-                <span className="ml-auto text-xs font-bold opacity-80">{data.longest.hours}h</span>
+              <li>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Longest</p>
+                <p className="flex items-start gap-2 text-xs font-semibold leading-tight">
+                  <span className="min-w-0 flex-1 break-words">{data.longest.artist}</span>
+                  <span className="shrink-0 font-bold opacity-80">{data.longest.hours}h</span>
+                </p>
               </li>
             )}
             {data.shortest && (
-              <li className="flex items-center gap-2">
-                <span className="text-[10px] font-bold uppercase tracking-widest opacity-70">Shortest</span>
-                <span className="truncate text-xs font-semibold">{data.shortest.artist}</span>
-                <span className="ml-auto text-xs font-bold opacity-80">{data.shortest.hours}h</span>
+              <li>
+                <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Shortest</p>
+                <p className="flex items-start gap-2 text-xs font-semibold leading-tight">
+                  <span className="min-w-0 flex-1 break-words">{data.shortest.artist}</span>
+                  <span className="shrink-0 font-bold opacity-80">{data.shortest.hours}h</span>
+                </p>
               </li>
             )}
           </ul>
