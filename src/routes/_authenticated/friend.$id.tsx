@@ -25,6 +25,21 @@ export const Route = createFileRoute("/_authenticated/friend/$id")({
   ),
 });
 
+function FriendErrorPage({ reset }: { reset: () => void }) {
+  const router = useRouter();
+  return (
+    <main className="mx-auto max-w-2xl px-6 py-20 text-center">
+      <h1 className="font-display text-2xl font-extrabold">Couldn't load this friend</h1>
+      <button
+        onClick={() => { reset(); router.invalidate(); }}
+        className="mt-6 rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground"
+      >
+        Retry
+      </button>
+    </main>
+  );
+}
+
 const YEAR = new Date().getFullYear();
 
 function heatColor(count: number, max: number): string {
