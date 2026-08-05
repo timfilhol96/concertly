@@ -30,3 +30,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Env files (keep the checked-in template)
+.env
+.env.*.local
+!.env.example
