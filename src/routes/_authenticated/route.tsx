@@ -4,9 +4,9 @@ import { AppNav } from "@/components/app-nav";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
-  beforeLoad: async () => {
+  beforeLoad: async ({ location }) => {
     const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
+    if (error || !data.user) throw redirect({ to: "/auth", search: { next: location.href } });
     return { user: data.user };
   },
   component: AppLayout,
