@@ -17,8 +17,6 @@ export const Route = createFileRoute("/trust")({
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://concertly.lovable.app/trust" },
-      { property: "og:image", content: "https://concertly.lovable.app/og-default.png" },
-      { name: "twitter:image", content: "https://concertly.lovable.app/og-default.png" },
     ],
     links: [{ rel: "canonical", href: "https://concertly.lovable.app/trust" }],
   }),

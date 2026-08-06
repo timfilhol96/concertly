@@ -16,7 +16,20 @@ import { plural } from "@/lib/utils";
 export const Route = createFileRoute("/_authenticated/friend/$id")({
   head: () => ({ meta: [{ title: "Friend · Concertly" }] }),
   component: FriendDashboard,
-  errorComponent: FriendErrorPage,
+  errorComponent: ({ reset }) => {
+    const router = useRouter();
+    return (
+      <main className="mx-auto max-w-2xl px-6 py-20 text-center">
+        <h1 className="font-display text-2xl font-extrabold">Couldn't load this friend</h1>
+        <button
+          onClick={() => { reset(); router.invalidate(); }}
+          className="mt-6 rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground"
+        >
+          Retry
+        </button>
+      </main>
+    );
+  },
   notFoundComponent: () => (
     <main className="mx-auto max-w-2xl px-6 py-20 text-center">
       <h1 className="font-display text-2xl font-extrabold">Friend not found</h1>
@@ -24,21 +37,6 @@ export const Route = createFileRoute("/_authenticated/friend/$id")({
     </main>
   ),
 });
-
-function FriendErrorPage({ reset }: { reset: () => void }) {
-  const router = useRouter();
-  return (
-    <main className="mx-auto max-w-2xl px-6 py-20 text-center">
-      <h1 className="font-display text-2xl font-extrabold">Couldn't load this friend</h1>
-      <button
-        onClick={() => { reset(); router.invalidate(); }}
-        className="mt-6 rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground"
-      >
-        Retry
-      </button>
-    </main>
-  );
-}
 
 const YEAR = new Date().getFullYear();
 

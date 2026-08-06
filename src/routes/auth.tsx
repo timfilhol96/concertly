@@ -5,10 +5,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
 
 export const Route = createFileRoute("/auth")({
-  validateSearch: (s: Record<string, unknown>): { next?: string } => {
-    const n = s.next;
-    return typeof n === "string" && n.startsWith("/") && !n.startsWith("//") ? { next: n } : {};
-  },
+  validateSearch: (s: Record<string, unknown>) => ({
+    next: typeof s.next === "string" && s.next.startsWith("/") && !s.next.startsWith("//") ? s.next : undefined,
+  }),
   head: () => ({
     meta: [
       { title: "Sign in · Concertly" },
@@ -17,8 +16,6 @@ export const Route = createFileRoute("/auth")({
       { property: "og:description", content: "Sign in to Concertly to log every show and unlock your live music stats." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://concertly.lovable.app/auth" },
-      { property: "og:image", content: "https://concertly.lovable.app/og-default.png" },
-      { name: "twitter:image", content: "https://concertly.lovable.app/og-default.png" },
     ],
     links: [{ rel: "canonical", href: "https://concertly.lovable.app/auth" }],
   }),

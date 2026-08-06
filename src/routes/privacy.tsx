@@ -17,8 +17,6 @@ export const Route = createFileRoute("/privacy")({
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://concertly.lovable.app/privacy" },
-      { property: "og:image", content: "https://concertly.lovable.app/og-default.png" },
-      { name: "twitter:image", content: "https://concertly.lovable.app/og-default.png" },
     ],
     links: [{ rel: "canonical", href: "https://concertly.lovable.app/privacy" }],
   }),
