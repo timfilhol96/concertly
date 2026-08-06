@@ -17,6 +17,8 @@ export const Route = createFileRoute("/auth")({
       { property: "og:description", content: "Sign in to Concertly to log every show and unlock your live music stats." },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://concertly.lovable.app/auth" },
+      { property: "og:image", content: "https://concertly.lovable.app/og-default.png" },
+      { name: "twitter:image", content: "https://concertly.lovable.app/og-default.png" },
     ],
     links: [{ rel: "canonical", href: "https://concertly.lovable.app/auth" }],
   }),
