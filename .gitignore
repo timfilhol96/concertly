@@ -30,9 +30,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# Env files
-# NOTE: .env is managed by Lovable and MUST stay tracked — the deploy build
-# reads VITE_* values from it. Ignoring it breaks the published app.
-.env.*.local
-!.env.example
