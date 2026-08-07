@@ -1,0 +1,1 @@
+GRANT EXECUTE ON FUNCTION public.has_friend_link(uuid, uuid) TO authenticated;
