@@ -105,7 +105,7 @@ function Landing() {
               { k: "Shows tracked", v: stats.total.toString() },
               { k: "Unique artists", v: stats.uniqueArtists.toString() },
               { k: "Cities", v: stats.uniqueCities.toString() },
-              { k: "Hours live", v: stats.hoursLive.toString() },
+              { k: "Hours live", v: formatDuration(stats.hoursLive) },
             ].map((s, i) => (
               <div key={s.k} className="bg-surface/70 p-6 animate-count" style={{ animationDelay: `${i * 80}ms` }}>
                 <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{s.k}</p>
