@@ -21,7 +21,7 @@ import {
   type Concert,
 } from "@/lib/concerts";
 import { copyText } from "@/lib/clipboard";
-import { plural } from "@/lib/utils";
+import { formatDuration, plural } from "@/lib/utils";
 import { createWrappedShare } from "@/lib/wrapped-share";
 import type { WrappedSharePayload } from "@/lib/wrapped-share-types";
 import { WrappedStatCard, type WrappedCardData } from "@/components/wrapped-card";
@@ -268,7 +268,7 @@ function Wrapped() {
                   shortestShow: cardData.shortest,
                 };
                 const origin = typeof window !== "undefined" ? window.location.origin : "";
-                const text = `My ${YEAR} Concertly Wrapped: ${plural(yearShows.length, "show")} · ${plural(artistsThisYear.size, "artist")} · ${plural(venuesThisYear.size, "venue")} · ${plural(citiesThisYear.size, "city", "cities")} · ${hoursLive}h live.`;
+                const text = `My ${YEAR} Concertly Wrapped: ${plural(yearShows.length, "show")} · ${plural(artistsThisYear.size, "artist")} · ${plural(venuesThisYear.size, "venue")} · ${plural(citiesThisYear.size, "city", "cities")} · ${formatDuration(hoursLive)} live.`;
                 const getShareUrl = async () => {
                   const id = await createWrappedShare(sharePayload, gradientId);
                   return `${origin}/w?id=${id}&card=1`;
@@ -395,7 +395,7 @@ function Wrapped() {
           <WrappedCard
             label="Longest show"
             value={longestShow?.artist ?? "—"}
-            sub={longestShow ? `${plural(longestShow.setlist?.length ?? longestShow.songsSeen ?? 0, "song")} · ~${Math.round(longestMins / 60 * 10) / 10}h` : ""}
+            sub={longestShow ? `${plural(longestShow.setlist?.length ?? longestShow.songsSeen ?? 0, "song")} · ~${formatDuration(longestMins / 60)}` : ""}
             tone="pink"
           />
         </div>

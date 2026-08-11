@@ -3,7 +3,7 @@ import { z } from "zod";
 
 import { getPublicWrappedShare } from "@/lib/wrapped-share.functions";
 import type { WrappedSharePayload as SharePayload } from "@/lib/wrapped-share-types";
-import { plural } from "@/lib/utils";
+import { formatDuration, plural } from "@/lib/utils";
 import { getWrappedTheme } from "@/lib/wrapped-themes";
 import { WrappedStatCard } from "@/components/wrapped-card";
 
@@ -134,7 +134,7 @@ function SharedWrapped() {
                   <Card
                     label="Longest show"
                     value={p.longestShow.artist}
-                    sub={`${plural(p.longestShow.songs, "song")} · ~${Math.round((p.longestShow.minutes / 60) * 10) / 10}h`}
+                    sub={`${plural(p.longestShow.songs, "song")} · ~${formatDuration(p.longestShow.minutes / 60)}`}
                     tone="pink"
                   />
                 )}

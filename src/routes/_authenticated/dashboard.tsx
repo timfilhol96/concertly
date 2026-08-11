@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { cn, plural } from "@/lib/utils";
+import { cn, formatDuration, plural } from "@/lib/utils";
 import { ArrowUpRight, Award, CalendarClock, Clock, Star, TrendingUp, Users } from "lucide-react";
 import {
   attendedOnly,
@@ -85,7 +85,7 @@ function Dashboard() {
         </div>
         <div className="grid grid-cols-3 gap-3 animate-reveal">
           <Stat label="Concert Age" value={`${getConcertAge(shows)} yrs`} accent="brand" />
-          <Stat label="Hours live" value={`${showStats.hoursLive}h`} accent="pink" />
+          <Stat label="Hours live" value={formatDuration(showStats.hoursLive)} accent="pink" />
           <Stat label="Avg Rating" value={showStats.avgRating.toFixed(1)} accent="teal" />
         </div>
       </div>

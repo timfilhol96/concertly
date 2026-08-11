@@ -1,4 +1,4 @@
-import { plural } from "@/lib/utils";
+import { formatDuration, plural } from "@/lib/utils";
 import { genreColors, type WrappedTheme } from "@/lib/wrapped-themes";
 
 const COUNTRY_FLAGS: Record<string, string> = {
@@ -111,14 +111,14 @@ export function WrappedStatCard({
           )}
         </CompactStat>
 
-        <CompactStat label="Live time" value={`${data.hours}h`}>
+        <CompactStat label="Live time" value={formatDuration(data.hours)}>
           <ul className="space-y-2">
             {data.longest && (
               <li>
                 <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Longest</p>
                 <p className="flex items-start gap-2 text-xs font-semibold leading-tight">
                   <span className="min-w-0 flex-1 break-words">{data.longest.artist}</span>
-                  <span className="shrink-0 font-bold opacity-80">{data.longest.hours}h</span>
+                  <span className="shrink-0 font-bold opacity-80">{formatDuration(data.longest.hours)}</span>
                 </p>
               </li>
             )}
@@ -127,7 +127,7 @@ export function WrappedStatCard({
                 <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Shortest</p>
                 <p className="flex items-start gap-2 text-xs font-semibold leading-tight">
                   <span className="min-w-0 flex-1 break-words">{data.shortest.artist}</span>
-                  <span className="shrink-0 font-bold opacity-80">{data.shortest.hours}h</span>
+                  <span className="shrink-0 font-bold opacity-80">{formatDuration(data.shortest.hours)}</span>
                 </p>
               </li>
             )}
