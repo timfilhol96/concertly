@@ -1,4 +1,4 @@
-import { plural } from "@/lib/utils";
+import { formatDuration, plural } from "@/lib/utils";
 import { genreColors, type WrappedTheme } from "@/lib/wrapped-themes";
 
 const COUNTRY_FLAGS: Record<string, string> = {
