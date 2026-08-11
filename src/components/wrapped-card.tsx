@@ -127,7 +127,7 @@ export function WrappedStatCard({
                 <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Shortest</p>
                 <p className="flex items-start gap-2 text-xs font-semibold leading-tight">
                   <span className="min-w-0 flex-1 break-words">{data.shortest.artist}</span>
-                  <span className="shrink-0 font-bold opacity-80">{data.shortest.hours}h</span>
+                  <span className="shrink-0 font-bold opacity-80">{formatDuration(data.shortest.hours)}</span>
                 </p>
               </li>
             )}
