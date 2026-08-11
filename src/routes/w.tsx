@@ -134,7 +134,7 @@ function SharedWrapped() {
                   <Card
                     label="Longest show"
                     value={p.longestShow.artist}
-                    sub={`${plural(p.longestShow.songs, "song")} · ~${Math.round((p.longestShow.minutes / 60) * 10) / 10}h`}
+                    sub={`${plural(p.longestShow.songs, "song")} · ~${formatDuration(p.longestShow.minutes / 60)}`}
                     tone="pink"
                   />
                 )}
