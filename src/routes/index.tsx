@@ -179,10 +179,11 @@ function Landing() {
             <span className="font-display text-xl font-extrabold tracking-tighter text-brand">CONCERTLY</span>
             <p className="mt-1 text-xs text-muted-foreground">Made for the front row · © {new Date().getFullYear()}</p>
           </div>
-          <div className="flex gap-6 text-xs text-muted-foreground">
+          <div className="flex flex-wrap gap-6 text-xs text-muted-foreground">
             <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
             <Link to="/terms" className="hover:text-foreground">Terms</Link>
             <Link to="/trust" className="hover:text-foreground">Trust</Link>
+            <Link to="/blog/best-concert-trackers" className="hover:text-foreground">Best concert trackers</Link>
           </div>
         </div>
       </footer>
