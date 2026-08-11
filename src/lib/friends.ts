@@ -3,6 +3,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import type { Concert } from "@/lib/concerts";
+import { findProfileByUsernameFn } from "@/lib/friend-lookup.functions";
 
 export type FriendProfile = {
   userId: string;
