@@ -21,7 +21,7 @@ import {
   type Concert,
 } from "@/lib/concerts";
 import { copyText } from "@/lib/clipboard";
-import { plural } from "@/lib/utils";
+import { formatDuration, plural } from "@/lib/utils";
 import { createWrappedShare } from "@/lib/wrapped-share";
 import type { WrappedSharePayload } from "@/lib/wrapped-share-types";
 import { WrappedStatCard, type WrappedCardData } from "@/components/wrapped-card";
