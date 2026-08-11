@@ -1,5 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
-import { cn, plural } from "@/lib/utils";
+import { formatDuration, plural } from "@/lib/utils";
 import { ArrowUpRight, Award, CalendarClock, Clock, Star, TrendingUp, Users } from "lucide-react";
 import {
   attendedOnly,
