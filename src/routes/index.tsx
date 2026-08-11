@@ -2,6 +2,7 @@ import { Link, createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, BarChart3, Calendar, Sparkles, Ticket } from "lucide-react";
 import heroImg from "@/assets/hero-concert.jpg";
 import { CONCERTS, getStats } from "@/lib/mock-data";
+import { formatDuration } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
