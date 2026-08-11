@@ -395,7 +395,7 @@ function Wrapped() {
           <WrappedCard
             label="Longest show"
             value={longestShow?.artist ?? "—"}
-            sub={longestShow ? `${plural(longestShow.setlist?.length ?? longestShow.songsSeen ?? 0, "song")} · ~${Math.round(longestMins / 60 * 10) / 10}h` : ""}
+            sub={longestShow ? `${plural(longestShow.setlist?.length ?? longestShow.songsSeen ?? 0, "song")} · ~${formatDuration(longestMins / 60)}` : ""}
             tone="pink"
           />
         </div>
