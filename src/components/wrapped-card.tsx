@@ -111,7 +111,7 @@ export function WrappedStatCard({
           )}
         </CompactStat>
 
-        <CompactStat label="Live time" value={`${data.hours}h`}>
+        <CompactStat label="Live time" value={formatDuration(data.hours)}>
           <ul className="space-y-2">
             {data.longest && (
               <li>
