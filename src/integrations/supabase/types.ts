@@ -209,15 +209,6 @@ export type Database = {
     }
     Functions: {
       are_friends: { Args: { a: string; b: string }; Returns: boolean }
-      find_profile_by_username: {
-        Args: { _username: string }
-        Returns: {
-          display_name: string
-          id: string
-          username: string
-        }[]
-      }
-      has_friend_link: { Args: { a: string; b: string }; Returns: boolean }
     }
     Enums: {
       concert_status: "attended" | "upcoming" | "wishlist"
