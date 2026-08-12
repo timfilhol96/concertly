@@ -6,12 +6,14 @@ export const Route = createFileRoute("/terms")({
       { title: "Terms of Service · Concertly" },
       {
         name: "description",
-        content: "The terms that govern your use of Concertly.",
+        content:
+          "Read the Concertly terms of service: the rules for using the concert tracking app, your account, your show data, and acceptable use.",
       },
       { property: "og:title", content: "Terms of Service · Concertly" },
       {
         property: "og:description",
-        content: "The terms that govern your use of Concertly.",
+        content:
+          "Read the Concertly terms of service: the rules for using the concert tracking app, your account, your show data, and acceptable use.",
       },
       { property: "og:type", content: "website" },
       { property: "og:url", content: "https://concertly.lovable.app/terms" },

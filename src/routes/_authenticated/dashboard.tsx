@@ -237,7 +237,7 @@ function Dashboard() {
                   <p className="text-[10px] font-bold uppercase tracking-widest text-brand">
                     {plural(yearsAgo, "year")} ago
                   </p>
-                  <h4 className="mt-1 truncate font-display text-lg font-extrabold">{c.artist}</h4>
+                  <h3 className="mt-1 truncate font-display text-lg font-extrabold">{c.artist}</h3>
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">
                     {c.venue} · {c.city}
                   </p>
@@ -306,9 +306,9 @@ function Dashboard() {
             <p className="text-[10px] font-bold uppercase tracking-widest text-brand">
               {YEAR} Wrapped
             </p>
-            <h4 className="mt-1 font-display text-xl font-extrabold">
+            <h3 className="mt-1 font-display text-xl font-extrabold">
               Your year in concerts is ready.
-            </h4>
+            </h3>
             <p className="mt-2 text-xs text-muted-foreground">
               {plural(yearShows, "show")} · {plural(yearArtists, "artist")}.
             </p>
@@ -549,10 +549,10 @@ export function ConcertCard({
         <div className="flex-grow">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h4 className="font-display text-2xl font-extrabold leading-tight">
+              <h3 className="font-display text-2xl font-extrabold leading-tight">
                 {artist}
                 {tour && <span className="text-muted-foreground"> · {tour}</span>}
-              </h4>
+              </h3>
               <p className="mt-1 text-sm text-muted-foreground">
                 {venue} · {city}
               </p>

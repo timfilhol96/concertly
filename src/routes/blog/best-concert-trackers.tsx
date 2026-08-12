@@ -164,7 +164,7 @@ function BestConcertTrackers() {
                 <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand/15 text-brand">
                   <item.icon className="h-4 w-4" />
                 </div>
-                <h3 className="font-display text-base font-bold">{item.title}</h3>
+                <h2 className="font-display text-base font-bold">{item.title}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>
               </div>
             ))}
