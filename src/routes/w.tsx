@@ -42,16 +42,17 @@ export const Route = createFileRoute("/w")({
     const title = p
       ? `${p.user ?? "A fan"}'s ${p.year} Wrapped · ${plural(p.shows, "show")}`
       : "Concertly Wrapped";
+    const description = p
+      ? `${p.user ?? "A fan"} went to ${plural(p.shows, "show")} in ${p.year}: ${plural(p.artists, "artist")}, ${plural(p.venues, "venue")} and ${plural(p.cities, "city", "cities")}. See the full Concertly Wrapped card.`
+      : "Your year in live music, wrapped: shows, artists, venues and cities in one shareable Concertly card.";
     return {
       meta: [
         { title },
-        {
-          name: "description",
-          content: p
-            ? `${plural(p.shows, "show")} · ${plural(p.artists, "artist")} · ${plural(p.venues, "venue")} · ${plural(p.cities, "city", "cities")}.`
-            : "Your year in live music.",
-        },
+        { name: "description", content: description },
         { property: "og:title", content: title },
+        { property: "og:description", content: description },
+        { property: "og:type", content: "website" },
+        { name: "twitter:card", content: "summary_large_image" },
       ],
     };
   },

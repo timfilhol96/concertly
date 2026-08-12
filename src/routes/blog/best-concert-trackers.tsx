@@ -4,15 +4,15 @@ import { ArrowRight, BarChart3, Calendar, Check, Music, Share2, Smartphone, Tick
 export const Route = createFileRoute("/blog/best-concert-trackers")({
   head: () => ({
     meta: [
-      { title: "Best Concert Tracker Apps (2026) — Concertly vs Setlist.fm, Songkick & More" },
+      { title: "Best Concert Tracker Apps in 2026 · Compared" },
       {
         name: "description",
         content:
-          "Compare the best concert tracker apps in 2026. See how Concertly, Setlist.fm, Songkick, Concert Archives, and Jukely stack up for logging gigs, setlists, stats, and shareable year-in-review recaps.",
+          "Compare the best concert tracker apps of 2026: Concertly, Setlist.fm, Songkick and more for logging gigs, setlists, stats and yearly recaps.",
       },
       {
         property: "og:title",
-        content: "Best Concert Tracker Apps (2026) — Concertly vs Setlist.fm, Songkick & More",
+        content: "Best Concert Tracker Apps in 2026 · Compared",
       },
       {
         property: "og:description",
@@ -164,7 +164,7 @@ function BestConcertTrackers() {
                 <div className="mb-3 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-brand/15 text-brand">
                   <item.icon className="h-4 w-4" />
                 </div>
-                <h3 className="font-display text-base font-bold">{item.title}</h3>
+                <h2 className="font-display text-base font-bold">{item.title}</h2>
                 <p className="mt-1 text-sm text-muted-foreground">{item.body}</p>
               </div>
             ))}
