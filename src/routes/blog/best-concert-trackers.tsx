@@ -4,15 +4,15 @@ import { ArrowRight, BarChart3, Calendar, Check, Music, Share2, Smartphone, Tick
 export const Route = createFileRoute("/blog/best-concert-trackers")({
   head: () => ({
     meta: [
-      { title: "Best Concert Tracker Apps (2026) — Concertly vs Setlist.fm, Songkick & More" },
+      { title: "Best Concert Tracker Apps in 2026 · Compared" },
       {
         name: "description",
         content:
-          "Compare the best concert tracker apps in 2026. See how Concertly, Setlist.fm, Songkick, Concert Archives, and Jukely stack up for logging gigs, setlists, stats, and shareable year-in-review recaps.",
+          "Compare the best concert tracker apps of 2026: Concertly, Setlist.fm, Songkick and more for logging gigs, setlists, stats and yearly recaps.",
       },
       {
         property: "og:title",
-        content: "Best Concert Tracker Apps (2026) — Concertly vs Setlist.fm, Songkick & More",
+        content: "Best Concert Tracker Apps in 2026 · Compared",
       },
       {
         property: "og:description",
