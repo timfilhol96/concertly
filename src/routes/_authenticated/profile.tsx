@@ -14,7 +14,12 @@ import {
 } from "@/lib/spotify.functions";
 
 export const Route = createFileRoute("/_authenticated/profile")({
-  head: () => ({ meta: [{ title: "Profile · Concertly" }] }),
+  head: () => ({
+    meta: [
+      { title: "Profile · Concertly" },
+      { name: "description", content: "Manage your Concertly profile: display name, username, avatar, connected Spotify account and data export options." },
+    ],
+  }),
   component: Profile,
 });
 

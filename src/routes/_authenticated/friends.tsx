@@ -30,7 +30,12 @@ import {
 } from "@/lib/friends";
 
 export const Route = createFileRoute("/_authenticated/friends")({
-  head: () => ({ meta: [{ title: "Friends · Concertly" }] }),
+  head: () => ({
+    meta: [
+      { title: "Friends · Concertly" },
+      { name: "description", content: "Add friends by username on Concertly and compare live music stats: shows, artists, venues and shared nights." },
+    ],
+  }),
   component: FriendsPage,
 });
 

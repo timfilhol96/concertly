@@ -41,7 +41,12 @@ type Search = {
 };
 
 export const Route = createFileRoute("/_authenticated/shows")({
-  head: () => ({ meta: [{ title: "My Shows · Concertly" }] }),
+  head: () => ({
+    meta: [
+      { title: "My Shows · Concertly" },
+      { name: "description", content: "Browse every concert you have logged on Concertly, filter by year, venue, genre or friends, and edit show details." },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>): Search => ({
     month: typeof s.month === "string" && /^\d{4}-\d{2}$/.test(s.month) ? s.month : undefined,
     genre: typeof s.genre === "string" && s.genre.length > 0 ? s.genre : undefined,

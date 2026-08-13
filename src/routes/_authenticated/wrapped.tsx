@@ -27,7 +27,12 @@ import type { WrappedSharePayload } from "@/lib/wrapped-share-types";
 import { WrappedStatCard, type WrappedCardData } from "@/components/wrapped-card";
 
 export const Route = createFileRoute("/_authenticated/wrapped")({
-  head: () => ({ meta: [{ title: "Your Wrapped · Concertly" }] }),
+  head: () => ({
+    meta: [
+      { title: "Your Wrapped · Concertly" },
+      { name: "description", content: "Your personal Concertly Wrapped: top artists, venues, genres and hours lived live, in one shareable year-in-review card." },
+    ],
+  }),
   component: Wrapped,
 });
 

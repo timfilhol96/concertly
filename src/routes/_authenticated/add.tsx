@@ -28,7 +28,12 @@ import { cn } from "@/lib/utils";
 type Search = { id?: string };
 
 export const Route = createFileRoute("/_authenticated/add")({
-  head: () => ({ meta: [{ title: "Log a show · Concertly" }] }),
+  head: () => ({
+    meta: [
+      { title: "Log a show · Concertly" },
+      { name: "description", content: "Log a concert on Concertly in seconds: artist, date and venue, with setlists and artwork pulled in automatically." },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>): Search => ({
     id: typeof s.id === "string" ? s.id : undefined,
   }),

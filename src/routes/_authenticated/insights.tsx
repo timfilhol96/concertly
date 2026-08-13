@@ -33,7 +33,12 @@ import { plural } from "@/lib/utils";
 type Search = { friendId?: string };
 
 export const Route = createFileRoute("/_authenticated/insights")({
-  head: () => ({ meta: [{ title: "Insights · Concertly" }] }),
+  head: () => ({
+    meta: [
+      { title: "Insights · Concertly" },
+      { name: "description", content: "Deep live music insights: shows per year, month and day, top artists, venues, cities, countries and genre mix." },
+    ],
+  }),
   validateSearch: (s: Record<string, unknown>): Search => ({
     friendId: typeof s.friendId === "string" && s.friendId.length > 0 ? s.friendId : undefined,
   }),

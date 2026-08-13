@@ -14,7 +14,12 @@ import { ConcertCard } from "@/routes/_authenticated/dashboard";
 import { plural } from "@/lib/utils";
 
 export const Route = createFileRoute("/_authenticated/friend/$id")({
-  head: () => ({ meta: [{ title: "Friend · Concertly" }] }),
+  head: () => ({
+    meta: [
+      { title: "Friend · Concertly" },
+      { name: "description", content: "View a friend's Concertly dashboard: their shows, top artists, venues and live music stats side by side with yours." },
+    ],
+  }),
   component: FriendDashboard,
   errorComponent: ({ reset }) => {
     const router = useRouter();

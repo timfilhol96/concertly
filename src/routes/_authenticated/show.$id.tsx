@@ -15,7 +15,12 @@ import {
 } from "@/lib/concert-media";
 
 export const Route = createFileRoute("/_authenticated/show/$id")({
-  head: () => ({ meta: [{ title: "Show · Concertly" }] }),
+  head: () => ({
+    meta: [
+      { title: "Show · Concertly" },
+      { name: "description", content: "Concert details on Concertly: setlist, openers, venue, rating, photos and friends who were at the same show." },
+    ],
+  }),
   component: ShowDetail,
 });
 
