@@ -79,14 +79,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
       { name: "theme-color", content: "#09090b" },
-      { title: "Concertly — Track every show you attend" },
-      {
-        name: "description",
-        content:
-          "Concertly turns your concert history into rich personal stats, year-in-review recaps, and shareable cards. Log every gig in seconds.",
-      },
       { property: "og:site_name", content: "Concertly" },
-      { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
       {
         name: "google-site-verification",

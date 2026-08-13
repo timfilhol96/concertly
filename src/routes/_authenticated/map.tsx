@@ -8,7 +8,12 @@ import { useConcerts, type Concert } from "@/lib/concerts";
 import { geocodeVenueFn } from "@/lib/geocode.functions";
 
 export const Route = createFileRoute("/_authenticated/map")({
-  head: () => ({ meta: [{ title: "Map · Concertly" }] }),
+  head: () => ({
+    meta: [
+      { title: "Map · Concertly" },
+      { name: "description", content: "See every concert you have logged plotted on a world map, with venues, cities and countries you have travelled to." },
+    ],
+  }),
   component: MapPage,
 });
 
