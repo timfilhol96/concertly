@@ -183,6 +183,7 @@ function Landing() {
             <Link to="/privacy" className="hover:text-foreground">Privacy</Link>
             <Link to="/terms" className="hover:text-foreground">Terms</Link>
             <Link to="/trust" className="hover:text-foreground">Trust</Link>
+            <Link to="/concert-stats" className="hover:text-foreground">Concert stats</Link>
             <Link to="/blog/best-concert-trackers" className="hover:text-foreground">Best concert trackers</Link>
           </div>
         </div>
