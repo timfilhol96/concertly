@@ -65,7 +65,7 @@ function TermsPage() {
           with, solely to operate the service.
         </p>
         <p className="mt-3">
-          Wrapped share links you generate are public by design — anyone with the link can view the recap.
+          Wrapped share links you generate are public by design: anyone with the link can view the recap.
         </p>
       </Section>
 

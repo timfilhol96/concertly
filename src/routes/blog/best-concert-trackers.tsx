@@ -1,5 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, BarChart3, Calendar, Check, Music, Share2, Smartphone, Ticket, X } from "lucide-react";
+import { ctaClass } from "@/components/cta";
 
 export const Route = createFileRoute("/blog/best-concert-trackers")({
   head: () => ({
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/blog/best-concert-trackers")({
         children: JSON.stringify({
           "@context": "https://schema.org",
           "@type": "Article",
-          headline: "Best Concert Tracker Apps (2026) — Concertly vs Setlist.fm, Songkick & More",
+          headline: "Best Concert Tracker Apps (2026): Concertly vs Setlist.fm, Songkick & More",
           url: "https://concertly.lovable.app/blog/best-concert-trackers",
           author: { "@type": "Organization", name: "Concertly" },
           publisher: { "@type": "Organization", name: "Concertly", logo: "https://concertly.lovable.app/favicon.ico" },
@@ -118,7 +119,7 @@ function BestConcertTrackers() {
           </Link>
           <Link
             to="/auth"
-            className="rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground transition-all hover:scale-[1.03] active:scale-95"
+            className={ctaClass()}
           >
             Try Concertly
           </Link>
@@ -327,7 +328,7 @@ function BestConcertTrackers() {
                 </p>
                 <Link
                   to="/auth"
-                  className="mt-6 group inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3.5 text-sm font-bold text-background transition-transform hover:scale-[1.03] active:scale-95"
+                  className={ctaClass({ variant: "inverse", size: "lg" }, "mt-6 group")}
                 >
                   Try Concertly free
                   <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
@@ -401,7 +402,7 @@ function AppSection({
       {cta && (
         <Link
           to="/auth"
-          className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground transition-all hover:scale-[1.03] active:scale-95"
+          className={ctaClass({}, "mt-6")}
         >
           Try Concertly free <ArrowRight className="h-4 w-4" />
         </Link>

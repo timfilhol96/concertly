@@ -1,4 +1,4 @@
-// Concertly data layer — backed by Lovable Cloud (Supabase).
+// Concertly data layer - backed by Lovable Cloud (Supabase).
 
 import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -99,7 +99,7 @@ export function useConcerts() {
   });
 }
 
-// Attended shows only — use for stats/dashboards/insights/wrapped so
+// Attended shows only - use for stats/dashboards/insights/wrapped so
 // wishlist and upcoming entries never pollute counts.
 export function attendedOnly(list: Concert[]): Concert[] {
   return list.filter((c) => (c.status ?? "attended") === "attended");
@@ -454,7 +454,7 @@ export function monthlyStreak(list: Concert[]): {
     if (run > longest) longest = run;
     prev = { y, m };
   }
-  // current streak — walk back from today
+  // current streak - walk back from today
   const now = new Date();
   let y = now.getFullYear();
   let m = now.getMonth();

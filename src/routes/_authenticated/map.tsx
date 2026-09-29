@@ -6,6 +6,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useConcerts, type Concert } from "@/lib/concerts";
 import { geocodeVenueFn } from "@/lib/geocode.functions";
+import { ctaClass } from "@/components/cta";
 
 export const Route = createFileRoute("/_authenticated/map")({
   head: () => ({
@@ -181,7 +182,7 @@ function MapPage() {
     }
     setGeocoding(null);
     toast.success(`Geocoded ${done} venue${done === 1 ? "" : "s"}`);
-    // Force a refetch — invalidate the concerts query.
+    // Force a refetch - invalidate the concerts query.
     window.location.reload();
   }
 
@@ -205,7 +206,7 @@ function MapPage() {
               type="button"
               onClick={runGeocode}
               disabled={!!geocoding || !BROWSER_KEY}
-              className="rounded-full bg-brand px-3 py-1.5 font-semibold text-brand-foreground disabled:opacity-60"
+              className={ctaClass({ size: "sm" })}
             >
               {geocoding
                 ? `Geocoding ${geocoding.done}/${geocoding.total}…`
@@ -224,7 +225,7 @@ function MapPage() {
       {isLoading ? (
         <div className="h-[70vh] animate-pulse rounded-2xl bg-surface" />
       ) : attended.length === 0 ? (
-        <EmptyState message="No attended shows yet — log your first one to see it on the map." />
+        <EmptyState message="No attended shows yet. Log your first one to see it on the map." />
       ) : withCoords.length === 0 ? (
         <EmptyState
           message={

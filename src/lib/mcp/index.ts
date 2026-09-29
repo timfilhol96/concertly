@@ -4,7 +4,7 @@ import getConcert from "./tools/get-concert";
 import createConcert from "./tools/create-concert";
 import getStats from "./tools/get-stats";
 
-// Direct Supabase host — the .lovable.cloud proxy is rejected as an OAuth issuer.
+// Direct Supabase host - the .lovable.cloud proxy is rejected as an OAuth issuer.
 const projectRef = import.meta.env.VITE_SUPABASE_PROJECT_ID ?? "project-ref-unset";
 
 export default defineMcp({

@@ -3,6 +3,7 @@ import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ArrowLeft, Calendar, ImagePlus, ListMusic, MapPin, Music, Pencil, Play, Star, Ticket, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { useAvatarUrl, useConcerts, useDeleteConcert } from "@/lib/concerts";
 import { useFriendsAtShow, type FriendProfile } from "@/lib/friends";
 import { createSpotifyPlaylist, getSpotifyStatus } from "@/lib/spotify.functions";
@@ -13,6 +14,7 @@ import {
   useUploadConcertMedia,
   type ConcertMediaItem,
 } from "@/lib/concert-media";
+import { ctaClass } from "@/components/cta";
 
 export const Route = createFileRoute("/_authenticated/show/$id")({
   head: () => ({
@@ -29,6 +31,7 @@ function ShowDetail() {
   const nav = useNavigate();
   const { data: concerts, isLoading } = useConcerts();
   const del = useDeleteConcert();
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const concert = concerts?.find((c) => c.id === id);
 
   // Merge stored openers with any same-date/same-venue concerts logged as a
@@ -70,7 +73,7 @@ function ShowDetail() {
       <main className="mx-auto max-w-2xl px-6 py-20 text-center">
         <h1 className="font-display text-3xl font-extrabold">Show not found</h1>
         <p className="mt-2 text-muted-foreground">It may have been deleted.</p>
-        <Link to="/shows" className="mt-6 inline-block rounded-full bg-brand px-5 py-3 text-sm font-bold text-brand-foreground">
+        <Link to="/shows" className={ctaClass({}, "mt-6")}>
           Back to my shows
         </Link>
       </main>
@@ -81,9 +84,9 @@ function ShowDetail() {
 
   async function handleDelete() {
     if (!concert) return;
-    if (!confirm(`Delete "${concert.artist}" from your archive?`)) return;
     try {
       await del.mutateAsync(concert.id);
+      setConfirmDelete(false);
       toast.success("Show deleted");
       nav({ to: "/shows" });
     } catch (err) {
@@ -128,7 +131,7 @@ function ShowDetail() {
           </Link>
           <button
             type="button"
-            onClick={handleDelete}
+            onClick={() => setConfirmDelete(true)}
             disabled={del.isPending}
             className="inline-flex items-center gap-2 rounded-full border border-hairline px-4 py-2.5 text-sm font-semibold text-destructive hover:bg-destructive/10 disabled:opacity-50"
           >
@@ -140,8 +143,8 @@ function ShowDetail() {
       <section className="mt-10 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline md:grid-cols-4">
         <Tile icon={Star} label="Rating" value={concert.rating.toFixed(1)} accent />
         <Tile icon={MapPin} label="Venue" value={concert.venue} sub={`${concert.city}${concert.country ? `, ${concert.country}` : ""}`} />
-        <Tile icon={Music} label="Genre" value={concert.genre ?? "—"} />
-        <Tile icon={Ticket} label="Ticket" value={concert.ticketPrice != null ? `$${concert.ticketPrice}` : "—"} sub={concert.songsSeen ? `${concert.songsSeen} songs` : undefined} />
+        <Tile icon={Music} label="Genre" value={concert.genre ?? "-"} />
+        <Tile icon={Ticket} label="Ticket" value={concert.ticketPrice != null ? `$${concert.ticketPrice}` : "-"} sub={concert.songsSeen ? `${concert.songsSeen} songs` : undefined} />
       </section>
 
       <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-[2fr_1fr]">
@@ -163,7 +166,7 @@ function ShowDetail() {
                 {concert.setlist.map((song, i) => (
                   <li
                     key={`${song}-${i}`}
-                    className="flex items-baseline gap-3 rounded-lg border border-hairline bg-surface/50 px-3 py-2"
+                    className="flex items-baseline gap-3 rounded-xl border border-hairline bg-surface/50 px-3 py-2"
                   >
                     <span className="font-mono text-xs text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                     <span className="truncate text-sm">{song}</span>
@@ -190,7 +193,7 @@ function ShowDetail() {
                       {o.songs.map((song, i) => (
                         <li
                           key={`${o.artist}-${i}`}
-                          className="flex items-baseline gap-3 rounded-lg border border-hairline bg-surface/40 px-3 py-1.5"
+                          className="flex items-baseline gap-3 rounded-xl border border-hairline bg-surface/40 px-3 py-1.5"
                         >
                           <span className="font-mono text-[11px] text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                           <span className="truncate text-xs">{song}</span>
@@ -233,6 +236,17 @@ function ShowDetail() {
           )}
         </aside>
       </div>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title={`Delete "${concert.artist}"?`}
+        description="This removes the show from your archive. It cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        loading={del.isPending}
+        onConfirm={handleDelete}
+        onOpenChange={setConfirmDelete}
+      />
     </main>
   );
 }
@@ -248,7 +262,7 @@ function Tile({
 }) {
   return (
     <div className="bg-card p-5 md:p-6">
-      <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+      <div className="flex items-center gap-2 eyebrow text-muted-foreground">
         <Icon className="h-3 w-3" /> {label}
       </div>
       <p className={"mt-2 font-display text-2xl font-extrabold leading-tight " + (accent ? "gradient-text" : "")}>
@@ -285,15 +299,15 @@ function FriendRow({ friend }: { friend: FriendProfile }) {
       <Link
         to="/friend/$id"
         params={{ id: friend.userId }}
-        className="flex items-center gap-2.5 rounded-lg -mx-1 px-1 py-1 hover:bg-surface-2"
+        className="flex items-center gap-2.5 rounded-xl -mx-1 px-1 py-1 hover:bg-surface-2"
       >
-        <div className="grid h-8 w-8 flex-none place-items-center overflow-hidden rounded-full border border-hairline bg-surface-2 text-[10px] font-bold">
+        <div className="grid h-8 w-8 flex-none place-items-center overflow-hidden rounded-full border border-hairline bg-surface-2 text-[11px] font-bold">
           {url ? <img src={url} alt="" className="h-full w-full object-cover" /> : initials}
         </div>
         <div className="min-w-0">
           <p className="truncate text-sm font-semibold">{friend.displayName}</p>
           {friend.username && (
-            <p className="truncate font-mono text-[10px] text-muted-foreground">@{friend.username}</p>
+            <p className="truncate font-mono text-[11px] text-muted-foreground">@{friend.username}</p>
           )}
         </div>
       </Link>
@@ -443,7 +457,7 @@ function MediaSection({ concertId }: { concertId: string }) {
           type="button"
           onClick={() => inputRef.current?.click()}
           disabled={upload.isPending}
-          className="inline-flex items-center gap-1.5 rounded-full bg-brand px-3 py-1.5 text-[11px] font-bold text-brand-foreground hover:opacity-90 disabled:opacity-60"
+          className={ctaClass({ size: "sm" })}
         >
           <ImagePlus className="h-3.5 w-3.5" />
           {upload.isPending ? "Uploading…" : "Add media"}
@@ -488,12 +502,12 @@ function MediaThumb({
 }) {
   const url = useSignedMediaUrl(item.path);
   const del = useDeleteConcertMedia(concertId);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
-  async function onDelete(e: React.MouseEvent) {
-    e.stopPropagation();
-    if (!confirm("Delete this file?")) return;
+  async function onDelete() {
     try {
       await del.mutateAsync(item.path);
+      setConfirmDelete(false);
       toast.success("Deleted");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't delete");
@@ -524,12 +538,25 @@ function MediaThumb({
       </button>
       <button
         type="button"
-        onClick={onDelete}
-        aria-label="Delete"
+        onClick={(e) => {
+          e.stopPropagation();
+          setConfirmDelete(true);
+        }}
+        aria-label="Delete file"
         className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-black/70 text-white opacity-0 transition-opacity hover:bg-destructive group-hover:opacity-100"
       >
         <Trash2 className="h-3.5 w-3.5" />
       </button>
+      <ConfirmDialog
+        open={confirmDelete}
+        title={`Delete this ${item.kind === "image" ? "photo" : "video"}?`}
+        description="It will be removed from this show. It cannot be undone."
+        confirmLabel="Delete"
+        destructive
+        loading={del.isPending}
+        onConfirm={onDelete}
+        onOpenChange={setConfirmDelete}
+      />
     </div>
   );
 }

@@ -6,6 +6,7 @@ import type { WrappedSharePayload as SharePayload } from "@/lib/wrapped-share-ty
 import { formatDuration, plural } from "@/lib/utils";
 import { getWrappedTheme } from "@/lib/wrapped-themes";
 import { WrappedStatCard } from "@/components/wrapped-card";
+import { ctaClass } from "@/components/cta";
 
 const searchSchema = z.object({
   d: z.coerce.string().optional(),
@@ -72,7 +73,7 @@ function SharedWrapped() {
         <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight">
           This Wrapped link is missing data.
         </h1>
-        <Link to="/" className="mt-6 rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground">
+        <Link to="/" className={ctaClass({ size: "lg" }, "mt-6")}>
           Go home
         </Link>
       </main>
@@ -147,7 +148,7 @@ function SharedWrapped() {
               <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 {p.topGenres && p.topGenres.length > 0 && (
                   <div className="rounded-3xl border border-hairline bg-card p-8">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Top genres live</p>
+                    <p className="eyebrow text-muted-foreground">Top genres live</p>
                     <ol className="mt-4 space-y-3">
                       {p.topGenres.map((g, i) => (
                         <li key={g.name} className="flex items-baseline gap-3">
@@ -163,7 +164,7 @@ function SharedWrapped() {
                 )}
                 {p.discoveredGenres && p.discoveredGenres.length > 0 && (
                   <div className="rounded-3xl border border-hairline bg-card p-8">
-                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+                    <p className="eyebrow text-muted-foreground">
                       Discovered live this year
                     </p>
                     <div className="mt-4 flex flex-wrap gap-2">
@@ -187,8 +188,8 @@ function SharedWrapped() {
               </div>
               {p.newArtists && p.newArtists.length > 0 && (
                 <div className="mt-6 rounded-3xl border border-hairline bg-card p-8">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-                    First time seeing — {plural(p.newArtists.length, "new artist")}
+                  <p className="eyebrow text-muted-foreground">
+                    First time seeing: {plural(p.newArtists.length, "new artist")}
                   </p>
                   <div className="mt-4 flex flex-wrap gap-2">
                     {p.newArtists.map((a) => (
@@ -251,7 +252,7 @@ function SharedWrapped() {
             <p className="mt-2 text-muted-foreground">Log every show on Concertly and get your own Wrapped.</p>
             <Link
               to="/"
-              className="mt-6 inline-flex rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground hover:scale-[1.03] active:scale-95"
+              className={ctaClass({ size: "lg" }, "mt-6")}
             >
               Try Concertly
             </Link>
@@ -274,7 +275,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-white/15 p-4 backdrop-blur">
-      <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">{label}</p>
+      <p className="eyebrow opacity-80">{label}</p>
       <p className="mt-1 font-display text-2xl font-black md:text-3xl">{value}</p>
     </div>
   );
@@ -294,7 +295,7 @@ function Card({
   const ring = tone === "brand" ? "from-brand/25" : tone === "teal" ? "from-teal/25" : "from-pink/25";
   return (
     <div className="relative overflow-hidden rounded-3xl border border-hairline bg-card p-8">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="eyebrow text-muted-foreground">{label}</p>
       <p className="mt-3 font-display text-3xl font-extrabold leading-tight md:text-4xl">{value}</p>
       {sub && <p className="mt-2 text-xs text-muted-foreground">{sub}</p>}
       <div
@@ -307,7 +308,7 @@ function Card({
 function Milestone({ label, show }: { label: string; show: NonNullable<SharePayload["firstShow"]> }) {
   return (
     <div className="rounded-3xl border border-hairline bg-card p-8">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="eyebrow text-muted-foreground">{label}</p>
       <p className="mt-3 font-display text-2xl font-extrabold">{show.artist}</p>
       <p className="mt-1 text-sm text-muted-foreground">
         {show.date ? new Date(show.date).toLocaleDateString("en", { dateStyle: "medium" }) : ""}

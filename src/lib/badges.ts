@@ -1,4 +1,4 @@
-// Badges — pure derivations from a user's concert list.
+// Badges - pure derivations from a user's concert list.
 // Milestone/count based; nothing here writes to the database.
 
 import {
@@ -14,7 +14,7 @@ export type Badge = {
   id: string;
   label: string;
   description: string;
-  icon: string; // emoji — matches the app's light-hearted card treatments
+  icon: string; // emoji - matches the app's light-hearted card treatments
   earned: boolean;
   progress?: string; // e.g. "7 / 10"
   value: number;

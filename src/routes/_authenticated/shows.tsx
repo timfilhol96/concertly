@@ -30,6 +30,7 @@ import {
   type ArtistSuggestion,
   type CoPerformer,
 } from "@/lib/setlistfm.functions";
+import { ctaClass } from "@/components/cta";
 
 type Search = {
   month?: string;
@@ -125,7 +126,7 @@ function Shows() {
   // fills it in for the openers / support acts on the next refresh.
   async function syncTicketPriceAcrossShow(date: string, venue: string) {
     // IMPORTANT: RLS also exposes friends' concerts, so we must scope both the
-    // read and any writes to the current user by user_id — otherwise a shared
+    // read and any writes to the current user by user_id - otherwise a shared
     // date+venue could pull a friend's row into the update batch.
     const { data: userRes } = await supabase.auth.getUser();
     const userId = userRes.user?.id;
@@ -346,7 +347,7 @@ function Shows() {
       return exact[0];
     }
     if (suggestions.length === 0) {
-      // Truly nothing found — ask user to broaden / pick closest (we already have none).
+      // Truly nothing found - ask user to broaden / pick closest (we already have none).
       const choice = await askArtist(concert, "not_found", concert.artist, []);
       if (choice === "cancel") return "cancel";
       if (choice === "skip") return null;
@@ -365,7 +366,7 @@ function Shows() {
       artistChoiceCache.current.set(key, choice);
       return choice;
     }
-    // exactly one suggestion, not exact name match — accept it but cache it.
+    // exactly one suggestion, not exact name match - accept it but cache it.
     artistChoiceCache.current.set(key, suggestions[0]);
     return suggestions[0];
   }
@@ -469,7 +470,7 @@ function Shows() {
         }
       }
 
-      // Start fresh from setlist.fm — do NOT carry over the concert's prior openers,
+      // Start fresh from setlist.fm - do NOT carry over the concert's prior openers,
       // otherwise repeated refreshes pile up duplicates.
       let finalHeadliner = res.artist ?? c.artist;
       let finalOpeners: string[] | null = res.openers.length > 0 ? [...res.openers] : null;
@@ -677,8 +678,8 @@ function Shows() {
               if (weekdayLabel) return `Showing ${plural(listCount, "show")} on ${weekdayLabel}`;
               if (withFriendsSet.size > 0) return `Showing ${plural(listCount, "co-attended show")}.`;
               return friendProfile
-                ? `Every gig in their archive — ${totalCount} total.`
-                : `Every gig in your archive — ${totalCount} total.`;
+                ? `Every gig in their archive (${totalCount} total).`
+                : `Every gig in your archive (${totalCount} total).`;
             })()}
           </p>
           {(month || genre || year || weekday || withFriendsSet.size > 0) && (
@@ -729,7 +730,7 @@ function Shows() {
 
       {!readOnly && acceptedFriends.length > 0 && (
         <div className="mb-4 flex flex-wrap items-center gap-2 rounded-2xl border border-hairline bg-card p-3">
-          <span className="inline-flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <span className="inline-flex items-center gap-1 eyebrow text-muted-foreground">
             <Users className="h-3 w-3" /> Attended with
           </span>
           {acceptedFriends.map((f) => {
@@ -801,7 +802,7 @@ function Shows() {
 
       <div className="overflow-hidden rounded-2xl border border-hairline">
         <table className="w-full text-left">
-          <thead className="border-b border-hairline bg-surface text-[10px] uppercase tracking-widest text-muted-foreground">
+          <thead className="border-b border-hairline bg-surface text-[11px] uppercase tracking-widest text-muted-foreground">
             <tr>
               <th className="px-4 py-3 font-bold md:px-6">Artist</th>
               <th className="hidden px-4 py-3 font-bold md:table-cell md:px-6">Venue</th>
@@ -831,7 +832,7 @@ function Shows() {
                           coAttendance.byKey[coAttendanceKey(c.date, c.venue, c.city)] ?? [];
                         if (attendees.length === 0) return null;
                         return (
-                          <div className="mt-1 inline-flex items-center gap-1 text-[10px] text-teal">
+                          <div className="mt-1 inline-flex items-center gap-1 text-[11px] text-teal">
                             <Users className="h-3 w-3" />
                             with {attendees.map((a) => `@${a.username ?? a.displayName}`).join(", ")}
                           </div>
@@ -845,7 +846,7 @@ function Shows() {
                   <div className="text-xs">{c.city}{c.country ? `, ${c.country}` : ""}</div>
                 </td>
                 <td className="hidden px-4 py-4 text-xs text-muted-foreground lg:table-cell">
-                  {c.tour ?? "—"}
+                  {c.tour ?? "-"}
                 </td>
                 <td className="px-4 py-4 font-mono text-xs md:px-6">
                   {new Date(c.date).toLocaleDateString("en", { day: "2-digit", month: "short", year: "numeric" })}
@@ -893,7 +894,7 @@ function Shows() {
             ))}
             {!isLoading && list.length === 0 && (
               <tr><td colSpan={6} className="px-6 py-12 text-center text-sm text-muted-foreground">
-                {concerts.length === 0 ? "No shows yet — log your first one!" : "No shows match that filter."}
+                {concerts.length === 0 ? "No shows yet. Log your first one!" : "No shows match that filter."}
               </td></tr>
             )}
           </tbody>
@@ -1093,7 +1094,7 @@ function CoPerformerPane({ prompt }: { prompt: CoPerformerPrompt }) {
               <div className="min-w-0 flex-grow">
                 <div className="text-sm font-semibold">{cp.artist}</div>
                 <div className="text-xs text-muted-foreground">
-                  {cp.tour ?? "—"} · {cp.songs.length} songs
+                  {cp.tour ?? "-"} · {cp.songs.length} songs
                 </div>
               </div>
             </li>
@@ -1125,7 +1126,7 @@ function CoPerformerPane({ prompt }: { prompt: CoPerformerPrompt }) {
               headliner,
             })
           }
-          className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-brand-foreground hover:opacity-90"
+          className={ctaClass({ size: "sm" })}
         >
           Log {selected.size} & continue
         </button>
@@ -1173,7 +1174,7 @@ function NotFoundPane({ prompt }: { prompt: NotFoundPrompt }) {
         <button
           type="button"
           onClick={() => resolve("apply")}
-          className="rounded-full bg-brand px-4 py-2 text-xs font-semibold text-brand-foreground hover:opacity-90"
+          className={ctaClass({ size: "sm" })}
         >
           Apply image & genre
         </button>
@@ -1305,7 +1306,7 @@ function UpcomingList({
               <button
                 type="button"
                 onClick={() => onMarkAttended(c)}
-                className="rounded-full bg-brand px-3 py-1.5 text-xs font-bold text-brand-foreground hover:opacity-90"
+                className={ctaClass({ size: "sm" })}
                 title="Mark as attended"
               >
                 Mark attended

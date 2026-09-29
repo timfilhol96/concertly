@@ -13,6 +13,7 @@ import {
   Upload,
   Users,
 } from "lucide-react";
+import { ctaClass } from "@/components/cta";
 
 const TITLE = "Live Music Stats: Track Your Concert History | Concertly";
 const DESCRIPTION =
@@ -117,7 +118,7 @@ function ConcertStatsPage() {
           </Link>
           <Link
             to="/auth"
-            className="rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground transition-all hover:scale-[1.03] active:scale-95"
+            className={ctaClass()}
           >
             Try Concertly
           </Link>
@@ -153,7 +154,7 @@ function ConcertStatsPage() {
           <div className="mt-8 flex flex-wrap gap-3">
             <Link
               to="/auth"
-              className="inline-flex items-center gap-2 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground transition-all hover:scale-[1.03] active:scale-95"
+              className={ctaClass()}
             >
               Start tracking free <ArrowRight className="h-4 w-4" />
             </Link>
@@ -248,7 +249,7 @@ function ConcertStatsPage() {
               </p>
               <Link
                 to="/auth"
-                className="mt-6 inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground transition-all hover:scale-[1.03] active:scale-95"
+                className={ctaClass({ size: "lg" }, "mt-6")}
               >
                 Create your free account <ArrowRight className="h-4 w-4" />
               </Link>

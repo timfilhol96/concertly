@@ -1,4 +1,4 @@
-// Wrapped themes — each theme is a single accent hue rendered at varying
+// Wrapped themes - each theme is a single accent hue rendered at varying
 // lightness/chroma in oklch. No theme mixes two hues.
 export type WrappedTheme = {
   id: string;

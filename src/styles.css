@@ -5,8 +5,14 @@
 @custom-variant dark (&:is(.dark *));
 
 /*
- * Concertly design system — dark-first.
+ * Concertly design system - dark-first.
  * Vibrant violet + teal accents over near-black with zinc cards.
+ *
+ * Corner radius scale:
+ *   rounded-3xl  page-level panels and hero blocks
+ *   rounded-2xl  cards nested inside a panel, dialogs, menus
+ *   rounded-xl   controls: inputs, list rows, thumbnails, small tiles
+ *   rounded-full buttons (see components/cta.ts), chips, avatars
  */
 
 @theme inline {
@@ -46,6 +52,7 @@
   --color-pink: var(--pink);
   --color-surface: var(--surface);
   --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
   --color-hairline: var(--hairline);
 
   --color-chart-1: var(--chart-1);
@@ -58,12 +65,13 @@
 :root {
   --radius: 1rem;
 
-  /* dark by default — Concertly is a night-time product */
+  /* dark by default - Concertly is a night-time product */
   --background: oklch(0.14 0.01 280);
   --foreground: oklch(0.98 0.005 280);
 
   --surface: oklch(0.17 0.012 280);
   --surface-2: oklch(0.21 0.015 280);
+  --surface-3: oklch(0.25 0.017 280);
   --hairline: oklch(1 0 0 / 8%);
 
   --card: oklch(0.18 0.012 280);
@@ -117,6 +125,14 @@
 @utility font-display {
   font-family: var(--font-display);
   letter-spacing: -0.02em;
+}
+
+/* Small uppercase label above a stat or section ("SHOWS IN 2026"). 11px is the smallest text size in the app. */
+@utility eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
 }
 
 @utility gradient-text {

@@ -100,11 +100,11 @@ Files ending in `.functions.ts` are TanStack Start server functions. They run on
 
 Five tables in Postgres, all protected by row level security:
 
-- **`concerts`** — one row per show: artist, tour, openers, date, venue, city, country, rating, genre, notes, ticket price, songs seen
-- **`profiles`** — display name, avatar, public profile settings
-- **`friendships`** — follow relationships between users
-- **`spotify_tokens`** — OAuth tokens, server-access only
-- **`wrapped_shares`** — published year in review cards
+- **`concerts`**: one row per show: artist, tour, openers, date, venue, city, country, rating, genre, notes, ticket price, songs seen
+- **`profiles`**: display name, avatar, public profile settings
+- **`friendships`**: follow relationships between users
+- **`spotify_tokens`**: OAuth tokens, server-access only
+- **`wrapped_shares`**: published year in review cards
 
 ## Integrations
 

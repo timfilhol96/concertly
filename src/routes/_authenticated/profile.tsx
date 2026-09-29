@@ -12,6 +12,7 @@ import {
   getSpotifyAuthUrl,
   getSpotifyStatus,
 } from "@/lib/spotify.functions";
+import { ctaClass } from "@/components/cta";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -206,7 +207,7 @@ function Profile() {
               type="button"
               onClick={onSaveName}
               disabled={saving || !profile}
-              className="rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground disabled:opacity-60"
+              className={ctaClass()}
             >
               {saving ? "Saving…" : "Save changes"}
             </button>

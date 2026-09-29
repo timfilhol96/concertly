@@ -29,6 +29,7 @@ import { spendStats } from "@/lib/badges";
 import type { Concert } from "@/lib/concerts";
 import { useFriendConcerts, useFriendships } from "@/lib/friends";
 import { plural } from "@/lib/utils";
+import { ctaClass } from "@/components/cta";
 
 type Search = { friendId?: string };
 
@@ -70,7 +71,7 @@ function Insights() {
 
   const nav = useNavigate();
   // Collapse rows that share date+venue (headliner + support acts) into a
-  // single "show" — counts and streaks reflect shows attended, not artists seen.
+  // single "show" - counts and streaks reflect shows attended, not artists seen.
   const shows = useMemo(() => uniqueShows(concerts), [concerts]);
   const years = availableYears(shows);
   const [year, setYear] = useState<YearSel>(years[0] ?? CURRENT_YEAR);
@@ -90,7 +91,7 @@ function Insights() {
   const byYear = showsByYear(shows);
   const byDay = showsByDay(showsInYear);
   const genres = genreBreakdown(showsInYear);
-  // Top artists is per-artist seen — keep using the full list so support acts count.
+  // Top artists is per-artist seen - keep using the full list so support acts count.
   const topArtists = rankBy(concertsInYear, "artist", 8);
   const topCountries = rankBy(showsInYear, "country", 6);
   const topCities = rankBy(showsInYear, "city", 6);
@@ -147,7 +148,7 @@ function Insights() {
         <p className="mt-3 text-sm text-muted-foreground">
           You aren't friends with this user.
         </p>
-        <Link to="/friends" className="mt-6 inline-block rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground">
+        <Link to="/friends" className={ctaClass({}, "mt-6")}>
           Back to Friends
         </Link>
       </main>
@@ -157,7 +158,7 @@ function Insights() {
   const headerTitle = friendProfile ? `${friendProfile.displayName}'s Insights` : "Insights";
   const headerSub = friendProfile
     ? `A look at @${friendProfile.username ?? "friend"}'s live music year.`
-    : "The patterns behind your live music life — when you go out, who you can't get enough of, and what genres own your calendar.";
+    : "The patterns behind your live music life: when you go out, who you can't get enough of, and what genres own your calendar.";
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
@@ -182,7 +183,7 @@ function Insights() {
 
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-hairline bg-card p-4">
         <div>
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Viewing</p>
+          <p className="eyebrow text-muted-foreground">Viewing</p>
           <p className="font-display text-lg font-extrabold">{scopeLabel}</p>
           <p className="text-[11px] text-muted-foreground">
             Filters monthly chart, genre mix, top artists & top countries
@@ -515,7 +516,7 @@ function StreakCard({
   const ring = tone === "brand" ? "from-brand/25" : tone === "teal" ? "from-teal/25" : "from-pink/25";
   return (
     <div className="relative overflow-hidden rounded-2xl border border-hairline bg-card p-5">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="eyebrow text-muted-foreground">{label}</p>
       <p className="mt-2 font-display text-4xl font-extrabold leading-tight">{value}</p>
       <p className="mt-1 text-xs text-muted-foreground">{sub}</p>
       <div className={`pointer-events-none absolute -right-10 -bottom-10 h-32 w-32 rounded-full bg-gradient-to-br ${ring} to-transparent blur-2xl`} />
@@ -568,13 +569,13 @@ function SpendSection({ concerts }: { concerts: Concert[] }) {
         <SpendStat label="Avg / show" value={fmt(s.avg)} />
         <SpendStat
           label="Most expensive"
-          value={s.mostExpensive ? fmt(s.mostExpensive.ticketPrice ?? 0) : "—"}
+          value={s.mostExpensive ? fmt(s.mostExpensive.ticketPrice ?? 0) : "-"}
           sub={s.mostExpensive?.artist}
         />
       </div>
       {s.perYear.length > 0 && (
         <div className="mt-8">
-          <p className="mb-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <p className="mb-3 eyebrow text-muted-foreground">
             By year
           </p>
           <ul className="space-y-2.5">
@@ -605,7 +606,7 @@ function SpendSection({ concerts }: { concerts: Concert[] }) {
 function SpendStat({ label, value, sub }: { label: string; value: string; sub?: string }) {
   return (
     <div className="rounded-2xl border border-hairline bg-surface p-4">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="eyebrow text-muted-foreground">{label}</p>
       <p className="mt-1.5 font-display text-2xl font-extrabold">{value}</p>
       {sub && <p className="mt-1 truncate text-[11px] text-muted-foreground">{sub}</p>}
     </div>

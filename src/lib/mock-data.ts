@@ -1,5 +1,5 @@
 // Seeded mock data for Concertly demo.
-// Realistic-looking dataset — used by the dashboard, insights, and shows pages.
+// Realistic-looking dataset - used by the dashboard, insights, and shows pages.
 
 export type Concert = {
   id: string;

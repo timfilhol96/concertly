@@ -1,6 +1,7 @@
 import { createFileRoute, redirect } from "@tanstack/react-router";
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { ctaClass } from "@/components/cta";
 
 type AuthDetails = {
   client?: { name?: string | null } | null;
@@ -90,7 +91,7 @@ function Consent() {
           it at any time from the connected app.
         </p>
         {error && (
-          <p role="alert" className="mt-4 rounded-md border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
+          <p role="alert" className="mt-4 rounded-xl border border-destructive/40 bg-destructive/10 p-3 text-sm text-destructive">
             {error}
           </p>
         )}
@@ -98,7 +99,7 @@ function Consent() {
           <button
             disabled={busy}
             onClick={() => decide(true)}
-            className="flex-1 rounded-full bg-brand py-3 text-sm font-bold text-brand-foreground transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
+            className={ctaClass({}, "flex-1 py-3")}
           >
             Approve
           </button>

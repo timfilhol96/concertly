@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
+import { ctaClass } from "@/components/cta";
 
 export const Route = createFileRoute("/auth")({
   validateSearch: (s: Record<string, unknown>): { next?: string } => ({
@@ -95,7 +96,7 @@ function AuthPage() {
 
   return (
     <main className="grid min-h-screen bg-background text-foreground md:grid-cols-2">
-      {/* Left — visual side */}
+      {/* Left - visual side */}
       <aside className="relative hidden flex-col justify-between overflow-hidden bg-gradient-to-br from-brand via-pink to-teal p-12 md:flex">
         <Link to="/" className="font-display text-3xl font-extrabold tracking-tighter text-brand-foreground">
           CONCERTLY
@@ -107,7 +108,7 @@ function AuthPage() {
             Discover your live music story.
           </h2>
           <p className="mt-4 max-w-md text-sm text-brand-foreground/80">
-            The stats.fm for concerts — rich personal analytics, year-in-review
+            The stats.fm for concerts. Rich personal analytics, year-in-review
             wraps and shareable cards for every gig you've ever attended.
           </p>
         </div>
@@ -115,7 +116,7 @@ function AuthPage() {
         <div className="pointer-events-none absolute -top-20 -left-20 h-72 w-72 rounded-full bg-white/10 blur-3xl" />
       </aside>
 
-      {/* Right — form */}
+      {/* Right - form */}
       <section className="flex flex-col justify-center px-6 py-12 md:px-16">
         <div className="mx-auto w-full max-w-sm">
           <Link to="/" className="mb-10 inline-block font-display text-2xl font-extrabold tracking-tighter text-brand md:hidden">
@@ -143,7 +144,7 @@ function AuthPage() {
                 <GoogleIcon /> Continue with Google
               </button>
 
-              <div className="my-6 flex items-center gap-3 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <div className="my-6 flex items-center gap-3 eyebrow text-muted-foreground">
                 <span className="h-px flex-1 bg-hairline" /> or email <span className="h-px flex-1 bg-hairline" />
               </div>
             </>
@@ -199,7 +200,7 @@ function AuthPage() {
             <button
               type="submit"
               disabled={loading}
-              className="mt-2 w-full rounded-full bg-brand py-3 text-sm font-bold text-brand-foreground transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
+              className={ctaClass({}, "mt-2 w-full py-3")}
             >
               {loading ? "Just a sec…" : mode === "sign-in" ? "Sign in" : mode === "sign-up" ? "Create account" : "Send reset link"}
             </button>

@@ -1,5 +1,5 @@
 // Tiny CSV helpers used by the profile export/import section.
-// Purely client-side — no dependency needed.
+// Purely client-side - no dependency needed.
 
 import type { Concert, ConcertStatus, NewConcert } from "@/lib/concerts";
 

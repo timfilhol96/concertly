@@ -22,6 +22,7 @@ import {
 import { Crown, Users } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { cn } from "@/lib/utils";
+import { ctaClass } from "@/components/cta";
 
 
 
@@ -96,7 +97,7 @@ function AddShow() {
   const [dirty, setDirty] = useState(false);
   const hydratedIdRef = useRef<string | null>(null);
 
-  // When the edit row arrives (async), hydrate the form once — unless the user
+  // When the edit row arrives (async), hydrate the form once - unless the user
   // has already started typing.
   useEffect(() => {
     if (!existing) return;
@@ -165,7 +166,7 @@ function AddShow() {
       } else if (exact.length > 1) {
         chosenArtist = await pickArtist(
           "Multiple artists share this name",
-          "Pick which one you saw — we use this for the image and genre.",
+          "Pick the one you saw. We use it for the image and genre.",
           exact,
         );
       } else if (suggestions.length > 0) {
@@ -177,7 +178,7 @@ function AddShow() {
       }
 
       if (!r.found) {
-        // Concert isn't on setlist.fm — still grab the artist's image + genre
+        // Concert isn't on setlist.fm - still grab the artist's image + genre
         // from Spotify so the entry isn't bare.
         let image: string | null = null;
         let genre: string | null = null;
@@ -205,7 +206,7 @@ function AddShow() {
         return;
       }
 
-      // Concert found — prefer setlist.fm data, but if the user picked a
+      // Concert found - prefer setlist.fm data, but if the user picked a
       // different Spotify artist, use their image + genre instead.
       let artistImage = r.artistImageUrl;
       let artistGenre = r.genre;
@@ -411,7 +412,7 @@ function AddShow() {
       }
 
       // If user picked a co-performer as the headliner, the main form's artist
-      // is actually a support act — reflect that in the main form before submit.
+      // is actually a support act - reflect that in the main form before submit.
       if (
         headlinerName &&
         headlinerName.toLowerCase() !== form.artist.trim().toLowerCase()
@@ -461,7 +462,7 @@ function AddShow() {
         <button
           type="button"
           onClick={() => nav({ to: "/shows" })}
-          className="mt-6 rounded-full bg-brand px-5 py-2.5 text-sm font-bold text-brand-foreground"
+          className={ctaClass({}, "mt-6")}
         >
           Back to your shows
         </button>
@@ -480,7 +481,7 @@ function AddShow() {
           {isEdit ? "Edit" : "Log a"} <span className="gradient-text">show</span>.
         </h1>
         <p className="mt-2 text-muted-foreground">
-          {isEdit ? "Update the details of this gig." : "Capture the basics — it lives in your archive forever."}
+          {isEdit ? "Update the details of this gig." : "Capture the basics. It stays in your archive forever."}
         </p>
       </div>
 
@@ -605,7 +606,7 @@ function AddShow() {
                   {coPerformers.length} other {coPerformers.length === 1 ? "artist" : "artists"} performed at {form.venue} on this date
                 </p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  Log them as separate shows. Pick which artist headlined — the rest will be marked as support.
+                  Log them as separate shows. Pick which artist headlined and the rest will be marked as support.
                 </p>
               </div>
               <button
@@ -617,7 +618,7 @@ function AddShow() {
               </button>
             </div>
             <div className="space-y-2">
-              {/* Main form artist row — always present, always "logged" via main submit */}
+              {/* Main form artist row - always present, always "logged" via main submit */}
               <div className="flex items-center gap-3 rounded-xl border border-hairline bg-card/60 p-3">
                 <span className="inline-flex h-4 w-4 items-center justify-center text-muted-foreground" title="Logged via main form">
                   ✓
@@ -687,7 +688,7 @@ function AddShow() {
                 type="button"
                 onClick={onLogSelectedCoPerformers}
                 disabled={loggingCo || selectedCo.size === 0}
-                className="rounded-full bg-brand px-4 py-2 text-xs font-bold text-brand-foreground disabled:opacity-50"
+                className={ctaClass({ size: "sm" })}
               >
                 {loggingCo ? "Logging…" : `Log ${selectedCo.size} selected`}
               </button>
@@ -756,7 +757,7 @@ function AddShow() {
             <button
               type="submit"
               disabled={pending}
-              className="rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground transition-transform hover:scale-[1.02] active:scale-95 disabled:opacity-60"
+              className={ctaClass({ size: "lg" })}
             >
               {pending ? "Saving…" : isEdit ? "Save changes" : "Add to archive"}
             </button>

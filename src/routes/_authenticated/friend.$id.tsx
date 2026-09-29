@@ -12,6 +12,7 @@ import {
 import { useFriendConcerts, useFriendships } from "@/lib/friends";
 import { ConcertCard } from "@/routes/_authenticated/dashboard";
 import { plural } from "@/lib/utils";
+import { ctaClass } from "@/components/cta";
 
 export const Route = createFileRoute("/_authenticated/friend/$id")({
   head: () => ({
@@ -28,7 +29,7 @@ export const Route = createFileRoute("/_authenticated/friend/$id")({
         <h1 className="font-display text-2xl font-extrabold">Couldn't load this friend</h1>
         <button
           onClick={() => { reset(); router.invalidate(); }}
-          className="mt-6 rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground"
+          className={ctaClass({}, "mt-6")}
         >
           Retry
         </button>
@@ -71,7 +72,7 @@ function FriendDashboard() {
         <p className="mt-3 text-sm text-muted-foreground">
           Send them a request to see their shows and stats.
         </p>
-        <Link to="/friends" className="mt-6 inline-block rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground">
+        <Link to="/friends" className={ctaClass({}, "mt-6")}>
           Back to Friends
         </Link>
       </main>
@@ -175,9 +176,9 @@ function FriendDashboard() {
                   <div
                     key={m.key}
                     className={`flex aspect-square flex-col items-center justify-center rounded-xl ${heatColor(m.count, maxMonth)}`}
-                    title={`${m.label} ${YEAR} — ${plural(m.count, "show")}`}
+                    title={`${m.label} ${YEAR}: ${plural(m.count, "show")}`}
                   >
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/70">{m.label}</span>
+                    <span className="eyebrow text-foreground/70">{m.label}</span>
                     <span className="font-display text-xl font-extrabold">{m.count}</span>
                   </div>
                 ))}
@@ -266,7 +267,7 @@ function FriendDashboard() {
                     <li key={v.name} className="flex items-center gap-3">
                       <span className="w-5 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                       <span className="truncate text-sm">{v.name}</span>
-                      <span className="ml-auto text-[10px] text-muted-foreground">{plural(v.count, "show")}</span>
+                      <span className="ml-auto text-[11px] text-muted-foreground">{plural(v.count, "show")}</span>
                     </li>
                   ))}
                 </ul>
@@ -278,7 +279,7 @@ function FriendDashboard() {
                     <li key={v.name} className="flex items-center gap-3">
                       <span className="w-5 text-xs font-bold text-muted-foreground">{String(i + 1).padStart(2, "0")}</span>
                       <span className="truncate text-sm">{v.name}</span>
-                      <span className="ml-auto text-[10px] text-muted-foreground">{plural(v.count, "show")}</span>
+                      <span className="ml-auto text-[11px] text-muted-foreground">{plural(v.count, "show")}</span>
                     </li>
                   ))}
                 </ul>
@@ -310,7 +311,7 @@ function LoadingState() {
 function BigStat({ label, value, sub }: { label: string; value: number; sub?: string }) {
   return (
     <div className="bg-card p-6 md:p-8">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="eyebrow text-muted-foreground">{label}</p>
       <p className="mt-2 font-display text-4xl font-extrabold md:text-5xl">{value.toLocaleString()}</p>
       {sub && (
         <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">

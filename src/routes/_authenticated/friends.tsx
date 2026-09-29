@@ -1,6 +1,7 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
 import { toast } from "sonner";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { BarChart3, Check, UserPlus, UserX, X } from "lucide-react";
 import {
   Bar,
@@ -49,6 +50,11 @@ function FriendsPage() {
 
   const [usernameInput, setUsernameInput] = useState("");
   const [selectedFriendId, setSelectedFriendId] = useState<string | null>(null);
+  const [removeTarget, setRemoveTarget] = useState<{
+    friendshipId: string;
+    otherUserId: string;
+    label: string;
+  } | null>(null);
 
   const friends = friendData?.friends ?? [];
   const incoming = friendData?.incoming ?? [];
@@ -210,14 +216,15 @@ function FriendsPage() {
                         title="Compare stats"
                       ><BarChart3 className="h-3.5 w-3.5" /></button>
                       <button
-                        onClick={() => {
-                          if (confirm(`Remove @${p?.username ?? "friend"}?`)) {
-                            removeFriend.mutate(f.id);
-                            if (active) setSelectedFriendId(null);
-                          }
-                        }}
+                        onClick={() =>
+                          setRemoveTarget({
+                            friendshipId: f.id,
+                            otherUserId: f.otherUserId,
+                            label: p?.username ? `@${p.username}` : p?.displayName ?? "this friend",
+                          })
+                        }
                         className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-surface hover:text-foreground"
-                        aria-label="Remove"
+                        aria-label="Remove friend"
                       ><UserX className="h-3.5 w-3.5" /></button>
                     </li>
                   );
@@ -234,7 +241,7 @@ function FriendsPage() {
               <div>
                 <p className="font-display text-xl font-extrabold">Pick a friend to compare</p>
                 <p className="mt-2 text-sm text-muted-foreground">
-                  Their stats appear next to yours — totals, shows per year, genre mix, and top lists.
+                  Their stats appear next to yours: totals, shows per year, genre mix, and top lists.
                 </p>
               </div>
             </div>
@@ -248,6 +255,26 @@ function FriendsPage() {
           )}
         </section>
       </div>
+
+      <ConfirmDialog
+        open={!!removeTarget}
+        title={`Remove ${removeTarget?.label ?? "friend"}?`}
+        description="You'll no longer see each other's shows. You can send a new friend request later."
+        confirmLabel="Remove"
+        destructive
+        loading={removeFriend.isPending}
+        onConfirm={async () => {
+          if (!removeTarget) return;
+          try {
+            await removeFriend.mutateAsync(removeTarget.friendshipId);
+            if (selectedFriendId === removeTarget.otherUserId) setSelectedFriendId(null);
+            setRemoveTarget(null);
+          } catch (err) {
+            toast.error(err instanceof Error ? err.message : "Couldn't remove friend");
+          }
+        }}
+        onOpenChange={(o) => !o && setRemoveTarget(null)}
+      />
     </main>
   );
 }
@@ -258,12 +285,12 @@ function ProfileLabel({ p }: { p: FriendProfile | undefined }) {
     .split(/\s+/).map((w) => w[0]).filter(Boolean).slice(0, 2).join("").toUpperCase();
   return (
     <div className="flex min-w-0 items-center gap-2">
-      <div className="grid h-7 w-7 flex-none place-items-center rounded-full border border-hairline bg-surface text-[10px] font-bold">
+      <div className="grid h-7 w-7 flex-none place-items-center rounded-full border border-hairline bg-surface text-[11px] font-bold">
         {initials}
       </div>
       <div className="min-w-0">
         <p className="truncate text-sm font-semibold">{p.displayName}</p>
-        {p.username && <p className="truncate font-mono text-[10px] text-muted-foreground">@{p.username}</p>}
+        {p.username && <p className="truncate font-mono text-[11px] text-muted-foreground">@{p.username}</p>}
       </div>
     </div>
   );
@@ -333,7 +360,7 @@ function Comparison({
   return (
     <div className="space-y-6">
       <header className="rounded-3xl border border-hairline bg-card p-6">
-        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Comparing</p>
+        <p className="eyebrow text-muted-foreground">Comparing</p>
         <h2 className="mt-1 font-display text-2xl font-extrabold">
           <span className="text-brand">{meLabel}</span>{" "}
           <span className="text-muted-foreground">vs</span>{" "}
@@ -350,7 +377,7 @@ function Comparison({
           const themWins = t.them > t.me;
           return (
             <div key={t.label} className="rounded-2xl border border-hairline bg-card p-4">
-              <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{t.label}</p>
+              <p className="eyebrow text-muted-foreground">{t.label}</p>
               <div className="mt-3 space-y-2">
                 <Row label={meLabel} value={t.me} pct={(t.me / max) * 100} color="bg-brand" highlight={meWins} />
                 <Row label={friendLabel} value={t.them} pct={(t.them / max) * 100} color="bg-teal" highlight={themWins} />
@@ -485,9 +512,9 @@ function RankPanel({
       <div className="mt-3 grid grid-cols-2 gap-4">
         {[a, b].map((side, idx) => (
           <div key={idx}>
-            <p className="mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{side.label}</p>
+            <p className="mb-2 eyebrow text-muted-foreground">{side.label}</p>
             {side.items.length === 0 ? (
-              <p className="text-xs text-muted-foreground">—</p>
+              <p className="text-xs text-muted-foreground">-</p>
             ) : (
               <ol className="space-y-1.5">
                 {side.items.map((it, i) => {
@@ -496,15 +523,15 @@ function RankPanel({
                     <li
                       key={it.name}
                       className={
-                        "flex items-center justify-between gap-2 rounded-lg px-2 py-1 text-xs " +
+                        "flex items-center justify-between gap-2 rounded-xl px-2 py-1 text-xs " +
                         (isShared ? "bg-gradient-to-r " + side.color + "/20 to-transparent ring-1 ring-inset ring-hairline" : "")
                       }
                     >
                       <span className="flex min-w-0 items-center gap-2">
-                        <span className="w-4 text-[10px] font-bold text-muted-foreground">{i + 1}</span>
+                        <span className="w-4 text-[11px] font-bold text-muted-foreground">{i + 1}</span>
                         <span className="truncate">{it.name}{isShared && " ✦"}</span>
                       </span>
-                      <span className="font-mono text-[10px] text-muted-foreground">{it.count}</span>
+                      <span className="font-mono text-[11px] text-muted-foreground">{it.count}</span>
                     </li>
                   );
                 })}

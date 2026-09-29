@@ -74,14 +74,14 @@ export function WrappedStatCard({
         <CompactStat label={data.artists === 1 ? "Artist" : "Artists"} value={data.artists}>
           {data.bestRatedArtists && data.bestRatedArtists.length > 0 && (
             <>
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Best rated</p>
+              <p className="eyebrow opacity-70">Best rated</p>
               <ul className="mt-1.5 space-y-1.5">
                 {data.bestRatedArtists.map((a) => (
                   <li key={a.name} className="flex items-center gap-2">
                     {a.image ? (
                       <img src={a.image} alt={a.name} loading="lazy" className="h-6 w-6 shrink-0 rounded-full object-cover" />
                     ) : (
-                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-current/20 text-[10px] font-black">
+                      <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-current/20 text-[11px] font-black">
                         {a.name.slice(0, 1)}
                       </span>
                     )}
@@ -97,7 +97,7 @@ export function WrappedStatCard({
         <CompactStat label={data.venues === 1 ? "Venue" : "Venues"} value={data.venues}>
           {data.topVenues && data.topVenues.length > 0 && (
             <>
-              <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Most visited</p>
+              <p className="eyebrow opacity-70">Most visited</p>
               <ul className="mt-1.5 space-y-1.5">
                 {data.topVenues.map((v) => (
                   <li key={v.name} className="flex items-start gap-2">
@@ -115,7 +115,7 @@ export function WrappedStatCard({
           <ul className="space-y-2">
             {data.longest && (
               <li>
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Longest</p>
+                <p className="eyebrow opacity-70">Longest</p>
                 <p className="flex items-start gap-2 text-xs font-semibold leading-tight">
                   <span className="min-w-0 flex-1 break-words">{data.longest.artist}</span>
                   <span className="shrink-0 font-bold opacity-80">{formatDuration(data.longest.hours)}</span>
@@ -124,7 +124,7 @@ export function WrappedStatCard({
             )}
             {data.shortest && (
               <li>
-                <p className="text-[10px] font-bold uppercase tracking-widest opacity-70">Shortest</p>
+                <p className="eyebrow opacity-70">Shortest</p>
                 <p className="flex items-start gap-2 text-xs font-semibold leading-tight">
                   <span className="min-w-0 flex-1 break-words">{data.shortest.artist}</span>
                   <span className="shrink-0 font-bold opacity-80">{formatDuration(data.shortest.hours)}</span>

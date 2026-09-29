@@ -249,7 +249,7 @@ export const lookupSetlist = createServerFn({ method: "POST" })
       }
     }
 
-    // Only use the tour name attached to this specific show — no nearby fallback.
+    // Only use the tour name attached to this specific show - no nearby fallback.
     const tour = headliner.tour?.name ?? null;
 
     // In parallel: MusicBrainz genre (fallback), Spotify artist (image + genre), opener setlists.
@@ -325,7 +325,7 @@ export const searchArtists = createServerFn({ method: "POST" })
 
 const ArtistByIdInput = z.object({ id: z.string().min(1).max(64) });
 
-// Formerly `lookupDeezerArtistByIdFn` — we moved from Deezer to Spotify; the
+// Formerly `lookupDeezerArtistByIdFn` - we moved from Deezer to Spotify; the
 // export is now `lookupSpotifyArtistByIdFn`. A deprecated alias is kept below
 // for any lingering callers, but new code should import the Spotify name.
 export const lookupSpotifyArtistByIdFn = createServerFn({ method: "POST" })

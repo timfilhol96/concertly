@@ -1,6 +1,6 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
-import { AppNav } from "@/components/app-nav";
+import { AppNav, MobileTabBar } from "@/components/app-nav";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
@@ -14,9 +14,11 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AppLayout() {
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    // Bottom padding on mobile keeps page content clear of the fixed tab bar.
+    <div className="min-h-screen bg-background pb-24 text-foreground md:pb-0">
       <AppNav />
       <Outlet />
+      <MobileTabBar />
     </div>
   );
 }

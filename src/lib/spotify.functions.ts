@@ -3,7 +3,7 @@ import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 // All spotify_tokens reads/writes go through the service-role client because
-// the table has no RLS policies and no grants to `authenticated` — the raw
+// the table has no RLS policies and no grants to `authenticated` - the raw
 // access/refresh tokens must never be reachable from a client session. These
 // server fns still require `requireSupabaseAuth` so we scope every query to
 // the authenticated caller by `context.userId`.

@@ -41,6 +41,7 @@ const WEEKDAYS = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Frida
 const MONTHS = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
 
 import { WRAPPED_THEMES, genreColors, type WrappedThemeId } from "@/lib/wrapped-themes";
+import { ctaClass } from "@/components/cta";
 
 const GRADIENTS = WRAPPED_THEMES;
 type GradientId = WrappedThemeId;
@@ -83,7 +84,7 @@ function Wrapped() {
         <p className="text-xs font-bold uppercase tracking-widest text-brand">Concertly Wrapped</p>
         <h1 className="mt-2 font-display text-5xl font-extrabold tracking-tight">No {YEAR} shows yet.</h1>
         <p className="mt-3 text-muted-foreground">Log a gig from this year to unlock your Wrapped.</p>
-        <Link to="/add" className="mt-6 rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground">
+        <Link to="/add" className={ctaClass({ size: "lg" }, "mt-6")}>
           Log a show
         </Link>
       </main>
@@ -196,7 +197,7 @@ function Wrapped() {
               <Palette className="h-3.5 w-3.5" /> Theme
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-48">
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              <DropdownMenuLabel className="text-[11px] uppercase tracking-widest text-muted-foreground">
                 Gradient
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
@@ -222,11 +223,11 @@ function Wrapped() {
               <Share2 className="h-3.5 w-3.5" /> Share
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              <DropdownMenuLabel className="text-[11px] uppercase tracking-widest text-muted-foreground">
                 Share your Wrapped
               </DropdownMenuLabel>
-              <div className="px-2 pb-2 text-[10px] leading-snug text-muted-foreground">
-                Heads up: share links are <span className="font-semibold text-foreground">public</span> — anyone with the URL can view this recap without signing in.
+              <div className="px-2 pb-2 text-[11px] leading-snug text-muted-foreground">
+                Heads up: share links are <span className="font-semibold text-foreground">public</span>. Anyone with the URL can view this recap without signing in.
               </div>
               <DropdownMenuSeparator />
               {(() => {
@@ -395,11 +396,11 @@ function Wrapped() {
       {/* #1s */}
       <Section title="Your #1s">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-          <WrappedCard label="Favorite venue" value={topVenue?.name ?? "—"} sub={topVenue ? plural(topVenue.count, "visit") : ""} tone="brand" />
-          <WrappedCard label="Favorite city" value={topCity?.name ?? "—"} sub={topCity ? plural(topCity.count, "show") : ""} tone="teal" />
+          <WrappedCard label="Favorite venue" value={topVenue?.name ?? "-"} sub={topVenue ? plural(topVenue.count, "visit") : ""} tone="brand" />
+          <WrappedCard label="Favorite city" value={topCity?.name ?? "-"} sub={topCity ? plural(topCity.count, "show") : ""} tone="teal" />
           <WrappedCard
             label="Longest show"
-            value={longestShow?.artist ?? "—"}
+            value={longestShow?.artist ?? "-"}
             sub={longestShow ? `${plural(longestShow.setlist?.length ?? longestShow.songsSeen ?? 0, "song")} · ~${formatDuration(longestMins / 60)}` : ""}
             tone="pink"
           />
@@ -410,7 +411,7 @@ function Wrapped() {
       <Section title="Taste & genre">
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
           <div className="rounded-3xl border border-hairline bg-card p-8">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Top genres live</p>
+            <p className="eyebrow text-muted-foreground">Top genres live</p>
             {genres.length === 0 ? (
               <p className="mt-4 text-sm text-muted-foreground">Add a genre to your shows to see this.</p>
             ) : (
@@ -426,9 +427,9 @@ function Wrapped() {
             )}
           </div>
           <div className="rounded-3xl border border-hairline bg-card p-8">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Discovered live this year</p>
+            <p className="eyebrow text-muted-foreground">Discovered live this year</p>
             {discoveredGenres.length === 0 ? (
-              <p className="mt-4 text-sm text-muted-foreground">No brand new genres — you know what you like.</p>
+              <p className="mt-4 text-sm text-muted-foreground">No brand new genres. You know what you like.</p>
             ) : (
               <div className="mt-4 flex flex-wrap gap-2">
                 {discoveredGenres.map((g) => (
@@ -449,8 +450,8 @@ function Wrapped() {
           <MilestoneCard label="Last show of the year" concert={lastShow} />
         </div>
         <div className="mt-6 rounded-3xl border border-hairline bg-card p-8">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
-            First time seeing — {plural(newArtists.length, "new artist")}
+          <p className="eyebrow text-muted-foreground">
+            First time seeing: {plural(newArtists.length, "new artist")}
           </p>
           {newArtists.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">All returning favorites this year.</p>
@@ -508,7 +509,7 @@ function Wrapped() {
       <div className="mt-10 rounded-3xl border border-hairline bg-card p-8 text-center">
         <h3 className="font-display text-2xl font-extrabold">The story keeps writing itself.</h3>
         <p className="mt-2 text-muted-foreground">Log your next show to keep the streak alive.</p>
-        <Link to="/add" className="mt-6 inline-flex rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground hover:scale-[1.03] active:scale-95">
+        <Link to="/add" className={ctaClass({ size: "lg" }, "mt-6")}>
           Log a show
         </Link>
       </div>
@@ -528,7 +529,7 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 function Stat({ label, value }: { label: string; value: string }) {
   return (
     <div className="rounded-2xl bg-white/15 p-4 backdrop-blur">
-      <p className="text-[10px] font-bold uppercase tracking-widest opacity-80">{label}</p>
+      <p className="eyebrow opacity-80">{label}</p>
       <p className="mt-1 font-display text-2xl font-black md:text-3xl">{value}</p>
     </div>
   );
@@ -558,7 +559,7 @@ function MilestoneCard({ label, concert }: { label: string; concert: Concert | u
   if (!concert) return null;
   return (
     <div className="rounded-3xl border border-hairline bg-card p-8">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="eyebrow text-muted-foreground">{label}</p>
       <p className="mt-3 font-display text-2xl font-extrabold">{concert.artist}</p>
       <p className="mt-1 text-sm text-muted-foreground">
         {new Date(concert.date).toLocaleDateString("en", { dateStyle: "medium" })} · {concert.venue}, {concert.city}
@@ -573,7 +574,7 @@ function WrappedCard({
   const ring = tone === "brand" ? "from-brand/25" : tone === "teal" ? "from-teal/25" : "from-pink/25";
   return (
     <div className={"relative overflow-hidden rounded-3xl border border-hairline bg-card p-8 " + className}>
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{label}</p>
+      <p className="eyebrow text-muted-foreground">{label}</p>
       <p className="mt-3 font-display text-3xl font-extrabold leading-tight md:text-4xl">{value}</p>
       <p className="mt-2 text-xs text-muted-foreground">{sub}</p>
       <div className={`pointer-events-none absolute -right-16 -bottom-16 h-48 w-48 rounded-full bg-gradient-to-br ${ring} to-transparent blur-2xl`} />

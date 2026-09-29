@@ -33,7 +33,7 @@ function TrustPage() {
         </h1>
         <p className="mt-4 text-sm text-muted-foreground">
           This page is maintained by the Concertly team to answer common security and privacy
-          questions about the app. It describes app-visible controls and current practices — it is
+          questions about the app. It describes app-visible controls and current practices. It is
           not an independent certification or audit report.
         </p>
       </div>

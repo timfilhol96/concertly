@@ -1,19 +1,20 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
-import { ArrowRight, BarChart3, Calendar, Sparkles, Ticket } from "lucide-react";
+import { ArrowRight, BarChart3, Download, MapPin, Sparkles, Ticket, Users } from "lucide-react";
 import heroImg from "@/assets/hero-concert.jpg";
-import { CONCERTS, getStats } from "@/lib/mock-data";
+import { getStats } from "@/lib/mock-data";
 import { formatDuration } from "@/lib/utils";
+import { ctaClass } from "@/components/cta";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Concertly — Track every show you attend" },
+      { title: "Concertly: Track every show you attend" },
       {
         name: "description",
         content:
           "The stats.fm for live music. Log every gig and watch your touring history come alive in stats, charts, and shareable year-in-review cards.",
       },
-      { property: "og:title", content: "Concertly — Track every show you attend" },
+      { property: "og:title", content: "Concertly: Track every show you attend" },
       {
         property: "og:description",
         content:
@@ -46,9 +47,9 @@ function Landing() {
             </Link>
             <Link
               to="/auth"
-              className="rounded-full bg-brand px-4 py-2 text-sm font-bold text-brand-foreground transition-all hover:scale-[1.03] active:scale-95"
+              className={ctaClass()}
             >
-              Try the demo
+              Get started
             </Link>
           </div>
         </div>
@@ -70,7 +71,7 @@ function Landing() {
           <div className="max-w-4xl animate-reveal">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-hairline bg-surface/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur-md">
               <span className="h-1.5 w-1.5 rounded-full bg-teal" />
-              Now in open beta — free forever
+              Open beta · Free forever
             </div>
             <h1 className="font-display text-5xl font-extrabold leading-[0.95] tracking-tight md:text-7xl lg:text-8xl">
               Track every show.
@@ -78,29 +79,32 @@ function Landing() {
               <span className="gradient-text">Discover your live music story.</span>
             </h1>
             <p className="mt-6 max-w-2xl text-lg text-muted-foreground md:text-xl">
-              The stats.fm for concert junkies. Log every gig, festival, and underground set —
+              The stats.fm for concert junkies. Log every gig, festival, and underground set,
               then watch your personal touring history come alive in stats, charts, and shareable
               year‑in‑review cards.
             </p>
             <div className="mt-10 flex flex-wrap items-center gap-4">
               <Link
                 to="/auth"
-                className="group inline-flex items-center gap-2 rounded-full bg-brand px-6 py-3.5 text-sm font-bold text-brand-foreground transition-all hover:scale-[1.03] active:scale-95"
+                className={ctaClass({ size: "lg" }, "group")}
               >
-                Open your dashboard
+                Start logging for free
                 <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
               </Link>
-              <Link
-                to="/auth"
-                className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface/60 px-6 py-3.5 text-sm font-bold text-foreground backdrop-blur-md transition-colors hover:bg-surface-2"
+              <a
+                href="#features"
+                className={ctaClass({ variant: "surface", size: "lg" })}
               >
-                Log your first show
-              </Link>
+                See what it does
+              </a>
             </div>
           </div>
 
-          {/* Floating stat strip */}
-          <div className="mt-20 grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline backdrop-blur-md md:grid-cols-4">
+          {/* Floating stat strip - sample data, labelled as such */}
+          <p className="mt-20 mb-3 text-xs font-medium text-muted-foreground">
+            Example: what a few years of concert-going looks like on Concertly
+          </p>
+          <div className="grid grid-cols-2 gap-px overflow-hidden rounded-3xl border border-hairline bg-hairline backdrop-blur-md md:grid-cols-4">
             {[
               { k: "Shows tracked", v: stats.total.toString() },
               { k: "Unique artists", v: stats.uniqueArtists.toString() },
@@ -108,7 +112,7 @@ function Landing() {
               { k: "Hours live", v: formatDuration(stats.hoursLive) },
             ].map((s, i) => (
               <div key={s.k} className="bg-surface/70 p-6 animate-count" style={{ animationDelay: `${i * 80}ms` }}>
-                <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">{s.k}</p>
+                <p className="eyebrow text-muted-foreground">{s.k}</p>
                 <p className="mt-2 font-display text-4xl font-extrabold md:text-5xl">{s.v}</p>
               </div>
             ))}
@@ -117,22 +121,22 @@ function Landing() {
       </section>
 
       {/* Features */}
-      <section className="mx-auto max-w-7xl px-6 py-24">
+      <section id="features" className="mx-auto max-w-7xl scroll-mt-8 px-6 py-24">
         <h2 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">
           A diary for the <span className="gradient-text">front row</span>.
         </h2>
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
-          Every gig you've ever been to, finally in one place — with the receipts to prove it.
+          Every gig you've ever been to, finally in one place, with the receipts to prove it.
         </p>
 
         <div className="mt-12 grid gap-6 md:grid-cols-3">
           {[
             { icon: Ticket, title: "Log it in seconds", body: "Search artist, pick a date, done. We pull setlists, openers and tour name automatically." },
             { icon: BarChart3, title: "Stats that hit", body: "Top artists, top venues, attendance heatmaps, genre breakdowns and travel stats." },
-            { icon: Sparkles, title: "Your Concertly Wrapped", body: "A beautiful, shareable year‑in‑review card every December. Made for stories." },
-            { icon: Calendar, title: "Never miss a tour", body: "Follow your favorite artists and get a heads‑up when they hit your city." },
-            { icon: BarChart3, title: "Friends + leaderboards", body: "Compare attendance with friends. Compete on shows, miles, and obscure venues." },
-            { icon: Sparkles, title: "Yours, forever", body: "Export everything as JSON or CSV at any time. Your memories, your data." },
+            { icon: Sparkles, title: "Your Concertly Wrapped", body: "A beautiful, shareable year‑in‑review card of your concerts. Made for stories." },
+            { icon: MapPin, title: "Your concert map", body: "Every venue you've been to, pinned on a map. See how far the music has taken you." },
+            { icon: Users, title: "Friends", body: "Add friends, browse their shows, and discover the gigs you went to together." },
+            { icon: Download, title: "Yours, forever", body: "Import your history from a CSV and export everything at any time. Your memories, your data." },
           ].map((f) => (
             <div
               key={f.title}
@@ -157,14 +161,14 @@ function Landing() {
               Start your live music archive tonight.
             </h2>
             <p className="mt-4 text-lg text-muted-foreground">
-              {CONCERTS.length} sample shows are already loaded. Jump in and explore the dashboard,
-              then start logging your own.
+              Create a free account, log the shows you remember, and watch your stats build up
+              from the very first one.
             </p>
             <Link
               to="/auth"
-              className="mt-8 inline-flex items-center gap-2 rounded-full bg-foreground px-6 py-3.5 text-sm font-bold text-background transition-transform hover:scale-[1.03] active:scale-95"
+              className={ctaClass({ variant: "inverse", size: "lg" }, "mt-8")}
             >
-              Enter the venue
+              Create your account
               <ArrowRight className="h-4 w-4" />
             </Link>
           </div>

@@ -1,4 +1,4 @@
-// Friends data layer — usernames, friend requests, and friend concert reads.
+// Friends data layer - usernames, friend requests, and friend concert reads.
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";

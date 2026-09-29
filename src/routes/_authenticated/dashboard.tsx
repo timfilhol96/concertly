@@ -18,6 +18,7 @@ import { computeBadges, onThisDay } from "@/lib/badges";
 import { useFriendships } from "@/lib/friends";
 import { useConcertMedia, useSignedMediaUrl, type ConcertMediaItem } from "@/lib/concert-media";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { ctaClass } from "@/components/cta";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -101,7 +102,7 @@ function Dashboard() {
         <BigStat label="Monthly streak" value={streak.current} sub={`longest ${streak.longest}`} />
 
         <Link to="/friends" className="bg-card p-6 transition-colors hover:bg-surface-2 md:p-8">
-          <p className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+          <p className="flex items-center gap-1.5 eyebrow text-muted-foreground">
             <Users className="h-3 w-3" /> Friends
           </p>
           <p className="mt-2 font-display text-4xl font-extrabold md:text-5xl">
@@ -132,9 +133,9 @@ function Dashboard() {
                 disabled={m.count === 0}
                 onClick={() => nav({ to: "/shows", search: { month: m.key } })}
                 className={`group flex aspect-square flex-col items-center justify-center rounded-xl ${heatColor(m.count, maxMonth)} transition-transform hover:scale-105 disabled:cursor-default disabled:hover:scale-100`}
-                title={`${m.label} ${YEAR} — ${plural(m.count, "show")}`}
+                title={`${m.label} ${YEAR}: ${plural(m.count, "show")}`}
               >
-                <span className="text-[10px] font-bold uppercase tracking-widest text-foreground/70">
+                <span className="eyebrow text-foreground/70">
                   {m.label}
                 </span>
                 <span className="font-display text-xl font-extrabold">{m.count}</span>
@@ -220,7 +221,7 @@ function Dashboard() {
         <div className="mb-10 rounded-3xl border border-hairline bg-card p-6 md:p-8">
           <div className="mb-4 flex items-center gap-2">
             <CalendarClock className="h-4 w-4 text-brand" />
-            <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+            <p className="eyebrow text-muted-foreground">
               On this day
             </p>
           </div>
@@ -234,7 +235,7 @@ function Dashboard() {
                   params={{ id: c.id }}
                   className="rounded-2xl border border-hairline bg-surface p-4 transition-colors hover:border-brand/40"
                 >
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-brand">
+                  <p className="eyebrow text-brand">
                     {plural(yearsAgo, "year")} ago
                   </p>
                   <h3 className="mt-1 truncate font-display text-lg font-extrabold">{c.artist}</h3>
@@ -303,7 +304,7 @@ function Dashboard() {
           </Panel>
 
           <div className="rounded-2xl border border-brand/30 bg-gradient-to-br from-brand/20 via-transparent to-teal/10 p-6">
-            <p className="text-[10px] font-bold uppercase tracking-widest text-brand">
+            <p className="eyebrow text-brand">
               {YEAR} Wrapped
             </p>
             <h3 className="mt-1 font-display text-xl font-extrabold">
@@ -314,7 +315,7 @@ function Dashboard() {
             </p>
             <Link
               to="/wrapped"
-              className="mt-4 inline-flex items-center gap-1 rounded-lg bg-foreground px-3 py-2 text-xs font-bold text-background"
+              className={ctaClass({ variant: "inverse", size: "sm" }, "mt-4 gap-1")}
             >
               View summary <ArrowUpRight className="h-3 w-3" />
             </Link>
@@ -381,7 +382,7 @@ function Dashboard() {
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="truncate text-sm">{v.name}</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground">
+                  <span className="ml-auto text-[11px] text-muted-foreground">
                     {plural(v.count, "show")} ({showStats.total ? Math.round((v.count / showStats.total) * 100) : 0}%)
                   </span>
                 </li>
@@ -397,7 +398,7 @@ function Dashboard() {
                     {String(i + 1).padStart(2, "0")}
                   </span>
                   <span className="truncate text-sm">{v.name}</span>
-                  <span className="ml-auto text-[10px] text-muted-foreground">
+                  <span className="ml-auto text-[11px] text-muted-foreground">
                     {plural(v.count, "show")} ({showStats.total ? Math.round((v.count / showStats.total) * 100) : 0}%)
                   </span>
                 </li>
@@ -439,7 +440,7 @@ function EmptyState({ name }: { name: string }) {
       </p>
       <Link
         to="/add"
-        className="mt-8 rounded-full bg-brand px-6 py-3 text-sm font-bold text-brand-foreground hover:scale-[1.03] active:scale-95"
+        className={ctaClass({ size: "lg" }, "mt-8")}
       >
         Log a show
       </Link>
@@ -459,7 +460,7 @@ function Stat({
   const color = accent === "brand" ? "text-brand" : accent === "teal" ? "text-teal" : "text-pink";
   return (
     <div className="rounded-2xl border border-hairline bg-surface/60 p-4">
-      <p className="mb-1 flex items-center gap-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+      <p className="mb-1 flex items-center gap-1 eyebrow text-muted-foreground">
         {accent === "pink" && <Clock className="h-3 w-3" />} {label}
       </p>
       <p className={"font-display text-2xl font-extrabold " + color}>{value}</p>
@@ -470,7 +471,7 @@ function Stat({
 function BigStat({ label, value, sub }: { label: string; value: number; sub?: string }) {
   return (
     <div className="bg-card p-6 md:p-8">
-      <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+      <p className="eyebrow text-muted-foreground">
         {label}
       </p>
       <p className="mt-2 font-display text-4xl font-extrabold md:text-5xl">
@@ -540,7 +541,7 @@ export function ConcertCard({
           ) : (
             <div className="py-6 text-center md:py-0">
               <p className="font-display text-3xl font-black leading-none">{d.getDate()}</p>
-              <p className="mt-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground">
+              <p className="mt-1 eyebrow text-muted-foreground">
                 {d.toLocaleString("en", { month: "short" })} {d.getFullYear()}
               </p>
             </div>
@@ -572,7 +573,7 @@ export function ConcertCard({
                 <MediaThumb key={m.path} path={m.path} kind={m.kind} />
               ))}
               {media.length > 5 && (
-                <span className="grid h-12 w-12 place-items-center rounded-md bg-surface-2 text-[10px] font-bold text-muted-foreground">
+                <span className="grid h-12 w-12 place-items-center rounded-xl bg-surface-2 text-[11px] font-bold text-muted-foreground">
                   +{media.length - 5}
                 </span>
               )}
@@ -586,14 +587,14 @@ export function ConcertCard({
 
 function MediaThumb({ path, kind }: { path: string; kind: "image" | "video" }) {
   const url = useSignedMediaUrl(path);
-  if (!url) return <div className="h-12 w-12 animate-pulse rounded-md bg-surface-2" />;
+  if (!url) return <div className="h-12 w-12 animate-pulse rounded-xl bg-surface-2" />;
   if (kind === "video") {
     return (
-      <div className="relative h-12 w-12 overflow-hidden rounded-md bg-black">
+      <div className="relative h-12 w-12 overflow-hidden rounded-xl bg-black">
         <video src={url} className="h-full w-full object-cover" muted />
         <span className="absolute inset-0 grid place-items-center text-white text-xs">▶</span>
       </div>
     );
   }
-  return <img src={url} alt="" className="h-12 w-12 rounded-md object-cover" />;
+  return <img src={url} alt="" className="h-12 w-12 rounded-xl object-cover" />;
 }

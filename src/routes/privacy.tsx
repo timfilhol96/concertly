@@ -64,7 +64,7 @@ function PrivacyPage() {
 
       <Section title="Sharing & visibility">
         <ul className="list-disc space-y-2 pl-5">
-          <li>Your concert history is private by default — only you can read or modify it.</li>
+          <li>Your concert history is private by default. Only you can read or modify it.</li>
           <li>Accepted friends can view each other's concert history and profile picture.</li>
           <li>Profile basics (display name, username, avatar) are visible to other signed-in users so friends can find you. Your email is never shown to other users.</li>
           <li>
@@ -77,10 +77,10 @@ function PrivacyPage() {
 
       <Section title="Third-party services">
         <ul className="list-disc space-y-2 pl-5">
-          <li><strong>Lovable Cloud</strong> — application hosting, database, authentication, file storage.</li>
-          <li><strong>Google</strong> — optional single sign-on.</li>
-          <li><strong>Spotify</strong> — optional playlist creation from setlists (only if you connect).</li>
-          <li><strong>setlist.fm</strong> — read-only lookups of publicly-available setlists.</li>
+          <li><strong>Lovable Cloud</strong>: application hosting, database, authentication, file storage.</li>
+          <li><strong>Google</strong>: optional single sign-on.</li>
+          <li><strong>Spotify</strong>: optional playlist creation from setlists (only if you connect).</li>
+          <li><strong>setlist.fm</strong>: read-only lookups of publicly-available setlists.</li>
         </ul>
       </Section>
 
