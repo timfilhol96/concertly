@@ -36,7 +36,10 @@ function AuthPage() {
     if (next) window.location.assign(next);
     else nav({ to: "/dashboard" });
   };
-  const returnUrl = () => (next ? `${window.location.origin}${next}` : window.location.origin);
+  // Where Google sign-in and email confirmation links send the user back to.
+  // Must be a signed-in page: the landing page ("/") would pick up the session
+  // but leave the user looking signed out.
+  const returnUrl = () => `${window.location.origin}${next ?? "/dashboard"}`;
 
   useEffect(() => {
     supabase.auth.getSession().then(({ data }) => {

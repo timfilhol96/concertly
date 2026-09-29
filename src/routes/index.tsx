@@ -1,4 +1,5 @@
-import { Link, createFileRoute } from "@tanstack/react-router";
+import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { useEffect } from "react";
 import { ArrowRight, BarChart3, Download, MapPin, Sparkles, Ticket, Users } from "lucide-react";
 import heroImg from "@/assets/hero-concert.jpg";
 import {
@@ -36,6 +37,19 @@ export const Route = createFileRoute("/")({
 });
 
 function Landing() {
+  const nav = useNavigate();
+
+  // Safety net for sign-in links that return to "/" with tokens in the URL hash
+  // (e.g. older email confirmation links): finish signing in, then go to the app.
+  useEffect(() => {
+    if (!/access_token=|refresh_token=/.test(window.location.hash)) return;
+    import("@/integrations/supabase/client").then(({ supabase }) =>
+      supabase.auth.getSession().then(({ data }) => {
+        if (data.session) nav({ to: "/dashboard", replace: true });
+      }),
+    );
+  }, [nav]);
+
   const stats = getStats();
   return (
     <div className="min-h-screen bg-background text-foreground">
