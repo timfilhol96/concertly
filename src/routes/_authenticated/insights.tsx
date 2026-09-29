@@ -30,6 +30,8 @@ import type { Concert } from "@/lib/concerts";
 import { useFriendConcerts, useFriendships } from "@/lib/friends";
 import { plural } from "@/lib/utils";
 import { ctaClass } from "@/components/cta";
+import { PageTitle } from "@/components/page-title";
+import { PageSkeleton } from "@/components/page-skeleton";
 
 type Search = { friendId?: string };
 
@@ -60,7 +62,7 @@ type YearSel = number | "all";
 
 function Insights() {
   const { friendId } = Route.useSearch();
-  const { data: friendData } = useFriendships();
+  const { data: friendData, isLoading: friendsLoading } = useFriendships();
   const friendProfile = friendId ? friendData?.profiles?.[friendId] : undefined;
   const isFriend = friendId
     ? friendData?.friends?.some((f) => f.otherUserId === friendId) ?? false
@@ -141,6 +143,10 @@ function Insights() {
   }
 
 
+  if (friendsLoading || (friendId ? friendConcertsQ.isLoading : ownConcertsQ.isLoading)) {
+    return <PageSkeleton />;
+  }
+
   if (friendId && (!isFriend || !friendProfile)) {
     return (
       <main className="mx-auto max-w-2xl px-6 py-20 text-center">
@@ -171,9 +177,8 @@ function Insights() {
           ← Back to {friendProfile.displayName.split(" ")[0]}'s dashboard
         </Link>
       )}
-      <div className="mb-8 animate-reveal">
-        <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{headerTitle}</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">{headerSub}</p>
+      <div className="mb-8">
+        <PageTitle title={headerTitle} description={headerSub} />
         <p className="mt-3 text-xs text-muted-foreground">
           <span className="font-semibold text-foreground">{totalShows}</span> {totalShows === 1 ? "show" : "shows"} attended ·{" "}
           <span className="font-semibold text-foreground">{totalArtists}</span> {totalArtists === 1 ? "artist" : "artists"} seen
@@ -537,7 +542,7 @@ function ChartCard({
     <section className={"rounded-3xl border border-hairline bg-card p-6 md:p-7 " + className}>
       <header className="mb-5 flex items-end justify-between gap-3">
         <div>
-          <h2 className="font-display text-xl font-extrabold">{title}</h2>
+          <h2 className="font-display text-xl font-bold">{title}</h2>
           {subtitle && <p className="text-[11px] uppercase tracking-widest text-muted-foreground">{subtitle}</p>}
         </div>
         {right}
@@ -557,7 +562,7 @@ function SpendSection({ concerts }: { concerts: Concert[] }) {
     <section className="mt-10 rounded-3xl border border-hairline bg-card p-6 md:p-8">
       <div className="mb-6 flex items-end justify-between">
         <div>
-          <h2 className="font-display text-2xl font-extrabold">Spend</h2>
+          <h2 className="font-display text-2xl font-bold">Spend</h2>
           <p className="text-xs text-muted-foreground">
             Based on {plural(s.count, "show")} with a ticket price logged.
           </p>

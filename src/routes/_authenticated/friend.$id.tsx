@@ -13,6 +13,7 @@ import { useFriendConcerts, useFriendships } from "@/lib/friends";
 import { ConcertCard } from "@/routes/_authenticated/dashboard";
 import { plural } from "@/lib/utils";
 import { ctaClass } from "@/components/cta";
+import { PageTitle } from "@/components/page-title";
 
 export const Route = createFileRoute("/_authenticated/friend/$id")({
   head: () => ({
@@ -108,21 +109,22 @@ function FriendDashboard() {
       </Link>
 
       <div className="mb-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-        <div className="animate-reveal">
-          <p className="text-xs font-bold uppercase tracking-widest text-teal">Friend dashboard</p>
-          <h1 className="mt-1 font-display text-4xl font-extrabold tracking-tight md:text-6xl">
-            {profile.displayName}
-          </h1>
-          {profile.username && (
-            <p className="mt-2 font-mono text-sm text-muted-foreground">@{profile.username}</p>
-          )}
-          {list.length > 0 && (
-            <p className="mt-3 text-muted-foreground md:text-lg">
-              They've seen <span className="font-semibold text-foreground">{plural(yearArtists, "artist")}</span> across{" "}
-              <span className="font-semibold text-foreground">{plural(yearCities, "city", "cities")}</span> in {YEAR}.
-            </p>
-          )}
-        </div>
+        <PageTitle
+          eyebrow="Friend dashboard"
+          eyebrowClassName="text-brand"
+          title={profile.displayName}
+          description={
+            <>
+              {profile.username && <p className="font-mono text-sm">@{profile.username}</p>}
+              {list.length > 0 && (
+                <p className="mt-2">
+                  They've seen <span className="font-semibold text-foreground">{plural(yearArtists, "artist")}</span> across{" "}
+                  <span className="font-semibold text-foreground">{plural(yearCities, "city", "cities")}</span> in {YEAR}.
+                </p>
+              )}
+            </>
+          }
+        />
         <div className="flex flex-wrap items-center gap-2">
           <Link
             to="/shows"
@@ -167,7 +169,7 @@ function FriendDashboard() {
             <div className="relative overflow-hidden rounded-3xl border border-hairline bg-card p-8 md:col-span-2">
               <div className="mb-8 flex items-center justify-between">
                 <div>
-                  <h2 className="font-display text-2xl font-extrabold">Yearly Attendance</h2>
+                  <h2 className="font-display text-2xl font-bold">Yearly Attendance</h2>
                   <p className="text-xs text-muted-foreground">{plural(yearShows, "show")} in {YEAR}</p>
                 </div>
               </div>
@@ -190,7 +192,7 @@ function FriendDashboard() {
 
             <div className="flex flex-col justify-between rounded-3xl border border-hairline bg-card p-8">
               <div>
-                <h2 className="font-display text-2xl font-extrabold">Their #1 Artist</h2>
+                <h2 className="font-display text-2xl font-bold">Their #1 Artist</h2>
                 {topArtists[0] ? (
                   <div className="mt-6 flex items-center gap-4">
                     {(() => {
@@ -220,7 +222,7 @@ function FriendDashboard() {
 
           <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
             <div className="space-y-5 lg:col-span-3">
-              <h3 className="font-display text-xl font-extrabold">Recent Memories</h3>
+              <h3 className="font-display text-xl font-bold">Recent Memories</h3>
               {recent.map((c) => (
               <ConcertCard
                   key={c.id}

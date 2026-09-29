@@ -23,6 +23,7 @@ import { Crown, Users } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { ctaClass } from "@/components/cta";
+import { PageTitle } from "@/components/page-title";
 
 
 
@@ -473,17 +474,12 @@ function AddShow() {
   return (
     <main className="mx-auto max-w-3xl px-6 py-10 md:py-14">
 
-      <div className="mb-8 animate-reveal">
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-          {isEdit ? "Edit entry" : "New entry"}
-        </p>
-        <h1 className="mt-1 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-          {isEdit ? "Edit" : "Log a"} <span className="gradient-text">show</span>.
-        </h1>
-        <p className="mt-2 text-muted-foreground">
-          {isEdit ? "Update the details of this gig." : "Capture the basics. It stays in your archive forever."}
-        </p>
-      </div>
+      <PageTitle
+        className="mb-8"
+        eyebrow={isEdit ? "Edit entry" : "New entry"}
+        title={<>{isEdit ? "Edit" : "Log a"} <span className="gradient-text">show</span>.</>}
+        description={isEdit ? "Update the details of this gig." : "Capture the basics. It stays in your archive forever."}
+      />
 
       <form onSubmit={onSubmit} className="space-y-6 rounded-3xl border border-hairline bg-card p-6 md:p-8">
         <div>

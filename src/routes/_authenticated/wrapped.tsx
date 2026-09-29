@@ -42,6 +42,8 @@ const MONTHS = ["January", "February", "March", "April", "May", "June", "July", 
 
 import { WRAPPED_THEMES, genreColors, type WrappedThemeId } from "@/lib/wrapped-themes";
 import { ctaClass } from "@/components/cta";
+import { PageTitle } from "@/components/page-title";
+import { PageSkeleton } from "@/components/page-skeleton";
 
 const GRADIENTS = WRAPPED_THEMES;
 type GradientId = WrappedThemeId;
@@ -63,7 +65,7 @@ function showLengthMinutes(c: Concert) {
 
 function Wrapped() {
   const { data: profile } = useProfile();
-  const { data: concerts = [] } = useConcerts();
+  const { data: concerts = [], isLoading } = useConcerts();
   const [gradientId, setGradientId] = useState<GradientId>("sunset");
   const gradient = GRADIENTS.find((g) => g.id === gradientId) ?? GRADIENTS[0];
 
@@ -78,10 +80,12 @@ function Wrapped() {
   );
   const yearShows = useMemo(() => uniqueShows(yearConcerts), [yearConcerts]);
 
+  if (isLoading) return <PageSkeleton className="max-w-5xl" />;
+
   if (yearConcerts.length === 0) {
     return (
       <main className="mx-auto flex min-h-[70vh] max-w-2xl flex-col items-center justify-center px-6 text-center">
-        <p className="text-xs font-bold uppercase tracking-widest text-brand">Concertly Wrapped</p>
+        <p className="eyebrow text-brand">Concertly Wrapped</p>
         <h1 className="mt-2 font-display text-5xl font-extrabold tracking-tight">No {YEAR} shows yet.</h1>
         <p className="mt-3 text-muted-foreground">Log a gig from this year to unlock your Wrapped.</p>
         <Link to="/add" className={ctaClass({ size: "lg" }, "mt-6")}>
@@ -184,13 +188,12 @@ function Wrapped() {
 
   return (
     <main className="mx-auto max-w-5xl px-6 py-10 md:py-14">
-      <div className="mb-8 flex items-center justify-between">
-        <div>
-          <p className="text-xs font-bold uppercase tracking-widest text-brand">Concertly Wrapped</p>
-          <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-6xl">
-            {YEAR} · {profile?.displayName ?? "You"}
-          </h1>
-        </div>
+      <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+        <PageTitle
+          eyebrow="Concertly Wrapped"
+          eyebrowClassName="text-brand"
+          title={<>{YEAR} · {profile?.displayName ?? "You"}</>}
+        />
         <div className="hidden flex-wrap items-center gap-2 md:flex">
           <DropdownMenu>
             <DropdownMenuTrigger className="inline-flex items-center gap-2 rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold transition hover:bg-muted">
@@ -507,7 +510,7 @@ function Wrapped() {
       </Section>
 
       <div className="mt-10 rounded-3xl border border-hairline bg-card p-8 text-center">
-        <h3 className="font-display text-2xl font-extrabold">The story keeps writing itself.</h3>
+        <h3 className="font-display text-2xl font-bold">The story keeps writing itself.</h3>
         <p className="mt-2 text-muted-foreground">Log your next show to keep the streak alive.</p>
         <Link to="/add" className={ctaClass({ size: "lg" }, "mt-6")}>
           Log a show
@@ -520,7 +523,7 @@ function Wrapped() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-10">
-      <h2 className="mb-4 font-display text-2xl font-extrabold tracking-tight md:text-3xl">{title}</h2>
+      <h2 className="mb-4 font-display text-2xl font-bold tracking-tight md:text-3xl">{title}</h2>
       {children}
     </section>
   );

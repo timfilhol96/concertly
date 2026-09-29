@@ -19,6 +19,7 @@ import { useFriendships } from "@/lib/friends";
 import { useConcertMedia, useSignedMediaUrl, type ConcertMediaItem } from "@/lib/concert-media";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ctaClass } from "@/components/cta";
+import { PageTitle } from "@/components/page-title";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -71,19 +72,17 @@ function Dashboard() {
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
       <div className="mb-10 flex flex-col items-start justify-between gap-6 md:flex-row md:items-end">
-        <div className="animate-reveal">
-          <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-            Welcome back
-          </p>
-          <h1 className="mt-1 font-display text-4xl font-extrabold tracking-tight md:text-6xl">
-            Hello, {(profile?.displayName ?? "friend").split(" ")[0]}.
-          </h1>
-          <p className="mt-3 text-muted-foreground md:text-lg">
-            You've seen <span className="font-semibold text-foreground">{plural(yearArtists, "artist")}</span>{" "}
-            across <span className="font-semibold text-foreground">{plural(yearCities, "city", "cities")}</span> in{" "}
-            {YEAR}.
-          </p>
-        </div>
+        <PageTitle
+          eyebrow="Welcome back"
+          title={<>Hello, {(profile?.displayName ?? "friend").split(" ")[0]}.</>}
+          description={
+            <>
+              You've seen <span className="font-semibold text-foreground">{plural(yearArtists, "artist")}</span>{" "}
+              across <span className="font-semibold text-foreground">{plural(yearCities, "city", "cities")}</span> in{" "}
+              {YEAR}.
+            </>
+          }
+        />
         <div className="grid grid-cols-3 gap-3 animate-reveal">
           <Stat label="Concert Age" value={`${getConcertAge(shows)} yrs`} accent="brand" />
           <Stat label="Hours live" value={formatDuration(showStats.hoursLive)} accent="pink" />
@@ -119,7 +118,7 @@ function Dashboard() {
         <div className="relative overflow-hidden rounded-3xl border border-hairline bg-card p-8 md:col-span-2">
           <div className="mb-8 flex items-center justify-between">
             <div>
-              <h2 className="font-display text-2xl font-extrabold">Yearly Attendance</h2>
+              <h2 className="font-display text-2xl font-bold">Yearly Attendance</h2>
               <p className="text-xs text-muted-foreground">
                 {plural(yearShows, "show")} in {YEAR} · click a month to see them
               </p>
@@ -159,7 +158,7 @@ function Dashboard() {
 
         <div className="flex flex-col justify-between rounded-3xl border border-hairline bg-card p-8">
           <div>
-            <h2 className="font-display text-2xl font-extrabold">Your #1 Artist</h2>
+            <h2 className="font-display text-2xl font-bold">Your #1 Artist</h2>
             {topArtists[0] ? (
               <div className="mt-6 flex items-center gap-4">
                 {(() => {
@@ -238,7 +237,7 @@ function Dashboard() {
                   <p className="eyebrow text-brand">
                     {plural(yearsAgo, "year")} ago
                   </p>
-                  <h3 className="mt-1 truncate font-display text-lg font-extrabold">{c.artist}</h3>
+                  <h3 className="mt-1 truncate font-display text-lg font-bold">{c.artist}</h3>
                   <p className="mt-0.5 truncate text-xs text-muted-foreground">
                     {c.venue} · {c.city}
                   </p>
@@ -252,7 +251,7 @@ function Dashboard() {
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
         <div className="space-y-5 lg:col-span-3">
           <div className="flex items-end justify-between">
-            <h3 className="font-display text-xl font-extrabold">Recent Memories</h3>
+            <h3 className="font-display text-xl font-bold">Recent Memories</h3>
             <Link to="/shows" className="text-xs font-semibold text-brand hover:underline">
               View all →
             </Link>
@@ -303,11 +302,11 @@ function Dashboard() {
             </div>
           </Panel>
 
-          <div className="rounded-2xl border border-brand/30 bg-gradient-to-br from-brand/20 via-transparent to-teal/10 p-6">
+          <div className="rounded-2xl border border-brand/30 bg-gradient-to-br from-brand/20 via-transparent to-transparent p-6">
             <p className="eyebrow text-brand">
               {YEAR} Wrapped
             </p>
-            <h3 className="mt-1 font-display text-xl font-extrabold">
+            <h3 className="mt-1 font-display text-xl font-bold">
               Your year in concerts is ready.
             </h3>
             <p className="mt-2 text-xs text-muted-foreground">
@@ -533,7 +532,7 @@ export function ConcertCard({
       )}
     >
       <div className="flex flex-col gap-5 md:flex-row">
-        <div className="grid w-full flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-surface-2 to-teal/20 md:h-32 md:w-32">
+        <div className="grid w-full flex-shrink-0 place-items-center overflow-hidden rounded-xl bg-gradient-to-br from-brand/30 via-surface-2 to-surface-2 md:h-32 md:w-32">
           {thumbUrl ? (
             <img src={thumbUrl} alt={`${artist} memory`} className="h-full w-full object-cover" />
           ) : imageUrl ? (
@@ -550,7 +549,7 @@ export function ConcertCard({
         <div className="flex-grow">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h3 className="font-display text-2xl font-extrabold leading-tight">
+              <h3 className="font-display text-2xl font-bold leading-tight">
                 {artist}
                 {tour && <span className="text-muted-foreground"> · {tour}</span>}
               </h3>

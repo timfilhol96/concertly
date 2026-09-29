@@ -317,7 +317,7 @@ function BestConcertTrackers() {
 
           {/* CTA */}
           <section className="mt-16">
-            <div className="relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br from-brand/25 via-surface to-teal/15 p-8 md:p-12">
+            <div className="relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br from-brand/25 via-surface to-surface p-8 md:p-12">
               <div className="relative z-10 max-w-2xl">
                 <h2 className="font-display text-3xl font-extrabold tracking-tight md:text-4xl">
                   Start your live music archive
@@ -335,7 +335,7 @@ function BestConcertTrackers() {
                 </Link>
               </div>
               <div className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full bg-brand/30 blur-3xl" />
-              <div className="pointer-events-none absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-teal/20 blur-3xl" />
+              <div className="pointer-events-none absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-brand/15 blur-3xl" />
             </div>
           </section>
         </article>

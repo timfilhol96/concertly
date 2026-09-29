@@ -238,9 +238,9 @@ function ConcertStatsPage() {
         </section>
 
         <section className="mt-16">
-          <div className="relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br from-brand/25 via-surface to-teal/15 p-8 md:p-12">
+          <div className="relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br from-brand/25 via-surface to-surface p-8 md:p-12">
             <div className="relative z-10 max-w-2xl">
-              <h2 className="font-display text-3xl font-extrabold tracking-tight">
+              <h2 className="font-display text-3xl font-bold tracking-tight">
                 Start your live music stats today
               </h2>
               <p className="mt-3 text-muted-foreground">

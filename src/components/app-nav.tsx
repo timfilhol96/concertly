@@ -12,13 +12,13 @@ import {
   Users,
 } from "lucide-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAvatarUrl, useProfile } from "@/lib/concerts";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLabel,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
@@ -52,7 +52,6 @@ export function AppNav() {
   const avatarUrl = useAvatarUrl(profile?.avatarPath);
   const nav = useNavigate();
   const qc = useQueryClient();
-  const [menuOpen, setMenuOpen] = useState(false);
 
   const initials = (profile?.displayName ?? "U")
     .split(/\s+/)
@@ -102,10 +101,9 @@ export function AppNav() {
             <Plus className="h-4 w-4" />
             Log Show
           </Link>
-          <div className="relative">
-            <button
-              onClick={() => setMenuOpen((v) => !v)}
-              className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-hairline bg-surface-2 text-xs font-bold transition-colors hover:border-brand"
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className="flex h-9 w-9 items-center justify-center overflow-hidden rounded-full border border-hairline bg-surface-2 text-xs font-bold outline-none transition-colors hover:border-brand focus-visible:ring-2 focus-visible:ring-ring"
               aria-label="Account menu"
             >
               {avatarUrl ? (
@@ -113,36 +111,24 @@ export function AppNav() {
               ) : (
                 initials
               )}
-            </button>
-            {menuOpen && (
-              <>
-                <button
-                  className="fixed inset-0 z-40 cursor-default"
-                  onClick={() => setMenuOpen(false)}
-                  aria-label="Close menu"
-                />
-                <div className="absolute right-0 top-11 z-50 w-56 overflow-hidden rounded-2xl border border-hairline bg-card shadow-xl">
-                  <div className="border-b border-hairline px-4 py-3">
-                    <p className="truncate text-sm font-semibold">{profile?.displayName}</p>
-                    <p className="truncate text-xs text-muted-foreground">{profile?.email}</p>
-                  </div>
-                  <Link
-                    to="/profile"
-                    onClick={() => setMenuOpen(false)}
-                    className="flex w-full items-center gap-2 px-4 py-3 text-left text-sm transition-colors hover:bg-surface-2"
-                  >
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" sideOffset={8} className="w-56 rounded-2xl p-0">
+              <DropdownMenuLabel className="border-b border-hairline px-4 py-3 font-normal">
+                <p className="truncate text-sm font-semibold">{profile?.displayName}</p>
+                <p className="truncate text-xs text-muted-foreground">{profile?.email}</p>
+              </DropdownMenuLabel>
+              <div className="p-1.5">
+                <DropdownMenuItem asChild className="rounded-xl px-3 py-2.5">
+                  <Link to="/profile">
                     <User className="h-3.5 w-3.5" /> View profile
                   </Link>
-                  <button
-                    onClick={signOut}
-                    className="flex w-full items-center gap-2 border-t border-hairline px-4 py-3 text-left text-sm transition-colors hover:bg-surface-2"
-                  >
-                    <LogOut className="h-3.5 w-3.5" /> Sign out
-                  </button>
-                </div>
-              </>
-            )}
-          </div>
+                </DropdownMenuItem>
+                <DropdownMenuItem onSelect={signOut} className="rounded-xl px-3 py-2.5">
+                  <LogOut className="h-3.5 w-3.5" /> Sign out
+                </DropdownMenuItem>
+              </div>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
     </nav>

@@ -13,6 +13,7 @@ import {
   getSpotifyStatus,
 } from "@/lib/spotify.functions";
 import { ctaClass } from "@/components/cta";
+import { PageTitle } from "@/components/page-title";
 
 export const Route = createFileRoute("/_authenticated/profile")({
   head: () => ({
@@ -85,12 +86,7 @@ function Profile() {
 
   return (
     <main className="mx-auto max-w-2xl px-6 py-10 md:py-14">
-      <div className="mb-8">
-        <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Account</p>
-        <h1 className="mt-1 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-          Your <span className="gradient-text">profile</span>.
-        </h1>
-      </div>
+      <PageTitle eyebrow="Account" title={<>Your <span className="gradient-text">profile</span>.</>} className="mb-8" />
 
       <section className="rounded-3xl border border-hairline bg-card p-6 md:p-8">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:items-end">
@@ -275,7 +271,7 @@ function DataSection() {
           <Database className="h-5 w-5" />
         </div>
         <div className="flex-1">
-          <h2 className="font-display text-xl font-extrabold">Your data</h2>
+          <h2 className="font-display text-xl font-bold">Your data</h2>
           <p className="text-sm text-muted-foreground">
             Export your archive as CSV, or import from a previous export.
           </p>
@@ -367,7 +363,7 @@ function SpotifySection() {
             <Music2 className="h-5 w-5" />
           </div>
           <div>
-            <h2 className="font-display text-xl font-extrabold">Spotify</h2>
+            <h2 className="font-display text-xl font-bold">Spotify</h2>
             <p className="text-sm text-muted-foreground">
               {isLoading
                 ? "Checking status…"

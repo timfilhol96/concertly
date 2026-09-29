@@ -29,6 +29,8 @@ import {
   useSendFriendRequest,
   type FriendProfile,
 } from "@/lib/friends";
+import { PageTitle } from "@/components/page-title";
+import { PageSkeleton } from "@/components/page-skeleton";
 
 export const Route = createFileRoute("/_authenticated/friends")({
   head: () => ({
@@ -42,7 +44,7 @@ export const Route = createFileRoute("/_authenticated/friends")({
 
 function FriendsPage() {
   const { data: profile } = useProfile();
-  const { data: friendData } = useFriendships();
+  const { data: friendData, isLoading: friendsLoading } = useFriendships();
   const { data: myConcerts = [] } = useConcerts();
   const sendReq = useSendFriendRequest();
   const respond = useRespondToRequest();
@@ -76,15 +78,17 @@ function FriendsPage() {
     }
   }
 
+  if (friendsLoading) return <PageSkeleton tiles={0} />;
+
   const hasUsername = !!profile?.username;
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
-      <div className="mb-8 animate-reveal">
-        <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">Friends</h1>
-        <p className="mt-2 max-w-2xl text-muted-foreground">
-          Add friends by username, then compare your live music stats side-by-side.
-        </p>
+      <div className="mb-8">
+        <PageTitle
+          title="Friends"
+          description="Add friends by username, then compare your live music stats side-by-side."
+        />
         {profile?.username && (
           <p className="mt-3 text-xs text-muted-foreground">
             Your username:{" "}
@@ -106,7 +110,7 @@ function FriendsPage() {
         {/* LEFT: add + lists */}
         <section className="space-y-4 lg:col-span-1">
           <div className="rounded-2xl border border-hairline bg-card p-5">
-            <h2 className="font-display text-lg font-extrabold">Add a friend</h2>
+            <h2 className="font-display text-lg font-bold">Add a friend</h2>
             <p className="mt-1 text-xs text-muted-foreground">Enter their username.</p>
             <form
               onSubmit={(e) => { e.preventDefault(); onSend(); }}
@@ -132,7 +136,7 @@ function FriendsPage() {
 
           {incoming.length > 0 && (
             <div className="rounded-2xl border border-hairline bg-card p-5">
-              <h3 className="font-display text-sm font-extrabold uppercase tracking-widest text-muted-foreground">
+              <h3 className="font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
                 Incoming requests
               </h3>
               <ul className="mt-3 space-y-2">
@@ -162,7 +166,7 @@ function FriendsPage() {
 
           {outgoing.length > 0 && (
             <div className="rounded-2xl border border-hairline bg-card p-5">
-              <h3 className="font-display text-sm font-extrabold uppercase tracking-widest text-muted-foreground">
+              <h3 className="font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
                 Sent · pending
               </h3>
               <ul className="mt-3 space-y-2">
@@ -183,7 +187,7 @@ function FriendsPage() {
           )}
 
           <div className="rounded-2xl border border-hairline bg-card p-5">
-            <h3 className="font-display text-sm font-extrabold uppercase tracking-widest text-muted-foreground">
+            <h3 className="font-display text-sm font-bold uppercase tracking-widest text-muted-foreground">
               Your friends
             </h3>
             {friends.length === 0 ? (
@@ -361,7 +365,7 @@ function Comparison({
     <div className="space-y-6">
       <header className="rounded-3xl border border-hairline bg-card p-6">
         <p className="eyebrow text-muted-foreground">Comparing</p>
-        <h2 className="mt-1 font-display text-2xl font-extrabold">
+        <h2 className="mt-1 font-display text-2xl font-bold">
           <span className="text-brand">{meLabel}</span>{" "}
           <span className="text-muted-foreground">vs</span>{" "}
           <span className="text-teal">{friendLabel}</span>
@@ -389,7 +393,7 @@ function Comparison({
 
       {/* Shows per year overlay */}
       <section className="rounded-3xl border border-hairline bg-card p-6">
-        <h3 className="font-display text-lg font-extrabold">Shows per year</h3>
+        <h3 className="font-display text-lg font-bold">Shows per year</h3>
         {yearData.length === 0 ? (
           <p className="mt-3 text-sm text-muted-foreground">No shows logged yet.</p>
         ) : (
@@ -476,7 +480,7 @@ function GenrePanel({
   const max = items[0]?.count ?? 1;
   return (
     <div className="rounded-2xl border border-hairline bg-card p-5">
-      <h3 className="font-display text-sm font-extrabold">{title}</h3>
+      <h3 className="font-display text-sm font-bold">{title}</h3>
       {items.length === 0 ? (
         <p className="mt-3 text-xs text-muted-foreground">No genres logged.</p>
       ) : (
@@ -508,7 +512,7 @@ function RankPanel({
 }) {
   return (
     <div className="rounded-2xl border border-hairline bg-card p-5">
-      <h3 className="font-display text-sm font-extrabold">{title}</h3>
+      <h3 className="font-display text-sm font-bold">{title}</h3>
       <div className="mt-3 grid grid-cols-2 gap-4">
         {[a, b].map((side, idx) => (
           <div key={idx}>

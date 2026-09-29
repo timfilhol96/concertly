@@ -151,7 +151,7 @@ function ShowDetail() {
         <article className="space-y-8">
           <div className="rounded-3xl border border-hairline bg-card p-6 md:p-8">
             <div className="flex items-center justify-between gap-3">
-              <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
+              <h2 className="flex items-center gap-2 font-display text-xl font-bold">
                 <Music className="h-4 w-4 text-brand" /> Setlist
               </h2>
               {concert.setlist?.length ? (
@@ -182,8 +182,8 @@ function ShowDetail() {
 
           {concert.openerSetlists?.length ? (
             <div className="rounded-3xl border border-hairline bg-card p-6 md:p-8">
-              <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
-                <Users className="h-4 w-4 text-pink" /> Opener setlists
+              <h2 className="flex items-center gap-2 font-display text-xl font-bold">
+                <Users className="h-4 w-4 text-brand" /> Opener setlists
               </h2>
               <div className="mt-6 space-y-5">
                 {concert.openerSetlists.map((o, oi) => (
@@ -385,7 +385,7 @@ function SpotifyPlaylistButton({ concertId, defaultName }: { concertId: string; 
             className="w-full max-w-md rounded-3xl border border-hairline bg-card p-6"
             onClick={(e) => e.stopPropagation()}
           >
-            <h3 className="font-display text-xl font-extrabold">Create Spotify playlist</h3>
+            <h3 className="font-display text-xl font-bold">Create Spotify playlist</h3>
             <p className="mt-1 text-xs text-muted-foreground">
               The setlist will be searched on Spotify and added to a new private playlist.
             </p>
@@ -450,7 +450,7 @@ function MediaSection({ concertId }: { concertId: string }) {
   return (
     <div className="rounded-3xl border border-hairline bg-card p-6 md:p-8">
       <div className="flex items-center justify-between gap-3">
-        <h2 className="flex items-center gap-2 font-display text-xl font-extrabold">
+        <h2 className="flex items-center gap-2 font-display text-xl font-bold">
           <ImagePlus className="h-4 w-4 text-brand" /> Photos & videos
         </h2>
         <button

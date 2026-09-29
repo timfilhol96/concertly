@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn, plural } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 import {
   uniqueShows,
@@ -31,6 +32,8 @@ import {
   type CoPerformer,
 } from "@/lib/setlistfm.functions";
 import { ctaClass } from "@/components/cta";
+import { PageTitle } from "@/components/page-title";
+import { RowSkeletons } from "@/components/page-skeleton";
 
 type Search = {
   month?: string;
@@ -667,9 +670,9 @@ function Shows() {
       )}
       <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
         <div>
-          <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">{pageTitle}</h1>
-          <p className="mt-2 text-muted-foreground">
-            {(() => {
+          <PageTitle
+            title={pageTitle}
+            description={(() => {
               const listCount = uniqueShows(list).length;
               const totalCount = uniqueShows(concerts).length;
               if (monthLabel) return `Showing ${plural(listCount, "show")} in ${monthLabel}`;
@@ -681,7 +684,7 @@ function Shows() {
                 ? `Every gig in their archive (${totalCount} total).`
                 : `Every gig in your archive (${totalCount} total).`;
             })()}
-          </p>
+          />
           {(month || genre || year || weekday || withFriendsSet.size > 0) && (
 
             <button
@@ -703,14 +706,18 @@ function Shows() {
               className="w-full rounded-full border border-hairline bg-surface py-2 pl-9 pr-3 text-sm outline-none focus:border-brand"
             />
           </div>
-          <select
-            value={sort}
-            onChange={(e) => setSort(e.target.value as "date" | "rating")}
-            className="rounded-full border border-hairline bg-surface px-3 py-2 text-xs outline-none"
-          >
-            <option value="date">Newest</option>
-            <option value="rating">Top rated</option>
-          </select>
+          <Select value={sort} onValueChange={(v) => setSort(v as "date" | "rating")}>
+            <SelectTrigger
+              aria-label="Sort shows"
+              className="h-auto w-auto gap-2 rounded-full border-hairline bg-surface px-3 py-2 text-xs shadow-none"
+            >
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="rounded-xl">
+              <SelectItem value="date" className="text-xs">Newest</SelectItem>
+              <SelectItem value="rating" className="text-xs">Top rated</SelectItem>
+            </SelectContent>
+          </Select>
           {!readOnly && (
             <button
               type="button"
@@ -892,6 +899,7 @@ function Shows() {
                 )}
               </tr>
             ))}
+            {isLoading && <RowSkeletons cols={6} />}
             {!isLoading && list.length === 0 && (
               <tr><td colSpan={6} className="px-6 py-12 text-center text-sm text-muted-foreground">
                 {concerts.length === 0 ? "No shows yet. Log your first one!" : "No shows match that filter."}
@@ -969,7 +977,7 @@ function ArtistPane({ prompt }: { prompt: ArtistPrompt }) {
 
   return (
     <div>
-      <h2 className="font-display text-xl font-extrabold">{heading}</h2>
+      <h2 className="font-display text-xl font-bold">{heading}</h2>
       <p className="mt-1 text-sm text-muted-foreground">{sub}</p>
 
       {suggestions.length === 0 ? (
@@ -1040,7 +1048,7 @@ function CoPerformerPane({ prompt }: { prompt: CoPerformerPrompt }) {
 
   return (
     <div>
-      <h2 className="font-display text-xl font-extrabold flex items-center gap-2">
+      <h2 className="font-display text-xl font-bold flex items-center gap-2">
         <Users className="h-5 w-5" /> Other artists played here
       </h2>
       <p className="mt-1 text-sm text-muted-foreground">
@@ -1139,7 +1147,7 @@ function NotFoundPane({ prompt }: { prompt: NotFoundPrompt }) {
   const { concert, fallback, resolve } = prompt;
   return (
     <div>
-      <h2 className="font-display text-xl font-extrabold">Show not found on setlist.fm</h2>
+      <h2 className="font-display text-xl font-bold">Show not found on setlist.fm</h2>
       <p className="mt-1 text-sm text-muted-foreground">
         {concert.artist} · {concert.venue} · {concert.date}. We can still apply the artist's profile picture and genre.
       </p>
@@ -1271,7 +1279,7 @@ function UpcomingList({
     <div className={cn("rounded-2xl border p-4 md:p-5", accentClass)}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <div>
-          <h2 className="font-display text-lg font-extrabold">
+          <h2 className="font-display text-lg font-bold">
             {title} <span className="text-muted-foreground">· {items.length}</span>
           </h2>
           <p className="text-xs text-muted-foreground">{hint}</p>

@@ -70,7 +70,7 @@ function Landing() {
         <div className="mx-auto max-w-7xl px-6 pb-32 pt-40 md:pb-48 md:pt-56">
           <div className="max-w-4xl animate-reveal">
             <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-hairline bg-surface/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur-md">
-              <span className="h-1.5 w-1.5 rounded-full bg-teal" />
+              <span className="h-1.5 w-1.5 rounded-full bg-brand" />
               Open beta · Free forever
             </div>
             <h1 className="font-display text-5xl font-extrabold leading-[0.95] tracking-tight md:text-7xl lg:text-8xl">
@@ -155,7 +155,7 @@ function Landing() {
 
       {/* CTA */}
       <section className="mx-auto max-w-7xl px-6 pb-32">
-        <div className="relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br from-brand/25 via-surface to-teal/15 p-10 md:p-16">
+        <div className="relative overflow-hidden rounded-3xl border border-hairline bg-gradient-to-br from-brand/25 via-surface to-surface p-10 md:p-16">
           <div className="relative z-10 max-w-2xl">
             <h2 className="font-display text-4xl font-extrabold tracking-tight md:text-6xl">
               Start your live music archive tonight.
@@ -173,7 +173,7 @@ function Landing() {
             </Link>
           </div>
           <div className="pointer-events-none absolute -right-20 -top-20 h-80 w-80 rounded-full bg-brand/30 blur-3xl" />
-          <div className="pointer-events-none absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-teal/20 blur-3xl" />
+          <div className="pointer-events-none absolute -bottom-20 -left-20 h-80 w-80 rounded-full bg-brand/15 blur-3xl" />
         </div>
       </section>
 

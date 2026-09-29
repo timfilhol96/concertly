@@ -82,6 +82,11 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
       { name: "theme-color", content: "#09090b" },
       { property: "og:site_name", content: "Concertly" },
       { name: "twitter:card", content: "summary_large_image" },
+      { property: "og:image", content: "https://concertly.lovable.app/og-image.png" },
+      { property: "og:image:width", content: "1200" },
+      { property: "og:image:height", content: "630" },
+      { property: "og:image:alt", content: "Concertly: Track every show. Discover your live music story." },
+      { name: "twitter:image", content: "https://concertly.lovable.app/og-image.png" },
       {
         name: "google-site-verification",
         content: "BZDF6P1bPk7ES1hi2jfgtk_MJqYrZ5NVCIBDYc6CjkY",
@@ -89,6 +94,9 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "stylesheet", href: appCss },
+      { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+      { rel: "icon", href: "/favicon.ico", sizes: "48x48" },
+      { rel: "apple-touch-icon", href: "/apple-touch-icon.png" },
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
       { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
       {
@@ -104,7 +112,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
           "@type": "Organization",
           name: "Concertly",
           url: "https://concertly.lovable.app",
-          logo: "https://concertly.lovable.app/favicon.ico",
+          logo: "https://concertly.lovable.app/apple-touch-icon.png",
         }),
       },
       {

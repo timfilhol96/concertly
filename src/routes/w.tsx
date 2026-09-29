@@ -248,7 +248,7 @@ function SharedWrapped() {
           )}
 
           <div className="mt-10 rounded-3xl border border-hairline bg-card p-8 text-center">
-            <h3 className="font-display text-2xl font-extrabold">Track your own live year.</h3>
+            <h3 className="font-display text-2xl font-bold">Track your own live year.</h3>
             <p className="mt-2 text-muted-foreground">Log every show on Concertly and get your own Wrapped.</p>
             <Link
               to="/"
@@ -266,7 +266,7 @@ function SharedWrapped() {
 function Section({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <section className="mt-10">
-      <h2 className="mb-4 font-display text-2xl font-extrabold tracking-tight md:text-3xl">{title}</h2>
+      <h2 className="mb-4 font-display text-2xl font-bold tracking-tight md:text-3xl">{title}</h2>
       {children}
     </section>
   );

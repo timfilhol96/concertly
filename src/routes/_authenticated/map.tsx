@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useConcerts, type Concert } from "@/lib/concerts";
 import { geocodeVenueFn } from "@/lib/geocode.functions";
 import { ctaClass } from "@/components/cta";
+import { PageTitle } from "@/components/page-title";
 
 export const Route = createFileRoute("/_authenticated/map")({
   head: () => ({
@@ -188,15 +189,11 @@ function MapPage() {
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
-      <div className="mb-6 flex flex-col items-start justify-between gap-3 md:flex-row md:items-end">
-        <div>
-          <h1 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-            Map
-          </h1>
-          <p className="mt-2 text-muted-foreground">
-            Every venue you've been to, plotted on a map. Attended shows only.
-          </p>
-        </div>
+      <div className="mb-8 flex flex-col items-start justify-between gap-4 md:flex-row md:items-end">
+        <PageTitle
+          title="Map"
+          description="Every venue you've been to, plotted on a map. Attended shows only."
+        />
         <div className="flex items-center gap-3 text-xs">
           <span className="inline-flex items-center gap-1 rounded-full border border-hairline bg-surface px-3 py-1.5">
             <MapPin className="h-3 w-3" /> {withCoords.length} mapped
