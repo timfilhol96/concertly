@@ -54,7 +54,7 @@ const CHART_COLORS = [
   "var(--pink)",
   "var(--chart-4)",
   "var(--chart-5)",
-  "#6366f1",
+  "var(--chart-6)",
 ];
 const CURRENT_YEAR = new Date().getFullYear();
 

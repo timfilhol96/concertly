@@ -29,7 +29,7 @@ function TrustPage() {
       <div className="mb-10">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Trust Center</p>
         <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-          Trust &amp; <span className="gradient-text">Privacy</span>
+          Trust &amp; Privacy
         </h1>
         <p className="mt-4 text-sm text-muted-foreground">
           This page is maintained by the Concertly team to answer common security and privacy

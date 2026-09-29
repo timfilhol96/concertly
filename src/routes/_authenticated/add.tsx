@@ -477,7 +477,7 @@ function AddShow() {
       <PageTitle
         className="mb-8"
         eyebrow={isEdit ? "Edit entry" : "New entry"}
-        title={<>{isEdit ? "Edit" : "Log a"} <span className="gradient-text">show</span>.</>}
+        title={<>{isEdit ? "Edit" : "Log a"} show.</>}
         description={isEdit ? "Update the details of this gig." : "Capture the basics. It stays in your archive forever."}
       />
 
@@ -721,7 +721,7 @@ function AddShow() {
           </label>
           <div className="rounded-2xl border border-hairline bg-surface p-5">
             <div className="flex items-baseline justify-between">
-              <span className="font-display text-5xl font-extrabold gradient-text">{rating.toFixed(1)}</span>
+              <span className="font-display text-5xl font-extrabold text-brand">{rating.toFixed(1)}</span>
               <span className="text-xs text-muted-foreground">/ 10</span>
             </div>
             <input type="range" min={0} max={10} step={0.1} value={rating} onChange={(e) => setRating(Number(e.target.value))} className="mt-3 w-full accent-brand" />

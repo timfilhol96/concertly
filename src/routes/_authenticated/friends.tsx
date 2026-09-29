@@ -31,6 +31,7 @@ import {
 } from "@/lib/friends";
 import { PageTitle } from "@/components/page-title";
 import { PageSkeleton } from "@/components/page-skeleton";
+import { IconTip } from "@/components/icon-tip";
 
 export const Route = createFileRoute("/_authenticated/friends")({
   head: () => ({
@@ -146,16 +147,20 @@ function FriendsPage() {
                     <li key={r.id} className="flex items-center justify-between gap-2 rounded-xl bg-surface-2 px-3 py-2">
                       <ProfileLabel p={p} />
                       <div className="flex gap-1">
-                        <button
-                          onClick={() => respond.mutate({ id: r.id, action: "accept" })}
-                          className="grid h-7 w-7 place-items-center rounded-full bg-brand text-brand-foreground"
-                          aria-label="Accept"
-                        ><Check className="h-3.5 w-3.5" /></button>
-                        <button
-                          onClick={() => respond.mutate({ id: r.id, action: "reject" })}
-                          className="grid h-7 w-7 place-items-center rounded-full border border-hairline bg-surface"
-                          aria-label="Reject"
-                        ><X className="h-3.5 w-3.5" /></button>
+                        <IconTip label="Accept">
+                          <button
+                            onClick={() => respond.mutate({ id: r.id, action: "accept" })}
+                            className="grid h-7 w-7 place-items-center rounded-full bg-brand text-brand-foreground"
+                            aria-label="Accept friend request"
+                          ><Check className="h-3.5 w-3.5" /></button>
+                        </IconTip>
+                        <IconTip label="Decline">
+                          <button
+                            onClick={() => respond.mutate({ id: r.id, action: "reject" })}
+                            className="grid h-7 w-7 place-items-center rounded-full border border-hairline bg-surface"
+                            aria-label="Decline friend request"
+                          ><X className="h-3.5 w-3.5" /></button>
+                        </IconTip>
                       </div>
                     </li>
                   );
@@ -213,23 +218,26 @@ function FriendsPage() {
                       >
                         <ProfileLabel p={p} />
                       </Link>
-                      <button
-                        onClick={() => setSelectedFriendId(f.otherUserId)}
-                        className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-surface hover:text-foreground"
-                        aria-label="Compare"
-                        title="Compare stats"
-                      ><BarChart3 className="h-3.5 w-3.5" /></button>
-                      <button
-                        onClick={() =>
-                          setRemoveTarget({
-                            friendshipId: f.id,
-                            otherUserId: f.otherUserId,
-                            label: p?.username ? `@${p.username}` : p?.displayName ?? "this friend",
-                          })
-                        }
-                        className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-surface hover:text-foreground"
-                        aria-label="Remove friend"
-                      ><UserX className="h-3.5 w-3.5" /></button>
+                      <IconTip label="Compare stats">
+                        <button
+                          onClick={() => setSelectedFriendId(f.otherUserId)}
+                          className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-surface hover:text-foreground"
+                          aria-label="Compare stats"
+                        ><BarChart3 className="h-3.5 w-3.5" /></button>
+                      </IconTip>
+                      <IconTip label="Remove friend">
+                        <button
+                          onClick={() =>
+                            setRemoveTarget({
+                              friendshipId: f.id,
+                              otherUserId: f.otherUserId,
+                              label: p?.username ? `@${p.username}` : p?.displayName ?? "this friend",
+                            })
+                          }
+                          className="grid h-7 w-7 place-items-center rounded-full text-muted-foreground hover:bg-surface hover:text-foreground"
+                          aria-label="Remove friend"
+                        ><UserX className="h-3.5 w-3.5" /></button>
+                      </IconTip>
                     </li>
                   );
                 })}

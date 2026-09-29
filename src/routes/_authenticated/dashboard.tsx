@@ -20,6 +20,7 @@ import { useConcertMedia, useSignedMediaUrl, type ConcertMediaItem } from "@/lib
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ctaClass } from "@/components/cta";
 import { PageTitle } from "@/components/page-title";
+import { IconTip } from "@/components/icon-tip";
 
 export const Route = createFileRoute("/_authenticated/dashboard")({
   head: () => ({
@@ -126,19 +127,20 @@ function Dashboard() {
           </div>
           <div className="grid grid-cols-6 gap-3 md:grid-cols-12">
             {months.map((m) => (
-              <button
-                key={m.key}
-                type="button"
-                disabled={m.count === 0}
-                onClick={() => nav({ to: "/shows", search: { month: m.key } })}
-                className={`group flex aspect-square flex-col items-center justify-center rounded-xl ${heatColor(m.count, maxMonth)} transition-transform hover:scale-105 disabled:cursor-default disabled:hover:scale-100`}
-                title={`${m.label} ${YEAR}: ${plural(m.count, "show")}`}
-              >
-                <span className="eyebrow text-foreground/70">
-                  {m.label}
-                </span>
-                <span className="font-display text-xl font-extrabold">{m.count}</span>
-              </button>
+              <IconTip key={m.key} label={`${m.label} ${YEAR}: ${plural(m.count, "show")}`}>
+                <button
+                  type="button"
+                  disabled={m.count === 0}
+                  onClick={() => nav({ to: "/shows", search: { month: m.key } })}
+                  className={`group flex aspect-square flex-col items-center justify-center rounded-xl ${heatColor(m.count, maxMonth)} transition-transform hover:scale-105 disabled:cursor-default disabled:hover:scale-100`}
+                  aria-label={`${m.label} ${YEAR}: ${plural(m.count, "show")}. View shows`}
+                >
+                  <span className="eyebrow text-foreground/70">
+                    {m.label}
+                  </span>
+                  <span className="font-display text-xl font-extrabold">{m.count}</span>
+                </button>
+              </IconTip>
             ))}
           </div>
           <div className="mt-6 flex items-center justify-between text-xs text-muted-foreground">

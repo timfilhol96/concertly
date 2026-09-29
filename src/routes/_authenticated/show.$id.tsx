@@ -15,6 +15,7 @@ import {
   type ConcertMediaItem,
 } from "@/lib/concert-media";
 import { ctaClass } from "@/components/cta";
+import { IconTip } from "@/components/icon-tip";
 
 export const Route = createFileRoute("/_authenticated/show/$id")({
   head: () => ({
@@ -265,7 +266,7 @@ function Tile({
       <div className="flex items-center gap-2 eyebrow text-muted-foreground">
         <Icon className="h-3 w-3" /> {label}
       </div>
-      <p className={"mt-2 font-display text-2xl font-extrabold leading-tight " + (accent ? "gradient-text" : "")}>
+      <p className={"mt-2 font-display text-2xl font-extrabold leading-tight " + (accent ? "text-brand" : "")}>
         {value}
       </p>
       {sub && <p className="mt-1 text-[11px] text-muted-foreground">{sub}</p>}
@@ -371,7 +372,7 @@ function SpotifyPlaylistButton({ concertId, defaultName }: { concertId: string; 
           setName(defaultName);
           setOpen(true);
         }}
-        className="inline-flex items-center gap-1.5 rounded-full bg-[#1DB954] px-3 py-1.5 text-[11px] font-bold text-black hover:opacity-90"
+        className="inline-flex items-center gap-1.5 rounded-full bg-spotify px-3 py-1.5 text-[11px] font-bold text-black hover:opacity-90"
       >
         <ListMusic className="h-3.5 w-3.5" /> Spotify playlist
       </button>
@@ -411,7 +412,7 @@ function SpotifyPlaylistButton({ concertId, defaultName }: { concertId: string; 
                 type="button"
                 onClick={onCreate}
                 disabled={creating || !name.trim()}
-                className="rounded-full bg-[#1DB954] px-4 py-2 text-xs font-bold text-black hover:opacity-90 disabled:opacity-60"
+                className="rounded-full bg-spotify px-4 py-2 text-xs font-bold text-black hover:opacity-90 disabled:opacity-60"
               >
                 {creating ? "Creating…" : "Create playlist"}
               </button>
@@ -536,17 +537,19 @@ function MediaThumb({
           <div className="h-full w-full animate-pulse bg-surface-2" />
         )}
       </button>
-      <button
-        type="button"
-        onClick={(e) => {
-          e.stopPropagation();
-          setConfirmDelete(true);
-        }}
-        aria-label="Delete file"
-        className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-black/70 text-white opacity-0 transition-opacity hover:bg-destructive group-hover:opacity-100"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
+      <IconTip label="Delete">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setConfirmDelete(true);
+          }}
+          aria-label="Delete file"
+          className="absolute right-1.5 top-1.5 grid h-7 w-7 place-items-center rounded-full bg-black/70 text-white opacity-0 transition-opacity hover:bg-destructive group-hover:opacity-100"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </IconTip>
       <ConfirmDialog
         open={confirmDelete}
         title={`Delete this ${item.kind === "image" ? "photo" : "video"}?`}

@@ -34,6 +34,7 @@ import {
 import { ctaClass } from "@/components/cta";
 import { PageTitle } from "@/components/page-title";
 import { RowSkeletons } from "@/components/page-skeleton";
+import { IconTip } from "@/components/icon-tip";
 
 type Search = {
   month?: string;
@@ -867,33 +868,38 @@ function Shows() {
                 {!readOnly && (
                   <td className="px-4 py-4 md:px-6" onClick={(e) => e.stopPropagation()}>
                     <div className="flex items-center justify-end gap-1">
-                      <button
-                        type="button"
-                        onClick={() => handleRefreshOne(c)}
-                        disabled={refresh.running}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground disabled:opacity-50"
-                        aria-label={`Refresh ${c.artist}`}
-                        title="Refresh info for this show"
-                      >
-                        <RefreshCw className="h-4 w-4" />
-                      </button>
-                      <Link
-                        to="/add"
-                        search={{ id: c.id }}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground"
-                        aria-label={`Edit ${c.artist}`}
-                      >
-                        <Pencil className="h-4 w-4" />
-                      </Link>
-                      <button
-                        type="button"
-                        onClick={() => setDeleteTarget({ id: c.id, artist: c.artist })}
-                        disabled={del.isPending}
-                        className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
-                        aria-label={`Delete ${c.artist}`}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+                      <IconTip label="Refresh info">
+                        <button
+                          type="button"
+                          onClick={() => handleRefreshOne(c)}
+                          disabled={refresh.running}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground disabled:opacity-50"
+                          aria-label={`Refresh ${c.artist}`}
+                        >
+                          <RefreshCw className="h-4 w-4" />
+                        </button>
+                      </IconTip>
+                      <IconTip label="Edit">
+                        <Link
+                          to="/add"
+                          search={{ id: c.id }}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+                          aria-label={`Edit ${c.artist}`}
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Link>
+                      </IconTip>
+                      <IconTip label="Delete">
+                        <button
+                          type="button"
+                          onClick={() => setDeleteTarget({ id: c.id, artist: c.artist })}
+                          disabled={del.isPending}
+                          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive disabled:opacity-50"
+                          aria-label={`Delete ${c.artist}`}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </IconTip>
                     </div>
                   </td>
                 )}
@@ -1058,18 +1064,21 @@ function CoPerformerPane({ prompt }: { prompt: CoPerformerPrompt }) {
       <ul className="mt-4 max-h-72 space-y-2 overflow-auto">
         <li className="flex items-center gap-3 rounded-xl border border-hairline bg-surface p-3">
           <input type="checkbox" checked disabled className="h-4 w-4" />
-          <button
-            type="button"
-            onClick={() => setHeadliner(concert.artist)}
-            className={`flex h-7 w-7 items-center justify-center rounded-full border ${
-              headliner.toLowerCase() === concert.artist.toLowerCase()
-                ? "border-brand bg-brand/20 text-brand"
-                : "border-hairline text-muted-foreground hover:bg-surface-2"
-            }`}
-            title="Mark as headliner"
-          >
-            <Crown className="h-3.5 w-3.5" />
-          </button>
+          <IconTip label="Mark as headliner">
+            <button
+              type="button"
+              onClick={() => setHeadliner(concert.artist)}
+              className={`flex h-7 w-7 items-center justify-center rounded-full border ${
+                headliner.toLowerCase() === concert.artist.toLowerCase()
+                  ? "border-brand bg-brand/20 text-brand"
+                  : "border-hairline text-muted-foreground hover:bg-surface-2"
+              }`}
+              aria-label={`Mark ${concert.artist} as headliner`}
+              aria-pressed={headliner.toLowerCase() === concert.artist.toLowerCase()}
+            >
+              <Crown className="h-3.5 w-3.5" />
+            </button>
+          </IconTip>
           <div className="min-w-0 flex-grow">
             <div className="text-sm font-semibold">{concert.artist}</div>
             <div className="text-xs text-muted-foreground">Already in your archive</div>
@@ -1095,7 +1104,8 @@ function CoPerformerPane({ prompt }: { prompt: CoPerformerPrompt }) {
                     ? "border-brand bg-brand/20 text-brand"
                     : "border-hairline text-muted-foreground hover:bg-surface-2"
                 } disabled:opacity-30`}
-                title="Mark as headliner"
+                aria-label={`Mark ${cp.artist} as headliner`}
+                aria-pressed={isHead}
               >
                 <Crown className="h-3.5 w-3.5" />
               </button>
@@ -1319,14 +1329,16 @@ function UpcomingList({
               >
                 Mark attended
               </button>
-              <Link
-                to="/add"
-                search={{ id: c.id }}
-                className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground"
-                aria-label={`Edit ${c.artist}`}
-              >
-                <Pencil className="h-4 w-4" />
-              </Link>
+              <IconTip label="Edit">
+                <Link
+                  to="/add"
+                  search={{ id: c.id }}
+                  className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground hover:bg-surface-2 hover:text-foreground"
+                  aria-label={`Edit ${c.artist}`}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Link>
+              </IconTip>
             </div>
           </li>
         ))}

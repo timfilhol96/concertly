@@ -118,7 +118,7 @@ function MapPage() {
             mapTypeControl: false,
             streetViewControl: false,
             styles: DARK_STYLE,
-            backgroundColor: "#0a0a0a",
+            backgroundColor: MAP_COLORS.background,
           });
         }
         const bounds = new g.LatLngBounds();
@@ -288,17 +288,29 @@ function escapeHtml(s: string): string {
     .replace(/'/g, "&#39;");
 }
 
+// Google Maps styles only accept hex colours, so these are the app's palette
+// tokens (styles.css) converted from oklch. Keep them in sync if the palette changes.
+const MAP_COLORS = {
+  background: "#08090d", // --background
+  land: "#0e0f15", // --surface
+  road: "#17181f", // --surface-2
+  border: "#25262e", // hairline, opaque
+  label: "#8f919f", // --muted-foreground
+  water: "#151022", // background tinted towards --brand
+  waterLabel: "#776a90",
+};
+
 // Dark map style that blends with the app aesthetic.
 const DARK_STYLE = [
-  { elementType: "geometry", stylers: [{ color: "#111214" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#111214" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#8a8a8a" }] },
-  { featureType: "administrative", elementType: "geometry", stylers: [{ color: "#2a2a2a" }] },
+  { elementType: "geometry", stylers: [{ color: MAP_COLORS.land }] },
+  { elementType: "labels.text.stroke", stylers: [{ color: MAP_COLORS.land }] },
+  { elementType: "labels.text.fill", stylers: [{ color: MAP_COLORS.label }] },
+  { featureType: "administrative", elementType: "geometry", stylers: [{ color: MAP_COLORS.border }] },
   { featureType: "poi", stylers: [{ visibility: "off" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#1c1c1c" }] },
+  { featureType: "road", elementType: "geometry", stylers: [{ color: MAP_COLORS.road }] },
   { featureType: "road", elementType: "labels", stylers: [{ visibility: "off" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0a1a24" }] },
-  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: "#4b6b7a" }] },
-  { featureType: "landscape", elementType: "geometry", stylers: [{ color: "#141414" }] },
+  { featureType: "water", elementType: "geometry", stylers: [{ color: MAP_COLORS.water }] },
+  { featureType: "water", elementType: "labels.text.fill", stylers: [{ color: MAP_COLORS.waterLabel }] },
+  { featureType: "landscape", elementType: "geometry", stylers: [{ color: MAP_COLORS.land }] },
   { featureType: "transit", stylers: [{ visibility: "off" }] },
 ];

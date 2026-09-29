@@ -29,7 +29,7 @@ function TermsPage() {
       <div className="mb-10">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Legal</p>
         <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-          Terms of <span className="gradient-text">Service</span>
+          Terms of Service
         </h1>
         <p className="mt-4 text-sm text-muted-foreground">
           By creating an account or using Concertly, you agree to these terms. Please also review our{" "}

@@ -29,7 +29,7 @@ function PrivacyPage() {
       <div className="mb-10">
         <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">Legal</p>
         <h1 className="mt-2 font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-          Privacy <span className="gradient-text">Policy</span>
+          Privacy Policy
         </h1>
         <p className="mt-4 text-sm text-muted-foreground">
           This policy describes what Concertly stores about you, how it is used, and the choices you

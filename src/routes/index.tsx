@@ -1,7 +1,14 @@
 import { Link, createFileRoute } from "@tanstack/react-router";
 import { ArrowRight, BarChart3, Download, MapPin, Sparkles, Ticket, Users } from "lucide-react";
 import heroImg from "@/assets/hero-concert.jpg";
-import { getStats } from "@/lib/mock-data";
+import {
+  genreBreakdown,
+  getStats,
+  rankBy,
+  recentConcerts,
+  showsByMonth,
+  showsByYear,
+} from "@/lib/mock-data";
 import { formatDuration } from "@/lib/utils";
 import { ctaClass } from "@/components/cta";
 
@@ -123,7 +130,7 @@ function Landing() {
       {/* Features */}
       <section id="features" className="mx-auto max-w-7xl scroll-mt-8 px-6 py-24">
         <h2 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">
-          A diary for the <span className="gradient-text">front row</span>.
+          A diary for the <span className="text-brand">front row</span>.
         </h2>
         <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
           Every gig you've ever been to, finally in one place, with the receipts to prove it.
@@ -151,6 +158,15 @@ function Landing() {
             </div>
           ))}
         </div>
+      </section>
+
+      {/* Product preview built from the sample data */}
+      <section className="mx-auto max-w-7xl px-6 pb-24">
+        <h2 className="font-display text-4xl font-extrabold tracking-tight md:text-5xl">A look inside.</h2>
+        <p className="mt-4 max-w-2xl text-lg text-muted-foreground">
+          This is what your dashboard looks like once a few years of shows are logged. Sample data shown.
+        </p>
+        <AppPreview />
       </section>
 
       {/* CTA */}
@@ -192,6 +208,92 @@ function Landing() {
           </div>
         </div>
       </footer>
+    </div>
+  );
+}
+
+function AppPreview() {
+  const busiestYear = [...showsByYear()].sort((a, b) => b.count - a.count)[0];
+  const months = showsByMonth(Number(busiestYear.year));
+  const maxMonth = Math.max(1, ...months.map((m) => m.count));
+  const artists = rankBy("artist", 5);
+  const genres = genreBreakdown().slice(0, 4);
+  const recent = recentConcerts(3);
+
+  return (
+    <div className="mt-12 overflow-hidden rounded-3xl border border-hairline bg-card shadow-2xl glow-brand">
+      {/* Fake window chrome */}
+      <div className="flex items-center gap-2 border-b border-hairline px-5 py-3">
+        <span className="h-3 w-3 rounded-full bg-surface-3" />
+        <span className="h-3 w-3 rounded-full bg-surface-3" />
+        <span className="h-3 w-3 rounded-full bg-surface-3" />
+        <span className="ml-4 text-xs text-muted-foreground">Dashboard</span>
+      </div>
+      <div className="grid gap-4 p-4 md:grid-cols-3 md:p-6">
+        <div className="rounded-2xl border border-hairline bg-surface p-5 md:col-span-2">
+          <p className="eyebrow text-muted-foreground">Shows per month · {busiestYear.year}</p>
+          <div className="mt-6 flex h-40 items-end gap-1.5 md:gap-2">
+            {months.map((m) => (
+              <div key={m.month} className="flex flex-1 flex-col items-center gap-2">
+                <div
+                  className="w-full rounded-md bg-brand/80"
+                  style={{ height: `${Math.max(4, (m.count / maxMonth) * 128)}px`, opacity: m.count ? 1 : 0.25 }}
+                />
+                <span className="text-[11px] text-muted-foreground">{m.label.slice(0, 1)}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-hairline bg-surface p-5">
+          <p className="eyebrow text-muted-foreground">Top artists</p>
+          <ol className="mt-4 space-y-3">
+            {artists.map((a, i) => (
+              <li key={a.name} className="flex items-center gap-3 text-sm">
+                <span className="w-4 font-display font-bold text-muted-foreground">{i + 1}</span>
+                <span className="flex-1 truncate font-semibold">{a.name}</span>
+                <span className="text-xs text-muted-foreground">{a.count}×</span>
+              </li>
+            ))}
+          </ol>
+        </div>
+        <div className="rounded-2xl border border-hairline bg-surface p-5">
+          <p className="eyebrow text-muted-foreground">Top genres</p>
+          <div className="mt-4 space-y-3">
+            {genres.map((g, i) => (
+              <div key={g.name} className="space-y-1.5">
+                <div className="flex justify-between text-xs">
+                  <span>{g.name}</span>
+                  <span className="text-muted-foreground">{g.pct}%</span>
+                </div>
+                <div className="h-1.5 overflow-hidden rounded-full bg-surface-2">
+                  <div
+                    className="h-full rounded-full"
+                    style={{ width: `${g.pct}%`, backgroundColor: `var(--chart-${(i % 5) + 1})` }}
+                  />
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+        <div className="rounded-2xl border border-hairline bg-surface p-5 md:col-span-2">
+          <p className="eyebrow text-muted-foreground">Recent memories</p>
+          <ul className="mt-4 divide-y divide-hairline">
+            {recent.map((c) => (
+              <li key={c.id} className="flex items-center justify-between gap-4 py-3 first:pt-0 last:pb-0">
+                <div className="min-w-0">
+                  <p className="truncate font-display font-bold">{c.artist}</p>
+                  <p className="truncate text-xs text-muted-foreground">
+                    {c.venue} · {c.city}
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs text-muted-foreground">
+                  {new Date(c.date).toLocaleDateString("en", { month: "short", year: "numeric", timeZone: "UTC" })}
+                </span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      </div>
     </div>
   );
 }
