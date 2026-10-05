@@ -1,12 +1,19 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Calendar, ImagePlus, ListMusic, MapPin, Music, Pencil, Play, Star, Ticket, Trash2, Users, X } from "lucide-react";
+import { AlertTriangle, ArrowLeft, Calendar, Check, ImagePlus, ListMusic, MapPin, Music, Pencil, Play, Plus, Search, Star, Ticket, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { ConfirmDialog } from "@/components/confirm-dialog";
-import { useAvatarUrl, useConcerts, useDeleteConcert } from "@/lib/concerts";
+import { useAvatarUrl, useConcertDetail, useConcerts, useDeleteConcert } from "@/lib/concerts";
+import { samePlace } from "@/lib/music-match";
 import { useFriendsAtShow, type FriendProfile } from "@/lib/friends";
-import { createSpotifyPlaylist, getSpotifyStatus } from "@/lib/spotify.functions";
+import {
+  createSpotifyPlaylist,
+  getSpotifyStatus,
+  matchSetlistOnSpotify,
+  searchSpotifyTracks,
+  type SpotifyTrackSummary,
+} from "@/lib/spotify.functions";
 import {
   useConcertMedia,
   useDeleteConcertMedia,
@@ -34,6 +41,10 @@ function ShowDetail() {
   const del = useDeleteConcert();
   const [confirmDelete, setConfirmDelete] = useState(false);
   const concert = concerts?.find((c) => c.id === id);
+  // Setlists aren't in the list query; load this show's full row for them.
+  const { data: detail, isLoading: detailLoading } = useConcertDetail(id);
+  const setlist = detail?.setlist ?? [];
+  const openerSetlists = detail?.openerSetlists ?? [];
 
   // Merge stored openers with any same-date/same-venue concerts logged as a
   // support act for this artist (these are stored as their own row, so the
@@ -42,13 +53,12 @@ function ShowDetail() {
     if (!concert) return [] as string[];
     const stored = concert.openers ?? [];
     const supportNote = `support act for ${concert.artist.toLowerCase()}`;
-    const venueKey = concert.venue.trim().toLowerCase();
     const implicit = (concerts ?? [])
       .filter(
         (c) =>
           c.id !== concert.id &&
           c.date === concert.date &&
-          c.venue.trim().toLowerCase() === venueKey &&
+          samePlace(c.venue, concert.venue) &&
           (c.notes ?? "").trim().toLowerCase().startsWith(supportNote),
       )
       .map((c) => c.artist);
@@ -155,16 +165,23 @@ function ShowDetail() {
               <h2 className="flex items-center gap-2 font-display text-xl font-bold">
                 <Music className="h-4 w-4 text-brand" /> Setlist
               </h2>
-              {concert.setlist?.length ? (
+              {setlist.length ? (
                 <SpotifyPlaylistButton
                   concertId={concert.id}
+                  artist={concert.artist}
                   defaultName={`${concert.artist} - ${concert.country || concert.city} - ${new Date(concert.date).getFullYear()}`}
                 />
               ) : null}
             </div>
-            {concert.setlist?.length ? (
+            {detailLoading ? (
+              <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2" aria-label="Loading setlist">
+                {Array.from({ length: 6 }, (_, i) => (
+                  <div key={i} className="h-9 animate-pulse rounded-xl bg-surface-2" />
+                ))}
+              </div>
+            ) : setlist.length ? (
               <ol className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
-                {concert.setlist.map((song, i) => (
+                {setlist.map((song, i) => (
                   <li
                     key={`${song}-${i}`}
                     className="flex items-baseline gap-3 rounded-xl border border-hairline bg-surface/50 px-3 py-2"
@@ -181,13 +198,13 @@ function ShowDetail() {
             )}
           </div>
 
-          {concert.openerSetlists?.length ? (
+          {openerSetlists.length ? (
             <div className="rounded-3xl border border-hairline bg-card p-6 md:p-8">
               <h2 className="flex items-center gap-2 font-display text-xl font-bold">
                 <Users className="h-4 w-4 text-brand" /> Opener setlists
               </h2>
               <div className="mt-6 space-y-5">
-                {concert.openerSetlists.map((o, oi) => (
+                {openerSetlists.map((o, oi) => (
                   <div key={"opener-" + oi}>
                     <h3 className="text-sm font-bold">{o.artist} <span className="text-muted-foreground">· {o.songs.length} songs</span></h3>
                     <ol className="mt-2 grid grid-cols-1 gap-1.5 sm:grid-cols-2">
@@ -316,34 +333,64 @@ function FriendRow({ friend }: { friend: FriendProfile }) {
   );
 }
 
-function SpotifyPlaylistButton({ concertId, defaultName }: { concertId: string; defaultName: string }) {
+type PlaylistRow = { song: string; track: SpotifyTrackSummary | null; skip: boolean };
+
+function SpotifyPlaylistButton({
+  concertId,
+  defaultName,
+  artist,
+}: {
+  concertId: string;
+  defaultName: string;
+  artist: string;
+}) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState(defaultName);
+  const [rows, setRows] = useState<PlaylistRow[] | null>(null);
+  const [matchError, setMatchError] = useState<string | null>(null);
+  const [fixing, setFixing] = useState<number | null>(null);
   const [creating, setCreating] = useState(false);
   const { data: status } = useQuery({
     queryKey: ["spotify-status"],
     queryFn: () => getSpotifyStatus(),
   });
 
+  async function startMatching() {
+    setRows(null);
+    setMatchError(null);
+    setFixing(null);
+    try {
+      const res = await matchSetlistOnSpotify({ data: { concertId } });
+      setRows(res.matches.map((m) => ({ ...m, skip: false })));
+    } catch (err) {
+      setMatchError(err instanceof Error ? err.message : "Couldn't search Spotify");
+    }
+  }
+
+  function updateRow(i: number, patch: Partial<PlaylistRow>) {
+    setRows((prev) => prev && prev.map((r, j) => (j === i ? { ...r, ...patch } : r)));
+  }
+
+  const included = rows?.filter((r) => !r.skip) ?? [];
+  const unresolved = included.filter((r) => !r.track).length;
+  const uris = included.flatMap((r) => (r.track ? [r.track.uri] : []));
+  const canCreate = !!rows && unresolved === 0 && uris.length > 0 && !!name.trim();
+
   async function onCreate() {
+    if (!canCreate) return;
     setCreating(true);
     try {
-      const res = await createSpotifyPlaylist({ data: { concertId, name: name.trim() } });
-      if (res.playlistUrl) {
-        const toastOptions = {
-          action: {
-            label: "Open",
-            onClick: () => window.open(res.playlistUrl!, "_blank", "noopener"),
-          },
-        };
-        if (res.warning) {
-          toast.warning(res.warning, toastOptions);
-        } else {
-          toast.success(`Playlist created: ${res.added}/${res.total} tracks added`, toastOptions);
-        }
-      } else {
-        toast.success("Playlist created");
-      }
+      const res = await createSpotifyPlaylist({ data: { concertId, name: name.trim(), uris } });
+      const toastOptions = res.playlistUrl
+        ? {
+            action: {
+              label: "Open",
+              onClick: () => window.open(res.playlistUrl!, "_blank", "noopener"),
+            },
+          }
+        : undefined;
+      if (res.warning) toast.warning(res.warning, toastOptions);
+      else toast.success(`Playlist created with ${res.added} tracks`, toastOptions);
       setOpen(false);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Couldn't create playlist");
@@ -371,6 +418,7 @@ function SpotifyPlaylistButton({ concertId, defaultName }: { concertId: string; 
         onClick={() => {
           setName(defaultName);
           setOpen(true);
+          void startMatching();
         }}
         className="inline-flex items-center gap-1.5 rounded-full bg-spotify px-3 py-1.5 text-[11px] font-bold text-black hover:opacity-90"
       >
@@ -383,12 +431,12 @@ function SpotifyPlaylistButton({ concertId, defaultName }: { concertId: string; 
           onClick={() => !creating && setOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-3xl border border-hairline bg-card p-6"
+            className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-3xl border border-hairline bg-card p-6"
             onClick={(e) => e.stopPropagation()}
           >
             <h3 className="font-display text-xl font-bold">Create Spotify playlist</h3>
             <p className="mt-1 text-xs text-muted-foreground">
-              The setlist will be searched on Spotify and added to a new private playlist.
+              Check each song's match before the private playlist is created.
             </p>
             <label className="mt-5 block text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
               Playlist name
@@ -399,7 +447,66 @@ function SpotifyPlaylistButton({ concertId, defaultName }: { concertId: string; 
               maxLength={100}
               className="mt-2 w-full rounded-xl border border-hairline bg-surface px-4 py-3 text-sm outline-none focus:border-brand"
             />
-            <div className="mt-6 flex justify-end gap-2">
+
+            <div className="mt-5 flex items-baseline justify-between gap-3">
+              <p className="text-[11px] font-bold uppercase tracking-widest text-muted-foreground">
+                Tracks
+              </p>
+              {rows && (
+                <p className="text-[11px] text-muted-foreground">
+                  {rows.filter((r) => r.track && !r.skip).length} of {rows.length} matched
+                </p>
+              )}
+            </div>
+            <div className="mt-2 min-h-0 flex-1 overflow-y-auto rounded-xl border border-hairline">
+              {matchError ? (
+                <div className="space-y-3 p-4 text-sm">
+                  <p className="text-destructive">{matchError}</p>
+                  <button
+                    type="button"
+                    onClick={() => void startMatching()}
+                    className="rounded-full border border-hairline px-3 py-1.5 text-xs font-semibold hover:bg-surface-2"
+                  >
+                    Try again
+                  </button>
+                </div>
+              ) : !rows ? (
+                <div className="space-y-2 p-3" aria-label="Finding songs on Spotify">
+                  <p className="px-1 text-xs text-muted-foreground">Finding each song on Spotify…</p>
+                  {Array.from({ length: 5 }, (_, i) => (
+                    <div key={i} className="h-10 animate-pulse rounded-lg bg-surface-2" />
+                  ))}
+                </div>
+              ) : (
+                <ol className="divide-y divide-hairline">
+                  {rows.map((row, i) => (
+                    <PlaylistTrackRow
+                      key={i}
+                      index={i}
+                      row={row}
+                      artist={artist}
+                      fixing={fixing === i}
+                      onFix={() => setFixing(fixing === i ? null : i)}
+                      onPick={(track) => {
+                        updateRow(i, { track, skip: false });
+                        setFixing(null);
+                      }}
+                      onToggleSkip={() => updateRow(i, { skip: !row.skip })}
+                    />
+                  ))}
+                </ol>
+              )}
+            </div>
+
+            {unresolved > 0 && (
+              <p className="mt-3 flex items-start gap-1.5 text-xs text-muted-foreground">
+                <AlertTriangle className="mt-0.5 h-3.5 w-3.5 flex-none text-pink" />
+                {unresolved === 1 ? "1 song isn't" : `${unresolved} songs aren't`} matched yet. Find
+                {unresolved === 1 ? " it" : " them"} on Spotify or skip to continue.
+              </p>
+            )}
+
+            <div className="mt-5 flex justify-end gap-2">
               <button
                 type="button"
                 onClick={() => setOpen(false)}
@@ -411,16 +518,165 @@ function SpotifyPlaylistButton({ concertId, defaultName }: { concertId: string; 
               <button
                 type="button"
                 onClick={onCreate}
-                disabled={creating || !name.trim()}
+                disabled={creating || !canCreate}
                 className="rounded-full bg-spotify px-4 py-2 text-xs font-bold text-black hover:opacity-90 disabled:opacity-60"
               >
-                {creating ? "Creating…" : "Create playlist"}
+                {creating ? "Creating…" : `Create playlist${uris.length ? ` (${uris.length})` : ""}`}
               </button>
             </div>
           </div>
         </div>
       )}
     </>
+  );
+}
+
+function PlaylistTrackRow({
+  index,
+  row,
+  artist,
+  fixing,
+  onFix,
+  onPick,
+  onToggleSkip,
+}: {
+  index: number;
+  row: PlaylistRow;
+  artist: string;
+  fixing: boolean;
+  onFix: () => void;
+  onPick: (track: SpotifyTrackSummary) => void;
+  onToggleSkip: () => void;
+}) {
+  const { song, track, skip } = row;
+  return (
+    <li className={`px-3 py-2.5 ${skip ? "opacity-50" : ""}`}>
+      <div className="flex items-center gap-3">
+        <span className="w-5 flex-none text-right font-mono text-[11px] text-muted-foreground">
+          {index + 1}
+        </span>
+        <div className="grid h-9 w-9 flex-none place-items-center overflow-hidden rounded-md bg-surface-2">
+          {track?.image ? (
+            <img src={track.image} alt="" className="h-full w-full object-cover" />
+          ) : (
+            <Music className="h-4 w-4 text-muted-foreground" />
+          )}
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-semibold">{song}</p>
+          {track ? (
+            <p className="flex items-center gap-1 truncate text-[11px] text-muted-foreground">
+              <Check className="h-3 w-3 flex-none text-spotify" />
+              <span className="truncate">
+                {track.name} · {track.artists}
+              </span>
+            </p>
+          ) : (
+            <p className="text-[11px] font-semibold text-pink">
+              {skip ? "Skipped" : "Not found on Spotify"}
+            </p>
+          )}
+        </div>
+        <div className="flex flex-none gap-1">
+          <IconTip label={track ? "Change match" : "Find on Spotify"}>
+            <button
+              type="button"
+              onClick={onFix}
+              aria-label={track ? "Change match" : "Find on Spotify"}
+              className={`grid h-8 w-8 place-items-center rounded-full border border-hairline hover:bg-surface-2 ${
+                fixing ? "bg-surface-2" : ""
+              }`}
+            >
+              <Search className="h-3.5 w-3.5" />
+            </button>
+          </IconTip>
+          <IconTip label={skip ? "Include song" : "Skip song"}>
+            <button
+              type="button"
+              onClick={onToggleSkip}
+              aria-label={skip ? "Include song" : "Skip song"}
+              className="grid h-8 w-8 place-items-center rounded-full border border-hairline hover:bg-surface-2"
+            >
+              {skip ? <Plus className="h-3.5 w-3.5" /> : <X className="h-3.5 w-3.5" />}
+            </button>
+          </IconTip>
+        </div>
+      </div>
+      {fixing && <TrackSearch initialQuery={`${song} ${artist}`} onPick={onPick} />}
+    </li>
+  );
+}
+
+function TrackSearch({
+  initialQuery,
+  onPick,
+}: {
+  initialQuery: string;
+  onPick: (track: SpotifyTrackSummary) => void;
+}) {
+  const [query, setQuery] = useState(initialQuery);
+  const [submitted, setSubmitted] = useState(initialQuery);
+  const { data: results, isFetching, error } = useQuery({
+    queryKey: ["spotify-track-search", submitted],
+    queryFn: () => searchSpotifyTracks({ data: { query: submitted } }),
+    enabled: submitted.trim().length > 0,
+    staleTime: 60_000,
+  });
+
+  return (
+    <div className="mt-2 ml-8 space-y-2">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault();
+          setSubmitted(query.trim());
+        }}
+        className="flex gap-2"
+      >
+        <input
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          autoFocus
+          className="min-w-0 flex-1 rounded-lg border border-hairline bg-surface px-3 py-2 text-xs outline-none focus:border-brand"
+          placeholder="Song and artist"
+        />
+        <button
+          type="submit"
+          className="rounded-full border border-hairline px-3 py-1.5 text-xs font-semibold hover:bg-surface-2"
+        >
+          Search
+        </button>
+      </form>
+      {isFetching ? (
+        <p className="text-[11px] text-muted-foreground">Searching…</p>
+      ) : error ? (
+        <p className="text-[11px] text-destructive">Search failed. Try again.</p>
+      ) : results && results.length === 0 ? (
+        <p className="text-[11px] text-muted-foreground">No results. Try a different spelling.</p>
+      ) : (
+        <ul className="space-y-1">
+          {results?.map((t) => (
+            <li key={t.uri}>
+              <button
+                type="button"
+                onClick={() => onPick(t)}
+                className="flex w-full items-center gap-2 rounded-lg px-2 py-1.5 text-left hover:bg-surface-2"
+              >
+                <div className="h-7 w-7 flex-none overflow-hidden rounded bg-surface-2">
+                  {t.image && <img src={t.image} alt="" className="h-full w-full object-cover" />}
+                </div>
+                <div className="min-w-0">
+                  <p className="truncate text-xs font-semibold">{t.name}</p>
+                  <p className="truncate text-[11px] text-muted-foreground">
+                    {t.artists}
+                    {t.album ? ` · ${t.album}` : ""}
+                  </p>
+                </div>
+              </button>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
   );
 }
 

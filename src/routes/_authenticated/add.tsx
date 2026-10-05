@@ -5,6 +5,7 @@ import { Calendar, MapPin, Music, Sparkles, Star, Ticket, Trash2 } from "lucide-
 import { toast } from "sonner";
 import {
   useAddConcert,
+  useConcertDetail,
   useConcerts,
   useDeleteConcert,
   useUpdateConcert,
@@ -13,17 +14,17 @@ import {
 import {
   lookupArtistImageFn,
   lookupCoPerformers,
-  lookupSpotifyArtistByIdFn,
   lookupSetlist,
   searchArtists,
   type ArtistSuggestion,
   type CoPerformer,
 } from "@/lib/setlistfm.functions";
-import { Crown, Users } from "lucide-react";
+import { AlertTriangle, Crown, Users } from "lucide-react";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { cn } from "@/lib/utils";
 import { ctaClass } from "@/components/cta";
 import { PageTitle } from "@/components/page-title";
+import { samePlace } from "@/lib/music-match";
 
 
 
@@ -45,14 +46,16 @@ export const Route = createFileRoute("/_authenticated/add")({
 function AddShow() {
   const nav = useNavigate();
   const { id } = Route.useSearch();
-  const { data: concerts, isLoading: concertsLoading } = useConcerts();
-  const existing = id ? concerts?.find((c) => c.id === id) : undefined;
+  const { data: concerts } = useConcerts();
+  // The full row (with setlists): the shared list query leaves them out.
+  const { data: existingRow, isLoading: existingLoading } = useConcertDetail(id);
+  const existing = existingRow ?? undefined;
   const isEdit = Boolean(id);
-  // While editing, we might be waiting on useConcerts() to resolve on a hard
-  // refresh / deep link. Show a loading state so the user doesn't see a blank
-  // form (and can't accidentally overwrite the record with empty values).
-  const editLoading = isEdit && !existing && concertsLoading;
-  const editNotFound = isEdit && !existing && !concertsLoading;
+  // While editing, we might be waiting on the row to load on a hard refresh /
+  // deep link. Show a loading state so the user doesn't see a blank form (and
+  // can't accidentally overwrite the record with empty values).
+  const editLoading = isEdit && !existing && existingLoading;
+  const editNotFound = isEdit && !existing && !existingLoading;
 
   const add = useAddConcert();
   const update = useUpdateConcert();
@@ -60,7 +63,6 @@ function AddShow() {
   const fetchSetlist = useServerFn(lookupSetlist);
   const fetchCoPerformers = useServerFn(lookupCoPerformers);
   const fetchArtistImage = useServerFn(lookupArtistImageFn);
-  const fetchArtistById = useServerFn(lookupSpotifyArtistByIdFn);
   const fetchArtistSuggestions = useServerFn(searchArtists);
 
   const [rating, setRating] = useState(8);
@@ -75,6 +77,12 @@ function AddShow() {
   const [headliner, setHeadliner] = useState<string>("");
   const [loggingCo, setLoggingCo] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  // setlist.fm listed the show somewhere other than what the user typed.
+  const [venueConflict, setVenueConflict] = useState<{
+    venue: string;
+    city: string | null;
+    country: string | null;
+  } | null>(null);
   const [picker, setPicker] = useState<{
     title: string;
     description: string;
@@ -108,9 +116,9 @@ function AddShow() {
     setRating(existing.rating);
     setOpeners(existing.openers);
     setSongsSeen(existing.songsSeen);
-    setSetlist(existing.setlist);
+    setSetlist(existing.setlist ?? null);
     setArtistImageUrl(existing.artistImageUrl);
-    setOpenerSetlists(existing.openerSetlists);
+    setOpenerSetlists(existing.openerSetlists ?? null);
     setHeadliner(existing.artist);
     setStatus(existing.status ?? "attended");
     setForm({
@@ -150,15 +158,13 @@ function AddShow() {
     setLooking(true);
     try {
       const name = form.artist.trim();
-      const [r, suggestions] = await Promise.all([
-        fetchSetlist({ data: { artist: name, date: form.date } }),
-        fetchArtistSuggestions({ data: { query: name } }).catch(
-          () => [] as ArtistSuggestion[],
-        ),
-      ]);
+      const suggestions = await fetchArtistSuggestions({ data: { query: name } }).catch(
+        () => [] as ArtistSuggestion[],
+      );
 
       // Artist disambiguation: ask the user to pick when there isn't a single
-      // clean match in Spotify.
+      // clean match in Spotify. Done before the setlist lookup so the server
+      // can use that exact artist for the image + genre in the same request.
       const lc = name.toLowerCase();
       const exact = suggestions.filter((s) => s.name.toLowerCase() === lc);
       let chosenArtist: ArtistSuggestion | null = null;
@@ -178,20 +184,20 @@ function AddShow() {
         );
       }
 
+      const r = await fetchSetlist({
+        data: {
+          artist: name,
+          date: form.date,
+          city: form.city.trim() || undefined,
+          spotifyArtistId: chosenArtist?.id ?? undefined,
+        },
+      });
+
       if (!r.found) {
-        // Concert isn't on setlist.fm - still grab the artist's image + genre
-        // from Spotify so the entry isn't bare.
-        let image: string | null = null;
-        let genre: string | null = null;
-        if (chosenArtist?.id) {
-          try {
-            const d = await fetchArtistById({ data: { id: chosenArtist.id } });
-            image = d.image;
-            genre = d.genre;
-          } catch {
-            // non-fatal
-          }
-        }
+        // Concert isn't on setlist.fm - the response still carries the picked
+        // artist's image + genre so the entry isn't bare.
+        const image = r.artistImageUrl;
+        const genre = r.genre;
         setForm((f) => ({
           ...f,
           artist: chosenArtist?.name ?? f.artist,
@@ -207,30 +213,25 @@ function AddShow() {
         return;
       }
 
-      // Concert found - prefer setlist.fm data, but if the user picked a
-      // different Spotify artist, use their image + genre instead.
-      let artistImage = r.artistImageUrl;
-      let artistGenre = r.genre;
-      if (
-        chosenArtist?.id &&
-        chosenArtist.name.toLowerCase() !== (r.artist ?? name).toLowerCase()
-      ) {
-        try {
-          const d = await fetchArtistById({ data: { id: chosenArtist.id } });
-          artistImage = d.image ?? artistImage;
-          artistGenre = d.genre ?? artistGenre;
-        } catch {
-          // non-fatal
-        }
-      }
+      const artistImage = r.artistImageUrl;
+      const artistGenre = r.genre;
 
+      // Never silently replace a venue/city the user typed: if setlist.fm
+      // disagrees, keep theirs and ask (the banner above the venue fields).
+      const typedVenue = form.venue.trim();
+      const typedCity = form.city.trim();
+      const conflict =
+        !!r.venue &&
+        ((!!typedVenue && !samePlace(typedVenue, r.venue)) ||
+          (!!typedCity && !!r.city && !samePlace(typedCity, r.city)));
+      setVenueConflict(conflict ? { venue: r.venue!, city: r.city, country: r.country } : null);
       setForm((f) => ({
         ...f,
         artist: chosenArtist?.name ?? r.artist ?? f.artist,
         tour: r.tour ?? "",
-        venue: r.venue ?? f.venue,
-        city: r.city ?? f.city,
-        country: r.country ?? f.country,
+        venue: conflict ? f.venue : (r.venue ?? f.venue),
+        city: conflict ? f.city : (r.city ?? f.city),
+        country: conflict ? f.country : (r.country ?? f.country),
         genre: artistGenre ?? f.genre,
       }));
       setOpeners(r.openers.length ? r.openers : null);
@@ -238,18 +239,24 @@ function AddShow() {
       setSetlist(r.songs.length ? r.songs : null);
       setArtistImageUrl(artistImage);
       setOpenerSetlists(r.openerSetlists.length ? r.openerSetlists : null);
-      toast.success("Pulled from setlist.fm", {
-        description:
-          [
-            r.tour,
-            r.openers.length ? `${r.openers.length} opener(s)` : null,
-            r.openerSetlists.length ? `${r.openerSetlists.length} opener setlists` : null,
-            r.songs.length ? `${r.songs.length} songs` : null,
-            artistGenre,
-          ]
-            .filter(Boolean)
-            .join(" · ") || "Details filled in.",
-      });
+      if (conflict) {
+        toast.warning("Venue doesn't match setlist.fm", {
+          description: `setlist.fm lists this show at ${[r.venue, r.city].filter(Boolean).join(", ")}. Check the venue below.`,
+        });
+      } else {
+        toast.success("Pulled from setlist.fm", {
+          description:
+            [
+              r.tour,
+              r.openers.length ? `${r.openers.length} opener(s)` : null,
+              r.openerSetlists.length ? `${r.openerSetlists.length} opener setlists` : null,
+              r.songs.length ? `${r.songs.length} songs` : null,
+              artistGenre,
+            ]
+              .filter(Boolean)
+              .join(" · ") || "Details filled in.",
+        });
+      }
 
       // Look for other artists at the same venue/date
       const venue = r.venue ?? form.venue;
@@ -286,10 +293,9 @@ function AddShow() {
 
   function findDuplicate(p: { date: string; venue: string; artist: string }): string | null {
     if (!concerts || isEdit) return null;
-    const v = p.venue.toLowerCase();
     const a = p.artist.toLowerCase();
     const sameDateVenue = concerts.find(
-      (c) => c.date === p.date && (c.venue ?? "").toLowerCase() === v,
+      (c) => c.date === p.date && samePlace(c.venue ?? "", p.venue),
     );
     if (sameDateVenue)
       return `You already logged a show at ${sameDateVenue.venue} on ${p.date} (${sameDateVenue.artist}).`;
@@ -692,6 +698,54 @@ function AddShow() {
           </div>
         )}
 
+
+        {venueConflict && (
+          <div className="rounded-2xl border border-pink/40 bg-pink/5 p-4">
+            <div className="flex items-start gap-3">
+              <AlertTriangle className="mt-0.5 h-5 w-5 flex-none text-pink" />
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-bold">setlist.fm has this show at a different venue</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  You entered{" "}
+                  <span className="font-semibold text-foreground">
+                    {[form.venue.trim(), form.city.trim()].filter(Boolean).join(", ")}
+                  </span>
+                  . setlist.fm lists{" "}
+                  <span className="font-semibold text-foreground">
+                    {[venueConflict.venue, venueConflict.city, venueConflict.country]
+                      .filter(Boolean)
+                      .join(", ")}
+                  </span>
+                  . If you really were somewhere else, the setlist may be from another show.
+                </p>
+                <div className="mt-3 flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setForm((f) => ({
+                        ...f,
+                        venue: venueConflict.venue,
+                        city: venueConflict.city ?? f.city,
+                        country: venueConflict.country ?? f.country,
+                      }));
+                      setVenueConflict(null);
+                    }}
+                    className={ctaClass({ size: "sm" })}
+                  >
+                    Use setlist.fm's venue
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setVenueConflict(null)}
+                    className="rounded-full border border-hairline px-4 py-2 text-xs font-semibold hover:bg-surface-2"
+                  >
+                    Keep mine
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid gap-6 md:grid-cols-2">
           <Field icon={MapPin} label="Venue">

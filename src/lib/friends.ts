@@ -2,8 +2,10 @@
 
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/current-user";
 import type { Concert } from "@/lib/concerts";
 import { findProfileByUsernameFn } from "@/lib/friend-lookup.functions";
+import { placeKey, samePlace } from "@/lib/music-match";
 
 export type FriendProfile = {
   userId: string;
@@ -51,12 +53,12 @@ export function useUpdateUsername() {
       if (!USERNAME_RE.test(u)) {
         throw new Error("3–20 chars, lowercase letters, numbers, underscore");
       }
-      const { data: userRes } = await supabase.auth.getUser();
-      if (!userRes.user) throw new Error("Not signed in");
+      const user = await getCurrentUser();
+      if (!user) throw new Error("Not signed in");
       const { error } = await supabase
         .from("profiles")
         .update({ username: u })
-        .eq("id", userRes.user.id);
+        .eq("id", user.id);
       if (error) {
         if (error.code === "23505") throw new Error("That username is taken");
         throw error;
@@ -78,8 +80,8 @@ export function useFriendships() {
       outgoing: Friendship[];
       profiles: Record<string, FriendProfile>;
     }> => {
-      const { data: userRes } = await supabase.auth.getUser();
-      const me = userRes.user?.id;
+      const user = await getCurrentUser();
+      const me = user?.id;
       if (!me) return { friends: [], incoming: [], outgoing: [], profiles: {} };
 
       const { data: rows, error } = await supabase
@@ -137,8 +139,8 @@ export function useSendFriendRequest() {
     mutationFn: async (username: string) => {
       const u = username.trim().toLowerCase().replace(/^@/, "");
       if (!u) throw new Error("Enter a username");
-      const { data: userRes } = await supabase.auth.getUser();
-      const me = userRes.user?.id;
+      const user = await getCurrentUser();
+      const me = user?.id;
       if (!me) throw new Error("Not signed in");
 
       // Username lookup runs server-side (authenticated) so profiles stay
@@ -231,8 +233,8 @@ export function useFriendsAtShow(args: {
     queryKey: ["friends-at-show", args?.date, args?.venue?.toLowerCase(), args?.city?.toLowerCase()],
     queryFn: async (): Promise<FriendProfile[]> => {
       if (!args) return [];
-      const { data: userRes } = await supabase.auth.getUser();
-      const me = userRes.user?.id;
+      const user = await getCurrentUser();
+      const me = user?.id;
       if (!me) return [];
 
       // Accepted friends only
@@ -245,9 +247,6 @@ export function useFriendsAtShow(args: {
         .filter((id): id is string => !!id);
       if (friendIds.length === 0) return [];
 
-      const venueKey = args.venue.trim().toLowerCase();
-      const cityKey = args.city.trim().toLowerCase();
-
       const { data: rows, error } = await supabase
         .from("concerts")
         .select("user_id, venue, city")
@@ -257,10 +256,8 @@ export function useFriendsAtShow(args: {
 
       const matchedIds = new Set<string>();
       for (const r of rows ?? []) {
-        if (
-          (r.venue ?? "").trim().toLowerCase() === venueKey &&
-          (r.city ?? "").trim().toLowerCase() === cityKey
-        ) {
+        // Same date already; tolerate spelling differences in venue/city.
+        if (samePlace(r.venue ?? "", args.venue) && samePlace(r.city ?? "", args.city)) {
           matchedIds.add(r.user_id as string);
         }
       }
@@ -344,8 +341,8 @@ export function useFriendsCoAttendance() {
       byKey: Record<string, FriendProfile[]>;
       profiles: Record<string, FriendProfile>;
     }> => {
-      const { data: userRes } = await supabase.auth.getUser();
-      const me = userRes.user?.id;
+      const user = await getCurrentUser();
+      const me = user?.id;
       if (!me) return { byKey: {}, profiles: {} };
       const { data: friendRows } = await supabase
         .from("friendships")
@@ -369,7 +366,7 @@ export function useFriendsCoAttendance() {
       }
       const byKey: Record<string, FriendProfile[]> = {};
       for (const r of rows ?? []) {
-        const key = `${r.date}|${(r.venue ?? "").trim().toLowerCase()}|${(r.city ?? "").trim().toLowerCase()}`;
+        const key = coAttendanceKey(r.date, r.venue ?? "", r.city ?? "");
         const p = profiles[r.user_id as string];
         if (!p) continue;
         if (!byKey[key]) byKey[key] = [];
@@ -380,6 +377,7 @@ export function useFriendsCoAttendance() {
   });
 }
 
+// Normalized so "The O2"/"O2" or "Theater"/"Theatre" still line up between friends.
 export function coAttendanceKey(date: string, venue: string, city: string): string {
-  return `${date}|${(venue ?? "").trim().toLowerCase()}|${(city ?? "").trim().toLowerCase()}`;
+  return `${date}|${placeKey(venue ?? "")}|${placeKey(city ?? "")}`;
 }

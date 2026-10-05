@@ -14,6 +14,7 @@ import {
 import {
   genreBreakdown,
   getStats,
+  canonicalizer,
   rankBy,
   uniqueShows,
   useConcerts,
@@ -97,8 +98,10 @@ function Wrapped() {
 
   const stats = getStats(yearShows);
   const artistsThisYear = new Set(yearConcerts.map((c) => c.artist));
-  const venuesThisYear = new Set(yearShows.map((c) => c.venue));
-  const citiesThisYear = new Set(yearShows.map((c) => c.city));
+  const venueOf = canonicalizer(yearShows, "venue");
+  const cityOf = canonicalizer(yearShows, "city");
+  const venuesThisYear = new Set(yearShows.map((c) => venueOf(c.venue)));
+  const citiesThisYear = new Set(yearShows.map((c) => cityOf(c.city)));
   const countriesThisYear = new Set(yearShows.map((c) => c.country).filter(Boolean));
   const hoursLive = Math.round(
     yearConcerts.reduce((s, c) => s + (c.setlist?.length ?? c.songsSeen ?? 16) * 4, 0) / 60,
@@ -129,7 +132,7 @@ function Wrapped() {
 
   const topVenues3 = rankBy(yearShows, "venue", 3).map((v) => ({
     ...v,
-    country: yearShows.find((c) => c.venue === v.name)?.country ?? null,
+    country: yearShows.find((c) => venueOf(c.venue) === v.name)?.country ?? null,
   }));
 
   const rawGenres = genreBreakdown(yearShows).filter((g) => g.name !== "Unknown");

@@ -1,8 +1,10 @@
 // Concertly data layer - backed by Lovable Cloud (Supabase).
 
-import { useEffect, useMemo, useState } from "react";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/current-user";
+import { useSignedStorageUrl } from "@/lib/signed-url";
+import { clusterNames, nameKey, samePlace } from "@/lib/music-match";
 
 export type OpenerSetlist = { artist: string; songs: string[] };
 
@@ -22,9 +24,11 @@ export type Concert = {
   notes: string | null;
   ticketPrice: number | null;
   songsSeen: number | null;
-  setlist: string[] | null;
+  // `undefined` = not loaded. The list query skips these heavy columns; load
+  // a single show with useConcertDetail() when they are needed.
+  setlist?: string[] | null;
   artistImageUrl: string | null;
-  openerSetlists: OpenerSetlist[] | null;
+  openerSetlists?: OpenerSetlist[] | null;
   status: ConcertStatus;
   latitude: number | null;
   longitude: number | null;
@@ -44,16 +48,17 @@ type Row = {
   notes: string | null;
   ticket_price: number | null;
   songs_seen: number | null;
-  setlist: string[] | null;
+  setlist?: string[] | null;
   artist_image_url: string | null;
-  opener_setlists: unknown;
+  opener_setlists?: unknown;
   status?: ConcertStatus | null;
   latitude?: number | null;
   longitude?: number | null;
 };
 
 function fromRow(r: Row): Concert {
-  let openerSetlists: OpenerSetlist[] | null = null;
+  let openerSetlists: OpenerSetlist[] | null | undefined =
+    r.opener_setlists === undefined ? undefined : null;
   if (Array.isArray(r.opener_setlists)) {
     openerSetlists = (r.opener_setlists as Array<{ artist?: string; songs?: string[] }>)
       .filter((x) => x && typeof x.artist === "string" && Array.isArray(x.songs))
@@ -82,19 +87,42 @@ function fromRow(r: Row): Concert {
   };
 }
 
+// Every column except the setlist JSON, which is most of each row's size and
+// only needed on the show and edit pages.
+const LIST_COLUMNS =
+  "id, artist, tour, openers, date, venue, city, country, rating, genre, notes, ticket_price, songs_seen, artist_image_url, status, latitude, longitude";
+
 export function useConcerts() {
   return useQuery({
     queryKey: ["concerts"],
     queryFn: async (): Promise<Concert[]> => {
-      const { data: userRes } = await supabase.auth.getUser();
-      if (!userRes.user) return [];
+      const user = await getCurrentUser();
+      if (!user) return [];
       const { data, error } = await supabase
         .from("concerts")
-        .select("*")
-        .eq("user_id", userRes.user.id)
+        .select(LIST_COLUMNS)
+        .eq("user_id", user.id)
         .order("date", { ascending: false });
       if (error) throw error;
       return (data as Row[]).map(fromRow);
+    },
+  });
+}
+
+// One show with every column, including setlists. Lives under the "concerts"
+// key so the mutations' invalidation refreshes it too.
+export function useConcertDetail(id: string | undefined) {
+  return useQuery({
+    queryKey: ["concerts", "detail", id],
+    enabled: !!id,
+    queryFn: async (): Promise<Concert | null> => {
+      const { data, error } = await supabase
+        .from("concerts")
+        .select("*")
+        .eq("id", id!)
+        .maybeSingle();
+      if (error) throw error;
+      return data ? fromRow(data as Row) : null;
     },
   });
 }
@@ -109,19 +137,19 @@ export function useProfile() {
   return useQuery({
     queryKey: ["profile"],
     queryFn: async () => {
-      const { data: userRes } = await supabase.auth.getUser();
-      if (!userRes.user) return null;
+      const user = await getCurrentUser();
+      if (!user) return null;
       const { data } = await supabase
         .from("profiles")
         .select("display_name, avatar_url, username")
-        .eq("id", userRes.user.id)
+        .eq("id", user.id)
         .maybeSingle();
       return {
-        userId: userRes.user.id,
-        email: userRes.user.email ?? "",
+        userId: user.id,
+        email: user.email ?? "",
         displayName:
           (data?.display_name as string | null) ??
-          userRes.user.email?.split("@")[0] ??
+          user.email?.split("@")[0] ??
           "You",
         avatarPath: (data?.avatar_url as string | null) ?? null,
         username: (data?.username as string | null) ?? null,
@@ -132,30 +160,10 @@ export function useProfile() {
 
 // Resolves a stored avatar path to a temporary signed URL.
 export function useAvatarUrl(avatarPath: string | null | undefined) {
-  const [url, setUrl] = useState<string | null>(null);
-  useEffect(() => {
-    let cancelled = false;
-    if (!avatarPath) {
-      setUrl(null);
-      return;
-    }
-    // Allow either a stored bucket path or a direct URL.
-    if (/^https?:\/\//.test(avatarPath)) {
-      setUrl(avatarPath);
-      return;
-    }
-    supabase.storage
-      .from("avatars")
-      .createSignedUrl(avatarPath, 60 * 60)
-      .then((res) => {
-        if (cancelled) return;
-        setUrl(res.data?.signedUrl ?? null);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [avatarPath]);
-  return url;
+  // Allow either a stored bucket path or a direct URL.
+  const isDirect = !!avatarPath && /^https?:\/\//.test(avatarPath);
+  const signed = useSignedStorageUrl("avatars", isDirect ? null : avatarPath);
+  return isDirect ? avatarPath! : signed;
 }
 
 // Existing call sites treat status/lat/lng as optional; default status = attended.
@@ -202,24 +210,44 @@ function toInsert(c: NewConcert, userId: string): InsertPayload {
     notes: c.notes,
     ticket_price: c.ticketPrice,
     songs_seen: c.songsSeen,
-    setlist: c.setlist,
+    setlist: c.setlist ?? null,
     artist_image_url: c.artistImageUrl,
-    opener_setlists: c.openerSetlists,
+    opener_setlists: c.openerSetlists ?? null,
     status: c.status ?? "attended",
     latitude: c.latitude ?? null,
     longitude: c.longitude ?? null,
   };
 }
 
+// Update payload: fields left `undefined` are not sent, so they keep their
+// stored value. This protects setlists that were never loaded (list query) and
+// status/coordinates that callers such as the refresh wizard don't pass.
+function toUpdate(c: NewConcert): Partial<Omit<InsertPayload, "user_id">> {
+  const { user_id: _ignored, ...full } = toInsert(c, "");
+  void _ignored;
+  const optional = {
+    setlist: c.setlist,
+    opener_setlists: c.openerSetlists,
+    status: c.status,
+    latitude: c.latitude,
+    longitude: c.longitude,
+  };
+  const out: Partial<Omit<InsertPayload, "user_id">> = { ...full };
+  for (const [k, v] of Object.entries(optional)) {
+    if (v === undefined) delete out[k as keyof typeof out];
+  }
+  return out;
+}
+
 export function useAddConcert() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (c: NewConcert) => {
-      const { data: userRes } = await supabase.auth.getUser();
-      if (!userRes.user) throw new Error("Not signed in");
+      const user = await getCurrentUser();
+      if (!user) throw new Error("Not signed in");
       const { error, data } = await supabase
         .from("concerts")
-        .insert(toInsert(c, userRes.user.id))
+        .insert(toInsert(c, user.id))
         .select()
         .single();
       if (error) throw error;
@@ -233,12 +261,9 @@ export function useUpdateConcert() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...c }: NewConcert & { id: string }) => {
-      const payload = toInsert(c, ""); // user_id is ignored on update
-      const { user_id: _ignored, ...update } = payload;
-      void _ignored;
       const { error, data } = await supabase
         .from("concerts")
-        .update(update)
+        .update(toUpdate(c))
         .eq("id", id)
         .select()
         .single();
@@ -265,14 +290,39 @@ export function useDeleteConcert() {
 
 export type RankedItem = { name: string; count: number };
 
+type NameField = "artist" | "venue" | "city" | "country";
+
+/**
+ * Maps every spelling of a field's values in `list` to one display name, so
+ * "The O2"/"O2" or "Star Theater"/"Star Theatre" count as one venue. Venues
+ * and cities also absorb small typos; artists and countries only differ by
+ * case, accents and punctuation.
+ */
+export function canonicalizer(list: Concert[], field: NameField): (value: string | null) => string {
+  const same =
+    field === "venue" || field === "city"
+      ? samePlace
+      : (a: string, b: string) => nameKey(a) === nameKey(b);
+  const map = clusterNames(
+    list.map((c) => (c[field] ?? "").trim()),
+    same,
+  );
+  return (value) => {
+    const v = (value ?? "").trim();
+    return map.get(v) ?? v;
+  };
+}
+
 // Collapse rows that represent the same physical show (same date + venue) into
 // a single "show". The headliner row (one whose notes don't start with
 // "support act for") is preferred; otherwise the first row wins.
 export function uniqueShows(list: Concert[]): Concert[] {
   list = attendedOnly(list);
+  const venueOf = canonicalizer(list, "venue");
+  const cityOf = canonicalizer(list, "city");
   const groups = new Map<string, Concert[]>();
   for (const c of list) {
-    const key = `${c.date}|${(c.venue ?? "").trim().toLowerCase()}|${(c.city ?? "").trim().toLowerCase()}`;
+    const key = `${c.date}|${venueOf(c.venue)}|${cityOf(c.city)}`;
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key)!.push(c);
   }
@@ -290,7 +340,8 @@ export function getStats(list: Concert[]) {
   list = attendedOnly(list);
   const total = list.length;
   const uniqueArtists = new Set(list.map((c) => c.artist)).size;
-  const uniqueCities = new Set(list.map((c) => c.city)).size;
+  const cityOf = canonicalizer(list, "city");
+  const uniqueCities = new Set(list.map((c) => cityOf(c.city))).size;
   const uniqueCountries = new Set(list.map((c) => c.country).filter(Boolean)).size;
   const hoursLive = Math.round(list.reduce((s, c) => s + (c.songsSeen ?? 16) * 4, 0) / 60);
   const avgRating = total ? list.reduce((s, c) => s + c.rating, 0) / total : 0;
@@ -300,13 +351,14 @@ export function getStats(list: Concert[]) {
 
 export function rankBy(
   list: Concert[],
-  key: "artist" | "venue" | "city" | "country",
+  key: NameField,
   limit = 5,
 ): RankedItem[] {
   list = attendedOnly(list);
+  const nameOf = canonicalizer(list, key);
   const counts = new Map<string, number>();
   for (const c of list) {
-    const v = String(c[key] ?? "");
+    const v = nameOf(c[key]);
     if (!v) continue;
     counts.set(v, (counts.get(v) ?? 0) + 1);
   }

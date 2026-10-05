@@ -1,14 +1,16 @@
 import { createFileRoute, Outlet, redirect } from "@tanstack/react-router";
-import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/current-user";
 import { AppNav, MobileTabBar } from "@/components/app-nav";
 import { AppFooter } from "@/components/app-footer";
 
 export const Route = createFileRoute("/_authenticated")({
   ssr: false,
   beforeLoad: async () => {
-    const { data, error } = await supabase.auth.getUser();
-    if (error || !data.user) throw redirect({ to: "/auth" });
-    return { user: data.user };
+    // Runs on every navigation, so read the local session instead of calling
+    // the auth server each time. Data access is still enforced by RLS.
+    const user = await getCurrentUser();
+    if (!user) throw redirect({ to: "/auth" });
+    return { user };
   },
   component: AppLayout,
 });

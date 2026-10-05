@@ -5,6 +5,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { Crown, Pencil, RefreshCw, Search, Star, Trash2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/current-user";
 import { cn, plural } from "@/lib/utils";
 import { ConfirmDialog } from "@/components/confirm-dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -25,7 +26,6 @@ import {
 } from "@/lib/friends";
 import {
   lookupCoPerformers,
-  lookupSpotifyArtistByIdFn,
   lookupSetlist,
   searchArtists,
   type ArtistSuggestion,
@@ -35,6 +35,7 @@ import { ctaClass } from "@/components/cta";
 import { PageTitle } from "@/components/page-title";
 import { RowSkeletons } from "@/components/page-skeleton";
 import { IconTip } from "@/components/icon-tip";
+import { sameArtist, samePlace } from "@/lib/music-match";
 
 type Search = {
   month?: string;
@@ -68,6 +69,9 @@ export const Route = createFileRoute("/_authenticated/shows")({
 });
 
 
+// Stable fallback so memoized values don't recompute on every render while loading.
+const NO_CONCERTS: Concert[] = [];
+
 // ---------- Wizard prompt types ----------
 
 type ArtistPromptKind = "ambiguous" | "not_found";
@@ -100,7 +104,14 @@ type NotFoundPrompt = {
   resolve: (choice: "apply" | "skip" | "cancel") => void;
 };
 
-type Prompt = ArtistPrompt | CoPerformerPrompt | NotFoundPrompt;
+type VenuePrompt = {
+  kind: "venue";
+  concert: Concert;
+  found: { venue: string; city: string | null; country: string | null };
+  resolve: (choice: "found" | "mine" | "cancel") => void;
+};
+
+type Prompt = ArtistPrompt | CoPerformerPrompt | NotFoundPrompt | VenuePrompt;
 
 function Shows() {
   const nav = useNavigate();
@@ -113,7 +124,7 @@ function Shows() {
   const readOnly = !!friendId;
   const ownConcertsQ = useConcerts();
   const friendConcertsQ = useFriendConcerts(friendId && isFriend ? friendId : null);
-  const concerts = friendId ? friendConcertsQ.data ?? [] : ownConcertsQ.data ?? [];
+  const concerts = (friendId ? friendConcertsQ.data : ownConcertsQ.data) ?? NO_CONCERTS;
   const isLoading = friendId ? friendConcertsQ.isLoading : ownConcertsQ.isLoading;
   const { data: coAttendance } = useFriendsCoAttendance();
   const del = useDeleteConcert();
@@ -121,7 +132,6 @@ function Shows() {
   const add = useAddConcert();
   const fetchSetlist = useServerFn(lookupSetlist);
   const fetchSearchArtists = useServerFn(searchArtists);
-  const fetchSpotifyArtistById = useServerFn(lookupSpotifyArtistByIdFn);
   const fetchCoPerformers = useServerFn(lookupCoPerformers);
   const qc = useQueryClient();
 
@@ -132,8 +142,8 @@ function Shows() {
     // IMPORTANT: RLS also exposes friends' concerts, so we must scope both the
     // read and any writes to the current user by user_id - otherwise a shared
     // date+venue could pull a friend's row into the update batch.
-    const { data: userRes } = await supabase.auth.getUser();
-    const userId = userRes.user?.id;
+    const user = await getCurrentUser();
+    const userId = user?.id;
     if (!userId) return;
     const { data } = await supabase
       .from("concerts")
@@ -188,6 +198,14 @@ function Shows() {
     () => concerts.filter((c) => (c.status ?? "attended") === "attended"),
     [concerts],
   );
+  // "Refresh all" only revisits shows still missing data. Each refresh costs
+  // several setlist.fm calls and the API key has a daily quota, so complete
+  // shows are left to the per-show refresh button. songsSeen is set whenever
+  // a setlist is pulled, so it stands in for the (unloaded) setlist here.
+  const incompleteConcerts = useMemo(
+    () => attendedConcerts.filter((c) => !c.songsSeen || !c.genre || !c.artistImageUrl),
+    [attendedConcerts],
+  );
   const upcomingConcerts = useMemo(
     () =>
       concerts
@@ -222,6 +240,10 @@ function Shows() {
       sort === "date" ? (a.date < b.date ? 1 : -1) : b.rating - a.rating,
     );
   }, [q, sort, attendedConcerts, month, genre, year, weekday, withFriendsSet, coAttendance]);
+  // Grouping clusters venue spellings, so compute the counts once per change
+  // rather than on every render.
+  const listCount = useMemo(() => uniqueShows(list).length, [list]);
+  const totalCount = useMemo(() => uniqueShows(concerts).length, [concerts]);
 
   const monthLabel = month
     ? new Date(`${month}-01T00:00:00`).toLocaleString("en", { month: "long", year: "numeric" })
@@ -330,6 +352,22 @@ function Shows() {
     [],
   );
 
+  const askVenue = useCallback(
+    (concert: Concert, found: VenuePrompt["found"]) =>
+      new Promise<"found" | "mine" | "cancel">((resolve) => {
+        setPrompt({
+          kind: "venue",
+          concert,
+          found,
+          resolve: (v) => {
+            setPrompt(null);
+            resolve(v);
+          },
+        });
+      }),
+    [],
+  );
+
   // Resolve a Spotify artist for a concert, asking if ambiguous / not found.
   // Returns null if user skipped, "cancel" if they cancelled the whole batch.
   async function resolveArtist(
@@ -390,21 +428,21 @@ function Shows() {
 
       // 2. Look up the show on setlist.fm.
       setFetching({ artist: c.artist, step: "Looking up setlist…" });
-      const res = await fetchSetlist({ data: { artist: c.artist, date: c.date } });
+      const res = await fetchSetlist({
+        data: {
+          artist: c.artist,
+          date: c.date,
+          city: c.city || undefined,
+          spotifyArtistId: artistChoice?.id ?? undefined,
+        },
+      });
 
       if (!res.found) {
-        // Fallback: still apply Spotify image + genre if the user picked something.
-        setFetching({ artist: c.artist, step: "Fetching artist image & genre…" });
-        let fallback: { image: string | null; genre: string | null } | null = null;
-        if (artistChoice && artistChoice.id != null) {
-          try {
-            fallback = await fetchSpotifyArtistById({ data: { id: artistChoice.id } });
-          } catch {
-            fallback = { image: artistChoice.image, genre: null };
-          }
-        } else if (artistChoice) {
-          fallback = { image: artistChoice.image, genre: null };
-        }
+        // Fallback: still apply Spotify image + genre if the user picked
+        // something. The lookup already returned them for the picked artist.
+        const fallback: { image: string | null; genre: string | null } | null = artistChoice
+          ? { image: res.artistImageUrl ?? artistChoice.image, genre: res.genre }
+          : null;
 
         if (!fallback || (!fallback.image && !fallback.genre)) {
           return { status: "skipped", coLogged };
@@ -436,23 +474,26 @@ function Shows() {
         return { status: "updated", coLogged };
       }
 
-      // Found a setlist. Prefer Spotify artist image/genre if the user picked one explicitly.
-      let imageOverride: string | null = res.artistImageUrl;
-      let genreOverride: string | null = res.genre;
-      if (artistChoice && artistChoice.id != null) {
-        try {
-          setFetching({ artist: c.artist, step: "Fetching artist image & genre…" });
-          const d = await fetchSpotifyArtistById({ data: { id: artistChoice.id } });
-          imageOverride = d.image ?? imageOverride;
-          genreOverride = d.genre ?? genreOverride;
-        } catch {
-          // keep setlist.fm values
-        }
+      // Found a setlist. Image + genre already come from the Spotify artist the
+      // user picked (passed as spotifyArtistId above).
+      const imageOverride: string | null = res.artistImageUrl;
+      const genreOverride: string | null = res.genre;
+
+      // If setlist.fm places the show somewhere other than the logged venue,
+      // let the user decide instead of silently overwriting it.
+      let place = { venue: res.venue ?? c.venue, city: res.city ?? c.city, country: res.country ?? c.country };
+      if (
+        res.venue &&
+        (!samePlace(c.venue, res.venue) || (!!res.city && !!c.city && !samePlace(c.city, res.city)))
+      ) {
+        const choice = await askVenue(c, { venue: res.venue, city: res.city, country: res.country });
+        if (choice === "cancel") return { status: "cancelled", coLogged };
+        if (choice === "mine") place = { venue: c.venue, city: c.city, country: c.country };
       }
 
       // Co-performer probe.
       let coPerformers: CoPerformer[] = [];
-      const venue = res.venue ?? c.venue;
+      const venue = place.venue;
       if (venue) {
         try {
           setFetching({ artist: c.artist, step: "Checking for other artists that day…" });
@@ -520,9 +561,9 @@ function Shows() {
         tour: res.tour ?? "",
         openers: finalOpeners,
         date: c.date,
-        venue: res.venue ?? c.venue,
-        city: res.city ?? c.city,
-        country: res.country ?? c.country,
+        venue: place.venue,
+        city: place.city,
+        country: place.country,
         rating: c.rating,
         genre: genreOverride ?? c.genre,
         notes:
@@ -545,16 +586,10 @@ function Shows() {
           let genre: string | null = null;
           try {
             const sug = await fetchSearchArtists({ data: { query: extra.performer.artist } });
-            const hit = sug.find(
-              (s) => s.name.toLowerCase() === extra.performer.artist.toLowerCase(),
-            ) ?? sug[0];
-            if (hit?.id != null) {
-              const d = await fetchSpotifyArtistById({ data: { id: hit.id } });
-              image = d.image;
-              genre = d.genre;
-            } else if (hit) {
-              image = hit.image;
-            }
+            // Search results already carry image + genre; no second lookup.
+            const hit = sug.find((s) => sameArtist(s.name, extra.performer.artist));
+            image = hit?.image ?? null;
+            genre = hit?.genre ?? null;
           } catch {
             // ignore image/genre failure
           }
@@ -581,7 +616,7 @@ function Shows() {
         }
       }
 
-      await syncTicketPriceAcrossShow(c.date, res.venue ?? c.venue);
+      await syncTicketPriceAcrossShow(c.date, place.venue);
       return { status: "updated", coLogged };
     } catch {
       return { status: "failed", coLogged };
@@ -608,8 +643,10 @@ function Shows() {
 
   function requestRefreshAll() {
     if (refresh.running) return;
-    if (concerts.length === 0) {
-      toast.info("No shows to refresh");
+    if (incompleteConcerts.length === 0) {
+      toast.info("Every show already has its setlist, genre and image", {
+        description: "Use the refresh button on a show to update it anyway.",
+      });
       return;
     }
     setConfirmRefreshAll(true);
@@ -617,7 +654,7 @@ function Shows() {
 
   async function runRefreshAll() {
     setConfirmRefreshAll(false);
-    const targets = attendedConcerts;
+    const targets = incompleteConcerts;
     if (targets.length === 0) return;
     artistChoiceCache.current.clear();
     setRefresh({ running: true, done: 0, total: targets.length });
@@ -674,8 +711,6 @@ function Shows() {
           <PageTitle
             title={pageTitle}
             description={(() => {
-              const listCount = uniqueShows(list).length;
-              const totalCount = uniqueShows(concerts).length;
               if (monthLabel) return `Showing ${plural(listCount, "show")} in ${monthLabel}`;
               if (year) return `Showing ${plural(listCount, "show")} in ${year}`;
               if (genre) return `Showing ${plural(listCount, "show")} tagged ${genre}`;
@@ -725,12 +760,12 @@ function Shows() {
               onClick={requestRefreshAll}
               disabled={refresh.running || concerts.length === 0}
               className="inline-flex items-center gap-1.5 rounded-full border border-hairline bg-surface px-3 py-2 text-xs font-semibold hover:bg-surface-2 disabled:opacity-50"
-              title="Re-fetch tour, setlist, genre & artist image for every show"
+              title="Fetch setlist, genre & artist image for shows missing them"
             >
               <RefreshCw className={`h-3.5 w-3.5 ${refresh.running ? "animate-spin" : ""}`} />
               {refresh.running
                 ? `Refreshing ${refresh.done}/${refresh.total}`
-                : "Refresh all info"}
+                : "Refresh missing info"}
             </button>
           )}
         </div>
@@ -931,8 +966,17 @@ function Shows() {
       />
       <ConfirmDialog
         open={confirmRefreshAll}
-        title={`Refresh all ${plural(uniqueShows(concerts).length, "show")}?`}
-        description="You'll be asked to confirm when something's ambiguous. Your existing rating, notes, and ticket price are always kept."
+        title={`Refresh ${plural(incompleteConcerts.length, "show")} missing details?`}
+        description={
+          <>
+            Shows without a setlist, genre or artist image get looked up again
+            {attendedConcerts.length > incompleteConcerts.length
+              ? `; ${plural(attendedConcerts.length - incompleteConcerts.length, "complete show")} will be skipped (refresh those one at a time)`
+              : ""}
+            . You'll be asked to confirm when something's ambiguous. Your existing rating, notes,
+            and ticket price are always kept.
+          </>
+        }
         confirmLabel="Refresh all"
         onConfirm={runRefreshAll}
         onOpenChange={setConfirmRefreshAll}
@@ -962,6 +1006,7 @@ function WizardModal({
           {prompt.kind === "artist" && <ArtistPane prompt={prompt} />}
           {prompt.kind === "co_performers" && <CoPerformerPane prompt={prompt} />}
           {prompt.kind === "not_found" && <NotFoundPane prompt={prompt} />}
+          {prompt.kind === "venue" && <VenuePane prompt={prompt} />}
         </div>
       </div>
     </div>
@@ -1195,6 +1240,56 @@ function NotFoundPane({ prompt }: { prompt: NotFoundPrompt }) {
           className={ctaClass({ size: "sm" })}
         >
           Apply image & genre
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function VenuePane({ prompt }: { prompt: VenuePrompt }) {
+  const { concert, found, resolve } = prompt;
+  return (
+    <div>
+      <h2 className="font-display text-xl font-bold">Different venue on setlist.fm</h2>
+      <p className="mt-1 text-sm text-muted-foreground">
+        {concert.artist} · {concert.date}. Which venue is right? If you were somewhere else, the
+        setlist may be from another show.
+      </p>
+
+      <div className="mt-4 grid gap-2 sm:grid-cols-2">
+        <div className="rounded-xl border border-hairline bg-surface p-4 text-sm">
+          <p className="eyebrow text-muted-foreground">You logged</p>
+          <p className="mt-1 font-semibold">{concert.venue}</p>
+          <p className="text-muted-foreground">
+            {[concert.city, concert.country].filter(Boolean).join(", ")}
+          </p>
+        </div>
+        <div className="rounded-xl border border-brand/40 bg-brand/5 p-4 text-sm">
+          <p className="eyebrow text-brand">setlist.fm</p>
+          <p className="mt-1 font-semibold">{found.venue}</p>
+          <p className="text-muted-foreground">
+            {[found.city, found.country].filter(Boolean).join(", ")}
+          </p>
+        </div>
+      </div>
+
+      <div className="mt-6 flex flex-wrap items-center justify-end gap-2">
+        <button
+          type="button"
+          onClick={() => resolve("cancel")}
+          className="rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold hover:bg-destructive/10 hover:text-destructive"
+        >
+          Cancel refresh
+        </button>
+        <button
+          type="button"
+          onClick={() => resolve("mine")}
+          className="rounded-full border border-hairline bg-surface px-4 py-2 text-xs font-semibold hover:bg-surface-2"
+        >
+          Keep mine
+        </button>
+        <button type="button" onClick={() => resolve("found")} className={ctaClass({ size: "sm" })}>
+          Use setlist.fm's venue
         </button>
       </div>
     </div>

@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/current-user";
 import type { Json } from "@/integrations/supabase/types";
 import type { WrappedSharePayload } from "./wrapped-share-types";
 
@@ -9,14 +10,14 @@ function createShareId() {
 }
 
 export async function createWrappedShare(payload: WrappedSharePayload, gradient: string) {
-  const { data: userRes, error: userError } = await supabase.auth.getUser();
-  if (userError || !userRes.user) throw new Error("Not signed in");
+  const user = await getCurrentUser();
+  if (!user) throw new Error("Not signed in");
 
   for (let attempt = 0; attempt < 3; attempt++) {
     const id = createShareId();
     const { error } = await supabase.from("wrapped_shares").insert({
       id,
-      user_id: userRes.user.id,
+      user_id: user.id,
       payload: payload as Json,
       gradient,
     });

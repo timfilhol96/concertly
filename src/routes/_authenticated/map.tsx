@@ -4,6 +4,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { MapPin } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrentUser } from "@/lib/current-user";
 import { useConcerts, type Concert } from "@/lib/concerts";
 import { geocodeVenueFn } from "@/lib/geocode.functions";
 import { ctaClass } from "@/components/cta";
@@ -156,8 +157,8 @@ function MapPage() {
   async function runGeocode() {
     if (missingCoords.length === 0) return;
     setGeocoding({ done: 0, total: missingCoords.length });
-    const { data: userRes } = await supabase.auth.getUser();
-    const userId = userRes.user?.id;
+    const user = await getCurrentUser();
+    const userId = user?.id;
     if (!userId) {
       setGeocoding(null);
       return;

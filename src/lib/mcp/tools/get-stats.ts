@@ -1,5 +1,6 @@
 import { defineTool } from "@lovable.dev/mcp-js";
 import { supabaseForUser, requireAuth } from "../supabase";
+import { clusterNames, nameKey, samePlace } from "@/lib/music-match";
 
 export default defineTool({
   name: "get_stats",
@@ -18,10 +19,20 @@ export default defineTool({
       .eq("status", "attended");
     if (error) return { content: [{ type: "text", text: error.message }], isError: true };
     const rows = data ?? [];
+    // Merge spelling variants ("The O2"/"O2") so they count as one entry.
+    const canonical = (key: "artist" | "venue" | "city") => {
+      const same =
+        key === "artist" ? (a: string, b: string) => nameKey(a) === nameKey(b) : samePlace;
+      const map = clusterNames(
+        rows.map((r) => (r[key] ?? "").trim()),
+        same,
+      );
+      return rows.map((r) => map.get((r[key] ?? "").trim()) ?? "");
+    };
+    const names = { artist: canonical("artist"), venue: canonical("venue"), city: canonical("city") };
     const tally = (key: "artist" | "venue" | "city") => {
       const m = new Map<string, number>();
-      for (const r of rows) {
-        const v = (r as Record<string, unknown>)[key] as string | null;
+      for (const v of names[key]) {
         if (!v) continue;
         m.set(v, (m.get(v) ?? 0) + 1);
       }
@@ -33,9 +44,9 @@ export default defineTool({
     const totalSpend = rows.reduce((s, r) => s + (Number(r.ticket_price) || 0), 0);
     const stats = {
       total_attended: rows.length,
-      unique_artists: new Set(rows.map((r) => r.artist)).size,
-      unique_venues: new Set(rows.map((r) => r.venue)).size,
-      unique_cities: new Set(rows.map((r) => r.city)).size,
+      unique_artists: new Set(names.artist).size,
+      unique_venues: new Set(names.venue).size,
+      unique_cities: new Set(names.city).size,
       total_spend: totalSpend,
       top_artists: tally("artist"),
       top_venues: tally("venue"),

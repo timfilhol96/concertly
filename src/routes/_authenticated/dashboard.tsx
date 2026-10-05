@@ -1,4 +1,5 @@
 import { Link, createFileRoute, useNavigate } from "@tanstack/react-router";
+import { Children, useEffect, useMemo, useRef, useState, type ReactNode, type RefObject } from "react";
 import { cn, formatDuration, plural } from "@/lib/utils";
 import { ArrowUpRight, Award, CalendarClock, Clock, Star, TrendingUp, Users } from "lucide-react";
 import {
@@ -33,6 +34,10 @@ export const Route = createFileRoute("/_authenticated/dashboard")({
 });
 
 const YEAR = new Date().getFullYear();
+// Recent memories shown on small screens; on desktop the list grows to match
+// the sidebar's height, up to MAX_RECENT.
+const MIN_RECENT = 4;
+const MAX_RECENT = 12;
 
 function heatColor(count: number, max: number): string {
   if (count === 0) return "bg-surface-2";
@@ -48,27 +53,67 @@ function Dashboard() {
   const { data: friendships } = useFriendships();
   const friendCount = friendships?.friends.length ?? 0;
   const nav = useNavigate();
+  const asideRef = useRef<HTMLElement>(null);
+  // Derived stats cluster venue/city spellings (pairwise comparisons), so only
+  // recompute when the concerts change, not on every re-render.
+  const derived = useMemo(() => {
+    if (!concerts || concerts.length === 0) return null;
+    const shows = uniqueShows(concerts);
+    const showStats = getStats(shows);
+
+    const topArtists = rankBy(concerts, "artist", 6);
+    const topVenues = rankBy(shows, "venue", 5);
+    const topCities = rankBy(shows, "city", 4);
+    const genres = genreBreakdown(shows);
+    const months = monthlyHeatmap(shows, YEAR);
+    const maxMonth = months.reduce((m, x) => Math.max(m, x.count), 0);
+    const recent = recentConcerts(shows, MAX_RECENT);
+    const inYear = concerts.filter((c) => new Date(c.date).getFullYear() === YEAR);
+    const yearShows = uniqueShows(inYear).length;
+    const yearArtists = new Set(inYear.map((c) => c.artist)).size;
+    const yearCities = new Set(inYear.map((c) => c.city)).size;
+    const streak = monthlyStreak(shows);
+    const badges = computeBadges(concerts);
+    const onThisDayShows = onThisDay(concerts);
+    return {
+      shows,
+      showStats,
+      topArtists,
+      topVenues,
+      topCities,
+      genres,
+      months,
+      maxMonth,
+      recent,
+      yearShows,
+      yearArtists,
+      yearCities,
+      streak,
+      badges,
+      onThisDayShows,
+    };
+  }, [concerts]);
 
   if (isLoading || !concerts) return <LoadingState />;
   if (concerts.length === 0) return <EmptyState name={profile?.displayName ?? "you"} />;
 
-  const shows = uniqueShows(concerts);
-  const showStats = getStats(shows);
-
-  const topArtists = rankBy(concerts, "artist", 6);
-  const topVenues = rankBy(shows, "venue", 5);
-  const topCities = rankBy(shows, "city", 4);
-  const genres = genreBreakdown(shows);
-  const months = monthlyHeatmap(shows, YEAR);
-  const maxMonth = months.reduce((m, x) => Math.max(m, x.count), 0);
-  const recent = recentConcerts(shows, 4);
-  const inYear = concerts.filter((c) => new Date(c.date).getFullYear() === YEAR);
-  const yearShows = uniqueShows(inYear).length;
-  const yearArtists = new Set(inYear.map((c) => c.artist)).size;
-  const yearCities = new Set(inYear.map((c) => c.city)).size;
-  const streak = monthlyStreak(shows);
-  const badges = computeBadges(concerts);
-  const onThisDayShows = onThisDay(concerts);
+  const {
+    shows,
+    showStats,
+    topArtists,
+    topVenues,
+    topCities,
+    genres,
+    months,
+    maxMonth,
+    recent,
+    yearShows,
+    yearArtists,
+    yearCities,
+    streak,
+    badges,
+    onThisDayShows,
+  } = derived!;
 
   return (
     <main className="mx-auto max-w-7xl px-6 py-10 md:py-14">
@@ -251,13 +296,14 @@ function Dashboard() {
       )}
 
       <div className="grid grid-cols-1 gap-8 lg:grid-cols-4">
-        <div className="space-y-5 lg:col-span-3">
+        <div className="flex flex-col gap-5 lg:col-span-3">
           <div className="flex items-end justify-between">
             <h3 className="font-display text-xl font-bold">Recent Memories</h3>
             <Link to="/shows" className="text-xs font-semibold text-brand hover:underline">
               View all →
             </Link>
           </div>
+          <RecentMemories asideRef={asideRef}>
           {recent.map((c) => (
             <Link key={c.id} to="/show/$id" params={{ id: c.id }} className="block">
               <ConcertCard
@@ -270,19 +316,23 @@ function Dashboard() {
                 notes={c.notes ?? undefined}
                 imageUrl={c.artistImageUrl ?? undefined}
                 concertId={c.id}
+                ownerId={profile?.userId}
               />
             </Link>
           ))}
+          </RecentMemories>
         </div>
 
-        <aside className="space-y-10">
+        <aside ref={asideRef} className="space-y-10 self-start">
           <Panel title="Top Genres">
             <div className="space-y-3">
               {genres.slice(0, 5).map((g, i) => (
                 <div key={g.name} className="space-y-1.5">
-                  <div className="flex justify-between text-xs">
-                    <span>{g.name}</span>
-                    <span className="text-muted-foreground">{plural(g.count, "show")} ({g.pct}%)</span>
+                  <div className="flex justify-between gap-3 text-xs">
+                    <span className="min-w-0 truncate">{g.name}</span>
+                    <span className="shrink-0 whitespace-nowrap text-muted-foreground">
+                      {plural(g.count, "show")} ({g.pct}%)
+                    </span>
                   </div>
                   <div className="h-1 overflow-hidden rounded-full bg-surface-2">
                     <div
@@ -379,11 +429,11 @@ function Dashboard() {
             <ul className="space-y-3">
               {topVenues.map((v, i) => (
                 <li key={v.name} className="flex items-center gap-3">
-                  <span className="w-5 text-xs font-bold text-muted-foreground">
+                  <span className="w-5 shrink-0 text-xs font-bold text-muted-foreground">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <span className="truncate text-sm">{v.name}</span>
-                  <span className="ml-auto text-[11px] text-muted-foreground">
+                  <span className="min-w-0 flex-1 truncate text-sm">{v.name}</span>
+                  <span className="shrink-0 whitespace-nowrap text-[11px] text-muted-foreground">
                     {plural(v.count, "show")} ({showStats.total ? Math.round((v.count / showStats.total) * 100) : 0}%)
                   </span>
                 </li>
@@ -395,11 +445,11 @@ function Dashboard() {
             <ul className="space-y-3">
               {topCities.map((v, i) => (
                 <li key={v.name} className="flex items-center gap-3">
-                  <span className="w-5 text-xs font-bold text-muted-foreground">
+                  <span className="w-5 shrink-0 text-xs font-bold text-muted-foreground">
                     {String(i + 1).padStart(2, "0")}
                   </span>
-                  <span className="truncate text-sm">{v.name}</span>
-                  <span className="ml-auto text-[11px] text-muted-foreground">
+                  <span className="min-w-0 flex-1 truncate text-sm">{v.name}</span>
+                  <span className="shrink-0 whitespace-nowrap text-[11px] text-muted-foreground">
                     {plural(v.count, "show")} ({showStats.total ? Math.round((v.count / showStats.total) * 100) : 0}%)
                   </span>
                 </li>
@@ -487,6 +537,75 @@ function BigStat({ label, value, sub }: { label: string; value: number; sub?: st
   );
 }
 
+// Shows as many recent memories as fit next to the sidebar (desktop only), then
+// spreads the leftover space between cards so the last one ends exactly where
+// the sidebar does. Cards vary in height (notes, photos), so this measures
+// rather than guessing a count.
+function RecentMemories({
+  asideRef,
+  children,
+}: {
+  asideRef: RefObject<HTMLElement | null>;
+  children: ReactNode;
+}) {
+  const items = Children.toArray(children);
+  const listRef = useRef<HTMLDivElement>(null);
+  const [count, setCount] = useState(Math.min(MIN_RECENT, items.length));
+  const [desktop, setDesktop] = useState(false);
+  // Largest count known to fit for the current sidebar height. Stops a tall
+  // card from being added, overflowing, removed and added again forever.
+  const fit = useRef<{ available: number; ceiling: number }>({ available: 0, ceiling: Infinity });
+
+  useEffect(() => {
+    const mq = window.matchMedia("(min-width: 1024px)");
+    const update = () => setDesktop(mq.matches);
+    update();
+    mq.addEventListener("change", update);
+    return () => mq.removeEventListener("change", update);
+  }, []);
+
+  useEffect(() => {
+    const list = listRef.current;
+    const aside = asideRef.current;
+    if (!desktop || !list || !aside) {
+      setCount(Math.min(MIN_RECENT, items.length));
+      return;
+    }
+    const measure = () => {
+      const cards = Array.from(list.children) as HTMLElement[];
+      if (cards.length === 0) return;
+      const gap = parseFloat(getComputedStyle(list).rowGap) || 0;
+      const used = cards.reduce((s, el) => s + el.offsetHeight, 0) + gap * (cards.length - 1);
+      const available = aside.getBoundingClientRect().bottom - list.getBoundingClientRect().top;
+      const avgCard = used / cards.length;
+      if (Math.abs(available - fit.current.available) > 1) {
+        fit.current = { available, ceiling: Infinity };
+      }
+      setCount((n) => {
+        if (used > available + 1 && n > 2) {
+          fit.current.ceiling = n - 1;
+          return n - 1;
+        }
+        if (n < Math.min(items.length, fit.current.ceiling) && used + gap + avgCard <= available) {
+          return n + 1;
+        }
+        return n;
+      });
+    };
+    const ro = new ResizeObserver(measure);
+    ro.observe(aside);
+    for (const el of Array.from(list.children)) ro.observe(el);
+    measure();
+    return () => ro.disconnect();
+  }, [desktop, count, items.length, asideRef]);
+
+  return (
+    <div ref={listRef} className="flex flex-1 flex-col justify-between gap-5">
+      {items.slice(0, count)}
+    </div>
+  );
+}
+
 function Panel({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div>
@@ -508,6 +627,7 @@ export function ConcertCard({
   notes,
   imageUrl,
   concertId,
+  ownerId,
   isReadOnly,
 }: {
   artist: string;
@@ -519,10 +639,11 @@ export function ConcertCard({
   notes?: string;
   imageUrl?: string;
   concertId?: string;
+  ownerId?: string;
   isReadOnly?: boolean;
 }) {
   const d = new Date(date);
-  const { data: media } = useConcertMedia(concertId);
+  const { data: media } = useConcertMedia(concertId, ownerId);
   const firstImage = media?.find((m) => m.kind === "image");
   const thumbUrl = useSignedMediaUrl(firstImage?.path);
   const dateLabel = d.toLocaleDateString("en", { day: "2-digit", month: "short", year: "numeric" });

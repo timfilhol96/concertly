@@ -125,3 +125,54 @@ export async function getSpotifyAppToken(): Promise<string> {
   return json.access_token;
 }
 
+
+// Returns a valid access token for the user's connected Spotify account,
+// refreshing (and persisting) it when it is about to expire.
+export async function getUserAccessToken(
+  userId: string,
+): Promise<{ accessToken: string; scope: string }> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  // Admin client: spotify_tokens has no RLS grants for client sessions.
+  const { data: tok, error } = await supabaseAdmin
+    .from("spotify_tokens")
+    .select("access_token, refresh_token, expires_at, scope")
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) throw new Error(error.message);
+  if (!tok) throw new Error("Spotify is not connected.");
+
+  let accessToken = tok.access_token;
+  if (new Date(tok.expires_at).getTime() - 60_000 <= Date.now()) {
+    const refreshed = await refreshAccessToken(tok.refresh_token);
+    accessToken = refreshed.access_token;
+    await supabaseAdmin
+      .from("spotify_tokens")
+      .update({
+        access_token: accessToken,
+        expires_at: new Date(Date.now() + (refreshed.expires_in ?? 3600) * 1000).toISOString(),
+        refresh_token: refreshed.refresh_token ?? tok.refresh_token,
+      })
+      .eq("user_id", userId);
+  }
+  return { accessToken, scope: tok.scope ?? "" };
+}
+
+// GET against the Web API, retrying once when rate limited.
+export async function spotifyUserGet<T>(accessToken: string, path: string): Promise<T | null> {
+  for (let attempt = 0; attempt < 2; attempt++) {
+    const res = await fetch(`https://api.spotify.com/v1${path}`, {
+      headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
+    });
+    if (res.status === 429 && attempt === 0) {
+      const wait = Math.min(Number(res.headers.get("Retry-After") ?? "1"), 5);
+      await new Promise((r) => setTimeout(r, wait * 1000));
+      continue;
+    }
+    if (!res.ok) {
+      console.error("[spotify] GET failed", path, res.status, await res.text().catch(() => ""));
+      return null;
+    }
+    return (await res.json()) as T;
+  }
+  return null;
+}
