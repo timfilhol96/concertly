@@ -235,7 +235,7 @@ function FriendDashboard() {
                   notes={c.notes ?? undefined}
                   imageUrl={c.artistImageUrl ?? undefined}
                   concertId={c.id}
-                  ownerId={id}
+                  mediaPaths={c.mediaPaths}
                   isReadOnly
                 />
               ))}

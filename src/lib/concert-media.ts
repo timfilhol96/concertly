@@ -10,7 +10,7 @@ export type ConcertMediaItem = {
   createdAt: string | null;
 };
 
-function detectKind(name: string): "image" | "video" {
+export function detectKind(name: string): "image" | "video" {
   const ext = name.split(".").pop()?.toLowerCase() ?? "";
   return ["mp4", "mov", "webm", "m4v", "ogg"].includes(ext) ? "video" : "image";
 }
@@ -54,6 +54,27 @@ export function useConcertMedia(concertId: string | undefined, knownOwnerId?: st
   });
 }
 
+// Re-list the concert's folder and store the paths on the concert row, so
+// list views can show media without listing storage per card.
+async function syncMediaPaths(concertId: string) {
+  const user = await getCurrentUser();
+  if (!user) return;
+  const prefix = `${user.id}/${concertId}`;
+  const { data, error } = await supabase.storage
+    .from("concert-media")
+    .list(prefix, { limit: 1000, sortBy: { column: "created_at", order: "desc" } });
+  if (error) throw error;
+  const paths = (data ?? [])
+    .filter((f) => f.name && !f.name.startsWith("."))
+    .map((f) => `${prefix}/${f.name}`);
+  const { error: upErr } = await supabase
+    .from("concerts")
+    .update({ media_paths: paths })
+    .eq("id", concertId)
+    .eq("user_id", user.id);
+  if (upErr) throw upErr;
+}
+
 export function useUploadConcertMedia(concertId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -71,8 +92,12 @@ export function useUploadConcertMedia(concertId: string) {
           .upload(path, file, { contentType: file.type, upsert: false });
         if (error) throw error;
       }
+      await syncMediaPaths(concertId);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["concert-media", concertId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["concert-media", concertId] });
+      qc.invalidateQueries({ queryKey: ["concerts"] });
+    },
   });
 }
 
@@ -82,8 +107,12 @@ export function useDeleteConcertMedia(concertId: string) {
     mutationFn: async (path: string) => {
       const { error } = await supabase.storage.from("concert-media").remove([path]);
       if (error) throw error;
+      await syncMediaPaths(concertId);
     },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["concert-media", concertId] }),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["concert-media", concertId] });
+      qc.invalidateQueries({ queryKey: ["concerts"] });
+    },
   });
 }
 

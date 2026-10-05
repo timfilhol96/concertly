@@ -9,66 +9,40 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as WRouteImport } from './routes/w'
-import { Route as TrustRouteImport } from './routes/trust'
-import { Route as TermsRouteImport } from './routes/terms'
-import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
-import { Route as PrivacyRouteImport } from './routes/privacy'
-import { Route as McpRouteImport } from './routes/mcp'
-import { Route as ConcertStatsRouteImport } from './routes/concert-stats'
-import { Route as AuthRouteImport } from './routes/auth'
-import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as BlogBestConcertTrackersRouteImport } from './routes/blog/best-concert-trackers'
-import { Route as AuthenticatedWrappedRouteImport } from './routes/_authenticated/wrapped'
-import { Route as AuthenticatedShowsRouteImport } from './routes/_authenticated/shows'
-import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
-import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated/map'
-import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
-import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated/friends'
-import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
-import { Route as AuthenticatedAddRouteImport } from './routes/_authenticated/add'
-import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedRouteRouteImport } from './routes/_authenticated/route'
+import { Route as AuthRouteImport } from './routes/auth'
+import { Route as ConcertStatsRouteImport } from './routes/concert-stats'
+import { Route as McpRouteImport } from './routes/mcp'
+import { Route as PrivacyRouteImport } from './routes/privacy'
+import { Route as SitemapDotxmlRouteImport } from './routes/sitemap[.]xml'
+import { Route as TermsRouteImport } from './routes/terms'
+import { Route as TrustRouteImport } from './routes/trust'
+import { Route as WRouteImport } from './routes/w'
 import { Route as Char91DotmcpChar93ListToolsRouteImport } from './routes/[.mcp]/list-tools'
-import { Route as AuthenticatedShowIdRouteImport } from './routes/_authenticated/show.$id'
-import { Route as AuthenticatedFriendIdRouteImport } from './routes/_authenticated/friend.$id'
-import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as Char91DotwellKnownChar93OauthProtectedResourceRouteImport } from './routes/[.well-known]/oauth-protected-resource'
+import { Route as AuthenticatedAddRouteImport } from './routes/_authenticated/add'
+import { Route as AuthenticatedDashboardRouteImport } from './routes/_authenticated/dashboard'
+import { Route as AuthenticatedFriendsRouteImport } from './routes/_authenticated/friends'
+import { Route as AuthenticatedInsightsRouteImport } from './routes/_authenticated/insights'
+import { Route as AuthenticatedMapRouteImport } from './routes/_authenticated/map'
+import { Route as AuthenticatedProfileRouteImport } from './routes/_authenticated/profile'
+import { Route as AuthenticatedShowsRouteImport } from './routes/_authenticated/shows'
+import { Route as AuthenticatedWrappedRouteImport } from './routes/_authenticated/wrapped'
+import { Route as BlogBestConcertTrackersRouteImport } from './routes/blog/best-concert-trackers'
 import { Route as DotlovableOauthConsentRouteImport } from './routes/[.]lovable.oauth.consent'
+import { Route as Char91DotmcpChar93InvokeToolToolRouteImport } from './routes/[.mcp]/invoke-tool/$tool'
+import { Route as AuthenticatedFriendIdRouteImport } from './routes/_authenticated/friend.$id'
+import { Route as AuthenticatedShowIdRouteImport } from './routes/_authenticated/show.$id'
 import { Route as ApiPublicSpotifyCallbackRouteImport } from './routes/api/public/spotify/callback'
 
-const WRoute = WRouteImport.update({
-  id: '/w',
-  path: '/w',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const TrustRoute = TrustRouteImport.update({
-  id: '/trust',
-  path: '/trust',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const TermsRoute = TermsRouteImport.update({
-  id: '/terms',
-  path: '/terms',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
-  id: '/sitemap.xml',
-  path: '/sitemap.xml',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const PrivacyRoute = PrivacyRouteImport.update({
-  id: '/privacy',
-  path: '/privacy',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const McpRoute = McpRouteImport.update({
-  id: '/mcp',
-  path: '/mcp',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ConcertStatsRoute = ConcertStatsRouteImport.update({
-  id: '/concert-stats',
-  path: '/concert-stats',
+const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
+  id: '/_authenticated',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AuthRoute = AuthRouteImport.update({
@@ -76,48 +50,56 @@ const AuthRoute = AuthRouteImport.update({
   path: '/auth',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedRouteRoute = AuthenticatedRouteRouteImport.update({
-  id: '/_authenticated',
+const ConcertStatsRoute = ConcertStatsRouteImport.update({
+  id: '/concert-stats',
+  path: '/concert-stats',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const McpRoute = McpRouteImport.update({
+  id: '/mcp',
+  path: '/mcp',
   getParentRoute: () => rootRouteImport,
 } as any)
-const BlogBestConcertTrackersRoute = BlogBestConcertTrackersRouteImport.update({
-  id: '/blog/best-concert-trackers',
-  path: '/blog/best-concert-trackers',
+const PrivacyRoute = PrivacyRouteImport.update({
+  id: '/privacy',
+  path: '/privacy',
   getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedWrappedRoute = AuthenticatedWrappedRouteImport.update({
-  id: '/wrapped',
-  path: '/wrapped',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const SitemapDotxmlRoute = SitemapDotxmlRouteImport.update({
+  id: '/sitemap.xml',
+  path: '/sitemap.xml',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedShowsRoute = AuthenticatedShowsRouteImport.update({
-  id: '/shows',
-  path: '/shows',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
-  id: '/profile',
-  path: '/profile',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const TrustRoute = TrustRouteImport.update({
+  id: '/trust',
+  path: '/trust',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedMapRoute = AuthenticatedMapRouteImport.update({
-  id: '/map',
-  path: '/map',
-  getParentRoute: () => AuthenticatedRouteRoute,
+const WRoute = WRouteImport.update({
+  id: '/w',
+  path: '/w',
+  getParentRoute: () => rootRouteImport,
 } as any)
-const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
-  id: '/insights',
-  path: '/insights',
-  getParentRoute: () => AuthenticatedRouteRoute,
-} as any)
-const AuthenticatedFriendsRoute = AuthenticatedFriendsRouteImport.update({
-  id: '/friends',
-  path: '/friends',
+const Char91DotmcpChar93ListToolsRoute =
+  Char91DotmcpChar93ListToolsRouteImport.update({
+    id: '/.mcp/list-tools',
+    path: '/.mcp/list-tools',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const Char91DotwellKnownChar93OauthProtectedResourceRoute =
+  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
+    id: '/.well-known/oauth-protected-resource',
+    path: '/.well-known/oauth-protected-resource',
+    getParentRoute: () => rootRouteImport,
+  } as any)
+const AuthenticatedAddRoute = AuthenticatedAddRouteImport.update({
+  id: '/add',
+  path: '/add',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
@@ -125,32 +107,45 @@ const AuthenticatedDashboardRoute = AuthenticatedDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedAddRoute = AuthenticatedAddRouteImport.update({
-  id: '/add',
-  path: '/add',
+const AuthenticatedFriendsRoute = AuthenticatedFriendsRouteImport.update({
+  id: '/friends',
+  path: '/friends',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const Char91DotwellKnownChar93OauthProtectedResourceRoute =
-  Char91DotwellKnownChar93OauthProtectedResourceRouteImport.update({
-    id: '/.well-known/oauth-protected-resource',
-    path: '/.well-known/oauth-protected-resource',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const Char91DotmcpChar93ListToolsRoute =
-  Char91DotmcpChar93ListToolsRouteImport.update({
-    id: '/.mcp/list-tools',
-    path: '/.mcp/list-tools',
-    getParentRoute: () => rootRouteImport,
-  } as any)
-const AuthenticatedShowIdRoute = AuthenticatedShowIdRouteImport.update({
-  id: '/show/$id',
-  path: '/show/$id',
+const AuthenticatedInsightsRoute = AuthenticatedInsightsRouteImport.update({
+  id: '/insights',
+  path: '/insights',
   getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
-const AuthenticatedFriendIdRoute = AuthenticatedFriendIdRouteImport.update({
-  id: '/friend/$id',
-  path: '/friend/$id',
+const AuthenticatedMapRoute = AuthenticatedMapRouteImport.update({
+  id: '/map',
+  path: '/map',
   getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedProfileRoute = AuthenticatedProfileRouteImport.update({
+  id: '/profile',
+  path: '/profile',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedShowsRoute = AuthenticatedShowsRouteImport.update({
+  id: '/shows',
+  path: '/shows',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedWrappedRoute = AuthenticatedWrappedRouteImport.update({
+  id: '/wrapped',
+  path: '/wrapped',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const BlogBestConcertTrackersRoute = BlogBestConcertTrackersRouteImport.update({
+  id: '/blog/best-concert-trackers',
+  path: '/blog/best-concert-trackers',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
+  id: '/.lovable/oauth/consent',
+  path: '/.lovable/oauth/consent',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const Char91DotmcpChar93InvokeToolToolRoute =
   Char91DotmcpChar93InvokeToolToolRouteImport.update({
@@ -158,10 +153,15 @@ const Char91DotmcpChar93InvokeToolToolRoute =
     path: '/.mcp/invoke-tool/$tool',
     getParentRoute: () => rootRouteImport,
   } as any)
-const DotlovableOauthConsentRoute = DotlovableOauthConsentRouteImport.update({
-  id: '/.lovable/oauth/consent',
-  path: '/.lovable/oauth/consent',
-  getParentRoute: () => rootRouteImport,
+const AuthenticatedFriendIdRoute = AuthenticatedFriendIdRouteImport.update({
+  id: '/friend/$id',
+  path: '/friend/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
+} as any)
+const AuthenticatedShowIdRoute = AuthenticatedShowIdRouteImport.update({
+  id: '/show/$id',
+  path: '/show/$id',
+  getParentRoute: () => AuthenticatedRouteRoute,
 } as any)
 const ApiPublicSpotifyCallbackRoute =
   ApiPublicSpotifyCallbackRouteImport.update({
@@ -359,60 +359,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/w': {
-      id: '/w'
-      path: '/w'
-      fullPath: '/w'
-      preLoaderRoute: typeof WRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/trust': {
-      id: '/trust'
-      path: '/trust'
-      fullPath: '/trust'
-      preLoaderRoute: typeof TrustRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/terms': {
-      id: '/terms'
-      path: '/terms'
-      fullPath: '/terms'
-      preLoaderRoute: typeof TermsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/sitemap.xml': {
-      id: '/sitemap.xml'
-      path: '/sitemap.xml'
-      fullPath: '/sitemap.xml'
-      preLoaderRoute: typeof SitemapDotxmlRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/privacy': {
-      id: '/privacy'
-      path: '/privacy'
-      fullPath: '/privacy'
-      preLoaderRoute: typeof PrivacyRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/mcp': {
-      id: '/mcp'
-      path: '/mcp'
-      fullPath: '/mcp'
-      preLoaderRoute: typeof McpRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/concert-stats': {
-      id: '/concert-stats'
-      path: '/concert-stats'
-      fullPath: '/concert-stats'
-      preLoaderRoute: typeof ConcertStatsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/auth': {
-      id: '/auth'
-      path: '/auth'
-      fullPath: '/auth'
-      preLoaderRoute: typeof AuthRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/_authenticated': {
@@ -422,81 +373,60 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/auth': {
+      id: '/auth'
+      path: '/auth'
+      fullPath: '/auth'
+      preLoaderRoute: typeof AuthRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/blog/best-concert-trackers': {
-      id: '/blog/best-concert-trackers'
-      path: '/blog/best-concert-trackers'
-      fullPath: '/blog/best-concert-trackers'
-      preLoaderRoute: typeof BlogBestConcertTrackersRouteImport
+    '/concert-stats': {
+      id: '/concert-stats'
+      path: '/concert-stats'
+      fullPath: '/concert-stats'
+      preLoaderRoute: typeof ConcertStatsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/wrapped': {
-      id: '/_authenticated/wrapped'
-      path: '/wrapped'
-      fullPath: '/wrapped'
-      preLoaderRoute: typeof AuthenticatedWrappedRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/mcp': {
+      id: '/mcp'
+      path: '/mcp'
+      fullPath: '/mcp'
+      preLoaderRoute: typeof McpRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/shows': {
-      id: '/_authenticated/shows'
-      path: '/shows'
-      fullPath: '/shows'
-      preLoaderRoute: typeof AuthenticatedShowsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/privacy': {
+      id: '/privacy'
+      path: '/privacy'
+      fullPath: '/privacy'
+      preLoaderRoute: typeof PrivacyRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/profile': {
-      id: '/_authenticated/profile'
-      path: '/profile'
-      fullPath: '/profile'
-      preLoaderRoute: typeof AuthenticatedProfileRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/sitemap.xml': {
+      id: '/sitemap.xml'
+      path: '/sitemap.xml'
+      fullPath: '/sitemap.xml'
+      preLoaderRoute: typeof SitemapDotxmlRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/map': {
-      id: '/_authenticated/map'
-      path: '/map'
-      fullPath: '/map'
-      preLoaderRoute: typeof AuthenticatedMapRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/insights': {
-      id: '/_authenticated/insights'
-      path: '/insights'
-      fullPath: '/insights'
-      preLoaderRoute: typeof AuthenticatedInsightsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
+    '/trust': {
+      id: '/trust'
+      path: '/trust'
+      fullPath: '/trust'
+      preLoaderRoute: typeof TrustRouteImport
+      parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/friends': {
-      id: '/_authenticated/friends'
-      path: '/friends'
-      fullPath: '/friends'
-      preLoaderRoute: typeof AuthenticatedFriendsRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/dashboard': {
-      id: '/_authenticated/dashboard'
-      path: '/dashboard'
-      fullPath: '/dashboard'
-      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/_authenticated/add': {
-      id: '/_authenticated/add'
-      path: '/add'
-      fullPath: '/add'
-      preLoaderRoute: typeof AuthenticatedAddRouteImport
-      parentRoute: typeof AuthenticatedRouteRoute
-    }
-    '/.well-known/oauth-protected-resource': {
-      id: '/.well-known/oauth-protected-resource'
-      path: '/.well-known/oauth-protected-resource'
-      fullPath: '/.well-known/oauth-protected-resource'
-      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+    '/w': {
+      id: '/w'
+      path: '/w'
+      fullPath: '/w'
+      preLoaderRoute: typeof WRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.mcp/list-tools': {
@@ -506,25 +436,74 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof Char91DotmcpChar93ListToolsRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/_authenticated/show/$id': {
-      id: '/_authenticated/show/$id'
-      path: '/show/$id'
-      fullPath: '/show/$id'
-      preLoaderRoute: typeof AuthenticatedShowIdRouteImport
+    '/.well-known/oauth-protected-resource': {
+      id: '/.well-known/oauth-protected-resource'
+      path: '/.well-known/oauth-protected-resource'
+      fullPath: '/.well-known/oauth-protected-resource'
+      preLoaderRoute: typeof Char91DotwellKnownChar93OauthProtectedResourceRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/add': {
+      id: '/_authenticated/add'
+      path: '/add'
+      fullPath: '/add'
+      preLoaderRoute: typeof AuthenticatedAddRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/_authenticated/friend/$id': {
-      id: '/_authenticated/friend/$id'
-      path: '/friend/$id'
-      fullPath: '/friend/$id'
-      preLoaderRoute: typeof AuthenticatedFriendIdRouteImport
+    '/_authenticated/dashboard': {
+      id: '/_authenticated/dashboard'
+      path: '/dashboard'
+      fullPath: '/dashboard'
+      preLoaderRoute: typeof AuthenticatedDashboardRouteImport
       parentRoute: typeof AuthenticatedRouteRoute
     }
-    '/.mcp/invoke-tool/$tool': {
-      id: '/.mcp/invoke-tool/$tool'
-      path: '/.mcp/invoke-tool/$tool'
-      fullPath: '/.mcp/invoke-tool/$tool'
-      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+    '/_authenticated/friends': {
+      id: '/_authenticated/friends'
+      path: '/friends'
+      fullPath: '/friends'
+      preLoaderRoute: typeof AuthenticatedFriendsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/insights': {
+      id: '/_authenticated/insights'
+      path: '/insights'
+      fullPath: '/insights'
+      preLoaderRoute: typeof AuthenticatedInsightsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/map': {
+      id: '/_authenticated/map'
+      path: '/map'
+      fullPath: '/map'
+      preLoaderRoute: typeof AuthenticatedMapRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/profile': {
+      id: '/_authenticated/profile'
+      path: '/profile'
+      fullPath: '/profile'
+      preLoaderRoute: typeof AuthenticatedProfileRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/shows': {
+      id: '/_authenticated/shows'
+      path: '/shows'
+      fullPath: '/shows'
+      preLoaderRoute: typeof AuthenticatedShowsRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/wrapped': {
+      id: '/_authenticated/wrapped'
+      path: '/wrapped'
+      fullPath: '/wrapped'
+      preLoaderRoute: typeof AuthenticatedWrappedRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/blog/best-concert-trackers': {
+      id: '/blog/best-concert-trackers'
+      path: '/blog/best-concert-trackers'
+      fullPath: '/blog/best-concert-trackers'
+      preLoaderRoute: typeof BlogBestConcertTrackersRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/.lovable/oauth/consent': {
@@ -533,6 +512,27 @@ declare module '@tanstack/react-router' {
       fullPath: '/.lovable/oauth/consent'
       preLoaderRoute: typeof DotlovableOauthConsentRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/.mcp/invoke-tool/$tool': {
+      id: '/.mcp/invoke-tool/$tool'
+      path: '/.mcp/invoke-tool/$tool'
+      fullPath: '/.mcp/invoke-tool/$tool'
+      preLoaderRoute: typeof Char91DotmcpChar93InvokeToolToolRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/_authenticated/friend/$id': {
+      id: '/_authenticated/friend/$id'
+      path: '/friend/$id'
+      fullPath: '/friend/$id'
+      preLoaderRoute: typeof AuthenticatedFriendIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
+    }
+    '/_authenticated/show/$id': {
+      id: '/_authenticated/show/$id'
+      path: '/show/$id'
+      fullPath: '/show/$id'
+      preLoaderRoute: typeof AuthenticatedShowIdRouteImport
+      parentRoute: typeof AuthenticatedRouteRoute
     }
     '/api/public/spotify/callback': {
       id: '/api/public/spotify/callback'

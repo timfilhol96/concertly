@@ -32,6 +32,7 @@ export type Concert = {
   status: ConcertStatus;
   latitude: number | null;
   longitude: number | null;
+  mediaPaths: string[];
 };
 
 type Row = {
@@ -54,6 +55,7 @@ type Row = {
   status?: ConcertStatus | null;
   latitude?: number | null;
   longitude?: number | null;
+  media_paths?: string[] | null;
 };
 
 function fromRow(r: Row): Concert {
@@ -84,13 +86,14 @@ function fromRow(r: Row): Concert {
     status: (r.status as ConcertStatus | null | undefined) ?? "attended",
     latitude: r.latitude == null ? null : Number(r.latitude),
     longitude: r.longitude == null ? null : Number(r.longitude),
+    mediaPaths: r.media_paths ?? [],
   };
 }
 
 // Every column except the setlist JSON, which is most of each row's size and
 // only needed on the show and edit pages.
 const LIST_COLUMNS =
-  "id, artist, tour, openers, date, venue, city, country, rating, genre, notes, ticket_price, songs_seen, artist_image_url, status, latitude, longitude";
+  "id, artist, tour, openers, date, venue, city, country, rating, genre, notes, ticket_price, songs_seen, artist_image_url, status, latitude, longitude, media_paths";
 
 export function useConcerts() {
   return useQuery({
@@ -167,7 +170,7 @@ export function useAvatarUrl(avatarPath: string | null | undefined) {
 }
 
 // Existing call sites treat status/lat/lng as optional; default status = attended.
-export type NewConcert = Omit<Concert, "id" | "status" | "latitude" | "longitude"> & {
+export type NewConcert = Omit<Concert, "id" | "status" | "latitude" | "longitude" | "mediaPaths"> & {
   status?: ConcertStatus;
   latitude?: number | null;
   longitude?: number | null;

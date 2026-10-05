@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1791205369819,
+      "tag": "0000_concert_media_paths",
+      "breakpoints": true
+    }
+  ]
+}

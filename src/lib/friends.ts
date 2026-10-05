@@ -277,6 +277,7 @@ export function useFriendsAtShow(args: {
 
 type ConcertRow = {
   id: string;
+  media_paths?: string[] | null;
   artist: string;
   tour: string | null;
   openers: string[] | null;
@@ -301,7 +302,7 @@ export function useFriendConcerts(friendUserId: string | null) {
       const { data, error } = await supabase
         .from("concerts")
         .select(
-          "id, artist, tour, openers, date, venue, city, country, rating, genre, notes, ticket_price, songs_seen, artist_image_url",
+          "id, artist, tour, openers, date, venue, city, country, rating, genre, notes, ticket_price, songs_seen, artist_image_url, media_paths",
         )
         .eq("user_id", friendUserId)
         .order("date", { ascending: false });
@@ -326,6 +327,7 @@ export function useFriendConcerts(friendUserId: string | null) {
         status: "attended" as const,
         latitude: null,
         longitude: null,
+        mediaPaths: r.media_paths ?? [],
       }));
     },
   });

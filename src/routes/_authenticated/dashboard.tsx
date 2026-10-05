@@ -17,7 +17,7 @@ import {
 } from "@/lib/concerts";
 import { computeBadges, onThisDay } from "@/lib/badges";
 import { useFriendships } from "@/lib/friends";
-import { useConcertMedia, useSignedMediaUrl, type ConcertMediaItem } from "@/lib/concert-media";
+import { detectKind, useSignedMediaUrl } from "@/lib/concert-media";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { ctaClass } from "@/components/cta";
 import { PageTitle } from "@/components/page-title";
@@ -316,7 +316,7 @@ function Dashboard() {
                 notes={c.notes ?? undefined}
                 imageUrl={c.artistImageUrl ?? undefined}
                 concertId={c.id}
-                ownerId={profile?.userId}
+                mediaPaths={c.mediaPaths}
               />
             </Link>
           ))}
@@ -626,8 +626,7 @@ export function ConcertCard({
   rating,
   notes,
   imageUrl,
-  concertId,
-  ownerId,
+  mediaPaths = [],
   isReadOnly,
 }: {
   artist: string;
@@ -639,12 +638,12 @@ export function ConcertCard({
   notes?: string;
   imageUrl?: string;
   concertId?: string;
-  ownerId?: string;
+  mediaPaths?: string[];
   isReadOnly?: boolean;
 }) {
   const d = new Date(date);
-  const { data: media } = useConcertMedia(concertId, ownerId);
-  const firstImage = media?.find((m) => m.kind === "image");
+  const media = mediaPaths.map((path) => ({ path, kind: detectKind(path) }));
+  const firstImage = media.find((m) => m.kind === "image");
   const thumbUrl = useSignedMediaUrl(firstImage?.path);
   const dateLabel = d.toLocaleDateString("en", { day: "2-digit", month: "short", year: "numeric" });
   return (

@@ -26,6 +26,7 @@ export type Database = {
           id: string
           latitude: number | null
           longitude: number | null
+          media_paths: string[]
           notes: string | null
           opener_setlists: Json | null
           openers: string[] | null
@@ -49,6 +50,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          media_paths?: string[]
           notes?: string | null
           opener_setlists?: Json | null
           openers?: string[] | null
@@ -72,6 +74,7 @@ export type Database = {
           id?: string
           latitude?: number | null
           longitude?: number | null
+          media_paths?: string[]
           notes?: string | null
           opener_setlists?: Json | null
           openers?: string[] | null
