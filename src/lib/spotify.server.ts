@@ -157,22 +157,36 @@ export async function getUserAccessToken(
   return { accessToken, scope: tok.scope ?? "" };
 }
 
-// GET against the Web API, retrying once when rate limited.
-export async function spotifyUserGet<T>(accessToken: string, path: string): Promise<T | null> {
-  for (let attempt = 0; attempt < 2; attempt++) {
+// GET against the Web API. Retries once on a short rate limit; any other
+// failure throws so callers never mistake a rejected request for "no results".
+export async function spotifyUserGet<T>(accessToken: string, path: string): Promise<T> {
+  for (let attempt = 0; ; attempt++) {
     const res = await fetch(`https://api.spotify.com/v1${path}`, {
       headers: { Authorization: `Bearer ${accessToken}`, Accept: "application/json" },
     });
-    if (res.status === 429 && attempt === 0) {
-      const wait = Math.min(Number(res.headers.get("Retry-After") ?? "1"), 5);
-      await new Promise((r) => setTimeout(r, wait * 1000));
+    if (res.ok) return (await res.json()) as T;
+    const retryAfter = Number(res.headers.get("Retry-After") ?? "1") || 1;
+    if (res.status === 429 && attempt === 0 && retryAfter <= 5) {
+      await new Promise((r) => setTimeout(r, retryAfter * 1000));
       continue;
     }
-    if (!res.ok) {
-      console.error("[spotify] GET failed", path, res.status, await res.text().catch(() => ""));
-      return null;
-    }
-    return (await res.json()) as T;
+    const body = await res.text().catch(() => "");
+    console.error("[spotify] GET failed", path, res.status, body);
+    throw new Error(spotifyErrorMessage(res.status, body, retryAfter));
   }
-  return null;
+}
+
+function spotifyErrorMessage(status: number, body: string, retryAfter: number): string {
+  let detail = "";
+  try {
+    detail = (JSON.parse(body) as { error?: { message?: string } }).error?.message ?? "";
+  } catch {
+    detail = body.slice(0, 200);
+  }
+  if (status === 401) return "Your Spotify session expired. Reconnect Spotify on your profile.";
+  if (status === 429) {
+    const mins = Math.ceil(retryAfter / 60);
+    return `Spotify is rate limiting searches. Try again in ${mins} minute${mins === 1 ? "" : "s"}.`;
+  }
+  return `Spotify rejected the search (${status})${detail ? `: ${detail}` : ""}.`;
 }

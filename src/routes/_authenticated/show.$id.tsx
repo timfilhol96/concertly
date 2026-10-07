@@ -649,7 +649,9 @@ function TrackSearch({
       {isFetching ? (
         <p className="text-[11px] text-muted-foreground">Searching…</p>
       ) : error ? (
-        <p className="text-[11px] text-destructive">Search failed. Try again.</p>
+        <p className="text-[11px] text-destructive">
+          {error instanceof Error ? error.message : "Search failed. Try again."}
+        </p>
       ) : results && results.length === 0 ? (
         <p className="text-[11px] text-muted-foreground">No results. Try a different spelling.</p>
       ) : (

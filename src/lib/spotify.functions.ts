@@ -103,7 +103,7 @@ async function searchTracks(accessToken: string, q: string): Promise<SpotifyTrac
     accessToken,
     `/search?type=track&limit=10&market=from_token&q=${encodeURIComponent(q)}`,
   );
-  return (json?.tracks?.items ?? []).filter((t) => t.uri && t.name);
+  return (json.tracks?.items ?? []).filter((t) => t.uri && t.name);
 }
 
 const ALT_VERSION = /\b(live|remix|karaoke|instrumental|acoustic|demo|sped up|slowed|cover|tribute)\b/i;
@@ -152,6 +152,9 @@ async function findCandidates(
       if (c && (c.artistMatch || (i === 2 && c.title >= 85))) all.push(c);
     }
     if (all.some((c) => c.artistMatch && c.title === 100)) break;
+    // The title-only query only exists to find covers; skip it once the
+    // artist's own version turned up.
+    if (i === 1 && all.some((c) => c.artistMatch)) break;
   }
   return all;
 }
