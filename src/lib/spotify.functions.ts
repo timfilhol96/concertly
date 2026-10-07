@@ -99,9 +99,12 @@ function summarize(t: SpotifyTrack): SpotifyTrackSummary {
 
 async function searchTracks(accessToken: string, q: string): Promise<SpotifyTrack[]> {
   const { spotifyUserGet } = await import("./spotify.server");
+  // No market=from_token: it needs the user-read-private scope we don't ask
+  // for (403 "Insufficient client scope"), and a user token already applies
+  // the account's country.
   const json = await spotifyUserGet<{ tracks?: { items?: SpotifyTrack[] } }>(
     accessToken,
-    `/search?type=track&limit=10&market=from_token&q=${encodeURIComponent(q)}`,
+    `/search?type=track&limit=10&q=${encodeURIComponent(q)}`,
   );
   return (json.tracks?.items ?? []).filter((t) => t.uri && t.name);
 }
